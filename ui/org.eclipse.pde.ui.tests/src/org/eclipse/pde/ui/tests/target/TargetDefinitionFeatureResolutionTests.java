@@ -275,7 +275,7 @@ public class TargetDefinitionFeatureResolutionTests extends AbstractTargetTest {
 		assertNotNull("Target didn't resolve",bundles);
 		assertEquals("Wrong number of included bundles", 1, bundles.length);
 		
-		IStatus definitionStatus = definition.getBundleStatus();
+		IStatus definitionStatus = definition.getStatus();
 		assertEquals("Wrong severity", IStatus.ERROR, definitionStatus.getSeverity());
 
 		IStatus[] children = definitionStatus.getChildren();
@@ -286,7 +286,7 @@ public class TargetDefinitionFeatureResolutionTests extends AbstractTargetTest {
 		// Check that removing the included bundles and resolving removes the errors.
 		definition.setIncluded(null);
 		assertTrue(definition.isResolved());
-		assertTrue(definition.getBundleStatus().isOK());
+		assertTrue(definition.getStatus().isOK());
 		assertTrue(definition.getBundles().length > 4);
 	}
 	
@@ -358,7 +358,7 @@ public class TargetDefinitionFeatureResolutionTests extends AbstractTargetTest {
 		assertNotNull("Target didn't resolve",bundles);
 		assertEquals("Wrong number of included bundles", 1, bundles.length);
 		
-		IStatus definitionStatus = definition.getBundleStatus();
+		IStatus definitionStatus = definition.getStatus();
 		assertEquals("Wrong severity", IStatus.ERROR, definitionStatus.getSeverity());
 
 		IStatus[] children = definitionStatus.getChildren();
@@ -369,7 +369,7 @@ public class TargetDefinitionFeatureResolutionTests extends AbstractTargetTest {
 		// Check that removing the included bundles and resolving removes the errors.
 		definition.setIncluded(null);
 		assertTrue(definition.isResolved());
-		assertTrue(definition.getBundleStatus().isOK());
+		assertTrue(definition.getStatus().isOK());
 		assertTrue(definition.getBundles().length > 4);
 	}
 	

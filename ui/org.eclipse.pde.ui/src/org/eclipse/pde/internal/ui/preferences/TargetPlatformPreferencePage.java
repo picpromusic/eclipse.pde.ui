@@ -134,9 +134,9 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 		private Image getImage(ITargetDefinition target) {
 			int flag = 0;
 			if (target.equals(fActiveTarget) && target.isResolved()) {
-				if (target.getBundleStatus().getSeverity() == IStatus.WARNING) {
+				if (target.getStatus().getSeverity() == IStatus.WARNING) {
 					flag = SharedLabelProvider.F_WARNING;
-				} else if (target.getBundleStatus().getSeverity() == IStatus.ERROR) {
+				} else if (target.getStatus().getSeverity() == IStatus.ERROR) {
 					flag = SharedLabelProvider.F_ERROR;
 				}
 			}
@@ -437,7 +437,7 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 
 			if (fActiveTarget.isResolved()) {
 				// Check if the bundle resolution has errors
-				IStatus bundleStatus = fActiveTarget.getBundleStatus();
+				IStatus bundleStatus = fActiveTarget.getStatus();
 				if (bundleStatus.getSeverity() == IStatus.ERROR) {
 					ErrorDialog.openError(getShell(), PDEUIMessages.TargetPlatformPreferencePage2_14, PDEUIMessages.TargetPlatformPreferencePage2_15, bundleStatus, IStatus.ERROR);
 				}

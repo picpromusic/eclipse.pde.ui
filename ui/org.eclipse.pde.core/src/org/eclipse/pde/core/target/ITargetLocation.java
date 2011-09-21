@@ -13,49 +13,89 @@ package org.eclipse.pde.core.target;
 import org.eclipse.core.runtime.*;
 
 /**
- * A collection of bundles. A bundle location abstracts the storage and location of the
- * underlying bundles and may contain a combination of executable and source bundles.
+ * Describes a location in a target that provides bundles and features. Abstracts
+ * the storage and provisioning of bundles. May contain a combination of 
+ * executable and source bundles.
+ * <p>
+ * Clients are allowed to provide their own implementations. For the target definition
+ * to be persisted correctly, clients must provide a factory through the 
+ * <code>org.eclipse.pde.core.targetLocations</code> extension point. To display
+ * an implementation in the PDE UI, clients must supply an adapter factory for 
+ * the following:
+ * </p><p>
+ * <code>String</code> to <code>IWizardNode</code>: Takes the target location 
+ * identifier (String) and returns an IWizardNode object to supply the wizard
+ * to create a new location.
+ * </p><p>
+ * <code>String</code> to <code>ILabelProvider</code>: Takes the target location
+ * identifier (String) and returns a label provider that will supply the text 
+ * and image for the target location.
+ * <p>
  * 
  * @since 3.8
  */
 public interface ITargetLocation extends IAdaptable {
 
 	/**
-	 * Resolves all bundles in this location in the context of the specified
-	 * target and returns a status describing the resolution.
+	 * Resolves all contents of this location in the context of the specified
+	 * target. Returns a status describing the resolution.
 	 * <p>
-	 * If there is an error preventing the resolution a status detailing
-	 * the error will be returned.  If resolution is successful an OK status is 
-	 * returned. If the progress monitor is canceled a CANCEL status will be returned.
+	 * If resolution is successful an OK status is returned. If a problem
+	 * occurs while resolving a non-OK status will be returned. If the 
+	 * progress monitor is cancelled a CANCEL status will be returned. The
+	 * returned status can be accessed later using {@link #getStatus()}.
 	 * </p><p>
-	 * Note that the returned status may differ from the result of calling 
-	 * {@link #getStatus()}
-	 * </p>
+	 * This location will be considered resolved even if a problem occurs
+	 * while resolving. See {@link #isResolved()}
+	 * 
 	 * @param definition target being resolved for
 	 * @param monitor progress monitor or <code>null</code>
 	 * @return resolution status
-	 * @exception CoreException if unable to resolve this location
 	 */
 	public IStatus resolve(ITargetDefinition definition, IProgressMonitor monitor);
 
 	/**
+	 * Returns whether this location has resolved all of its contents. If there
+	 * was a problem during the resolution the location will still be considered
+	 * resolved, see {@link #getStatus()}.
+	 * 
+	 * @see #resolve(ITargetDefinition, IProgressMonitor)
+	 * @return whether this location has resolved all of its contents
+	 */
+	public boolean isResolved();
+
+	/**
 	 * Returns the status of the last bundle resolution or <code>null</code> if 
-	 * this location has not been resolved.  If there was a problem during the 
-	 * resolution, a status, possibly a multi-status explaining the problem will be 
-	 * returned, see {@link #resolve(ITargetDefinition, IProgressMonitor)}. 
+	 * this location has not been resolved. If there was a problem during the 
+	 * resolution, the status returned by {@link #resolve(ITargetDefinition, IProgressMonitor)}
+	 * will be returned.
 	 * 	 
-	 * @see ITargetLocation#getBundles()
-	 * @return single resolution status or <code>null</code>
+	 * @return resolution status or <code>null</code>
 	 */
 	public IStatus getStatus();
 
 	/**
-	 * Returns whether this location has resolved all of its contained bundles.
+	 * Returns a string that identifies the implementation of this target location.
+	 * For target definitions to be persisted correctly, this must match the type
+	 * in a contributed <code>org.eclipse.pde.core.targetLocations</code> extension.
 	 * 
-	 * @see #resolve(ITargetDefinition, IProgressMonitor)
-	 * @return whether this location has resolved all of its contained bundles
+	 * @return string identifier for the type of target location.
 	 */
-	public boolean isResolved();
+	public String getType();
+
+	/**
+	 * Returns a path in the local file system to the root of the target location.
+	 * <p>
+	 * The current target platform framework requires a local file location but this
+	 * requirement may be removed in the future.  This method should not be referenced.
+	 * </p>
+	 * 
+	 * @param resolve whether to resolve variables in the path
+	 * @return home location
+	 * @exception CoreException if unable to resolve the location
+	 * @noreference This method is not intended to be referenced by clients.
+	 */
+	public String getLocation(boolean resolve) throws CoreException;
 
 	/**
 	 * Returns the bundles in this location or <code>null</code> if this location is not resolved
@@ -87,27 +127,6 @@ public interface ITargetLocation extends IAdaptable {
 	 * @return list of VM Arguments or <code>null</code> if none available
 	 */
 	public String[] getVMArguments();
-
-	/**
-	 * Returns a string that identifies the target location.  This type is persisted to xml
-	 * so that the correct target location is created when deserializing the xml.  This type is also
-	 * used to alter how the containers are presented to the user in the UI.
-	 * 
-	 * @return string identifier for the type of target location.
-	 */
-	public String getType();
-
-	/**
-	 * Returns a path in the local file system to the root of the target location.
-	 * <p>
-	 * Currently the PDE target platform preferences are
-	 * based on a home location and additional locations, so we need the information.
-	 * </p>
-	 * @param resolve whether to resolve variables in the path
-	 * @return home location
-	 * @exception CoreException if unable to resolve the location
-	 */
-	public String getLocation(boolean resolve) throws CoreException;
 
 	/**
 	 * Save the location attributes

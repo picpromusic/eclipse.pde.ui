@@ -225,7 +225,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 				if (fLocationTree != source) {
 					fLocationTree.setInput(definition);
 				}
-				if (definition.isResolved() && definition.getBundleStatus().getSeverity() == IStatus.ERROR) {
+				if (definition.isResolved() && definition.getStatus().getSeverity() == IStatus.ERROR) {
 					fLocationTab.setImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_ERROR_TSK));
 				} else {
 					fLocationTab.setImage(null);
@@ -265,7 +265,7 @@ public class TargetDefinitionContentPage extends TargetDefinitionPage {
 					}
 					fContentTree.setInput(definition);
 					fLocationTree.setInput(definition);
-					if (definition.isResolved() && definition.getBundleStatus().getSeverity() == IStatus.ERROR) {
+					if (definition.isResolved() && definition.getStatus().getSeverity() == IStatus.ERROR) {
 						fLocationTab.setImage(PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJS_ERROR_TSK));
 					} else {
 						fLocationTab.setImage(null);

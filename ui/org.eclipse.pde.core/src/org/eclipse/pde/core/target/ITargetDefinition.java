@@ -15,13 +15,99 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.osgi.service.environment.Constants;
 
 /**
- * Defines a target platform. A target platform is a collection of bundles configured
- * for a specific environment.
+ * Defines a target platform. A target platform is a collection of bundles and
+ * features configured for a specific environment.
+ * 
+ * @see ITargetPlatformService Use the target platform service to work with target definitions
  * 
  * @since 3.8
  * @noimplement This interface is not intended to be implemented by clients.
+ * @noextend This interface is not intended to be extended by clients.
  */
 public interface ITargetDefinition {
+
+	/**
+	 * Resolves all contents of this target definition by resolving each
+	 * {@link ITargetLocation} in this target definition.
+	 * <p>
+	 * Returns a {@link MultiStatus} containing any non-OK statuses produced 
+	 * when resolving each {@link ITargetLocation}.  An OK status will be
+	 * returned if no non-OK statuses are returned from the locations. A
+	 * CANCEL status will be returned if the monitor is cancelled.
+	 * </p><p>
+	 * For more information on how a target resolves, see 
+	 * {@link ITargetLocation#resolve(ITargetDefinition, IProgressMonitor)}
+	 * </p>
+	 * 
+	 * @param monitor progress monitor or <code>null</code>
+	 * @return resolution multi-status
+	 * @throws CoreException if unable to resolve
+	 */
+	public IStatus resolve(IProgressMonitor monitor);
+
+	/**
+	 * Returns whether all {@link ITargetLocation}s in this target currently in
+	 * a resolved state.
+	 * 
+	 * @return <code>true</code> if all locations are currently resolved
+	 */
+	public boolean isResolved();
+
+	/**
+	 * Returns all bundles included in this target definition or <code>null</code>
+	 * if this container is not resolved. Takes all the bundles available from the
+	 * set target locations (returned by {@link #getAllBundles()} and applies
+	 * the filters (returned by {@link #getIncluded()} and {@link #getOptional()})
+	 * to determine the final list of bundles in this target.
+	 * <p>
+	 * Some of the returned bundles may have non-OK statuses. These bundles may be 
+	 * missing some information (location, version, source target). To get a bundle's 
+	 * status call {@link TargetBundle#getStatus()}. Calling {@link #getStatus()} 
+	 * will return all problems in this target definition.
+	 * </p>
+	 * @return resolved bundles or <code>null</code>
+	 */
+	public TargetBundle[] getBundles();
+
+	/**
+	 * Returns a list of all resolved bundles in this target definition or <code>null</code>. 
+	 * Does not filter based on any filters ({@link #getIncluded()} and {@link #getOptional()}).
+	 * Returns <code>null</code> if this target has not been resolved. 
+	 * Use {@link #getBundles()} to get the filtered list of bundles.
+	 *  
+	 * @return collection of resolved bundles or <code>null</code>
+	 */
+	public TargetBundle[] getAllBundles();
+
+	/**
+	 * Returns the list of feature models available in this target or <code>null</code> if
+	 * this target has not been resolved.
+	 * 
+	 * @return collection of feature models or <code>null</code>
+	 */
+	public TargetFeature[] getAllFeatures();
+
+	/**
+	 * Returns a {@link MultiStatus} containing all problems with this target.
+	 * Returns an OK status if there are no problems.  Returns <code>null</code>
+	 * if this target has not been resolved.
+	 * </p><p>
+	 * The returned status will include all non-OK statuses returned by {@link #resolve(IProgressMonitor)}
+	 * as well as any non-OK statuses found in {@link TargetBundle}s returned by {@link #getBundles()}. 
+	 * For more information on the statuses that can be returned see {@link ITargetLocation#getStatus()}
+	 * and {@link TargetBundle#getStatus()}.
+	 * </p>
+	 * 
+	 * @return {@link MultiStatus} containing all problems with this target or <code>null</code>
+	 */
+	public IStatus getStatus();
+
+	/**
+	 * Returns a handle to this target definition.
+	 * 
+	 * @return target handle
+	 */
+	public ITargetHandle getHandle();
 
 	/**
 	 * Returns the name of this target, or <code>null</code> if none
@@ -38,14 +124,64 @@ public interface ITargetDefinition {
 	public void setName(String name);
 
 	/**
-	 * Sets the JRE that this target definition should be built against, or <code>null</code>
-	 * to use the workspace default JRE. JavaRuntime should be used to generate and parse
-	 * JRE container paths.
+	 * Returns the locations defined by this target, possible <code>null</code>.
 	 * 
-	 * @param containerPath JRE container path
-	 * @see JavaRuntime
+	 * @return target locations or <code>null</code>
 	 */
-	public void setJREContainer(IPath containerPath);
+	public ITargetLocation[] getTargetLocations();
+
+	/**
+	 * Sets the locations in this target definition or <code>null</code> if none.
+	 * 
+	 * @param containers target locations or <code>null</code>
+	 */
+	public void setTargetLocations(ITargetLocation[] containers);
+
+	/**
+	 * Returns a list of descriptors that filter the resolved plug-ins in this target.  The list may include
+	 * both plug-ins and features.  The returned descriptors will have an id, may have a version and will have
+	 * either {@link NameVersionDescriptor#TYPE_FEATURE} or {@link NameVersionDescriptor#TYPE_PLUGIN} as their
+	 * type.  If the target is set to include all units (no filtering is being done), this method will return 
+	 * <code>null</code>.
+	 * 
+	 * @see #getBundles()
+	 * @see #setIncluded()
+	 * @return list of name version descriptors or <code>null</code>
+	 */
+	public NameVersionDescriptor[] getIncluded();
+
+	/**
+	 * Sets a list of descriptors to filter the resolved plug-ins in this target.  The list may include both
+	 * plug-ins and features.  To include all plug-ins in the target, pass <code>null</code> as the argument.
+	 * <p>
+	 * The descriptions passed to this method must have an ID set.  The version may be <code>null</code>
+	 * to include any version of the matches the ID.  Only descriptors with a type of {@link NameVersionDescriptor#TYPE_FEATURE}
+	 * or {@link NameVersionDescriptor#TYPE_PLUGIN} will be considered.
+	 * </p>
+	 * @see #getBundles()
+	 * @see #getIncluded()
+	 * @param included list of descriptors to include in the target or <code>null</code> to include all plug-ins
+	 */
+	public void setIncluded(NameVersionDescriptor[] included);
+
+	/**
+	 * Returns a list of descriptors used to add optional bundles to the resolved target.  If optional
+	 * bundles are not being used in this target this method will return <code>null</code>.  The returned
+	 * descriptors will have an ID set, may have a version set and will have a type of {@link NameVersionDescriptor#TYPE_PLUGIN}.
+	 * 
+	 * @return list of name version descriptors or <code>null</code>
+	 */
+	public NameVersionDescriptor[] getOptional();
+
+	/**
+	 * Sets a list of descriptors used to add optional bundles to the resolved target.  To not use optional bundles
+	 * pass <code>null</code> as the argument.  Only {@link NameVersionDescriptor}s with a type of {@link NameVersionDescriptor#TYPE_PLUGIN}
+	 * will be considered. The unit descriptions passed to this method must have an ID set, but the version may be <code>null</code>
+	 * to include any version of that plug-in.
+	 * 
+	 * @param included list of units to include in the target or <code>null</code> to not use optional bundles
+	 */
+	public void setOptional(NameVersionDescriptor[] optional);
 
 	/**
 	 * Returns JRE container path that this target definition should be built against,
@@ -56,6 +192,16 @@ public interface ITargetDefinition {
 	 * @see JavaRuntime
 	 */
 	public IPath getJREContainer();
+
+	/**
+	 * Sets the JRE that this target definition should be built against, or <code>null</code>
+	 * to use the workspace default JRE. JavaRuntime should be used to generate and parse
+	 * JRE container paths.
+	 * 
+	 * @param containerPath JRE container path
+	 * @see JavaRuntime
+	 */
+	public void setJREContainer(IPath containerPath);
 
 	/**
 	 * Returns the identifier of the operating system this target is configured for,
@@ -130,141 +276,6 @@ public interface ITargetDefinition {
 	public void setNL(String nl);
 
 	/**
-	 * Returns the target locations defined by this target, possible <code>null</code>.
-	 * 
-	 * @return target locations or <code>null</code>
-	 */
-	public ITargetLocation[] getTargetLocations();
-
-	/**
-	 * Sets the target locations in this target definition or <code>null</code> if none.
-	 * 
-	 * @param containers target locations or <code>null</code>
-	 */
-	public void setTargetLocations(ITargetLocation[] containers);
-
-	/**
-	 * Sets a list of descriptors to filter the resolved plug-ins in this target.  The list may include both
-	 * plug-ins and features.  To include all plug-ins in the target, pass <code>null</code> as the argument.
-	 * <p>
-	 * The descriptions passed to this method must have an ID set.  The version may be <code>null</code>
-	 * to include any version of the matches the ID.  Only descriptors with a type of {@link NameVersionDescriptor#TYPE_FEATURE}
-	 * or {@link NameVersionDescriptor#TYPE_PLUGIN} will be considered.
-	 * </p>
-	 * @see #getBundles()
-	 * @see #getIncluded()
-	 * @param included list of descriptors to include in the target or <code>null</code> to include all plug-ins
-	 */
-	public void setIncluded(NameVersionDescriptor[] included);
-
-	/**
-	 * Returns a list of descriptors that filter the resolved plug-ins in this target.  The list may include
-	 * both plug-ins and features.  The returned descriptors will have an id, may have a version and will have
-	 * either {@link NameVersionDescriptor#TYPE_FEATURE} or {@link NameVersionDescriptor#TYPE_PLUGIN} as their
-	 * type.  If the target is set to include all units (no filtering is being done), this method will return 
-	 * <code>null</code>.
-	 * 
-	 * @see #getBundles()
-	 * @see #setIncluded()
-	 * @return list of name version descriptors or <code>null</code>
-	 */
-	public NameVersionDescriptor[] getIncluded();
-
-	/**
-	 * Sets a list of descriptors used to add optional bundles to the resolved target.  To not use optional bundles
-	 * pass <code>null</code> as the argument.  Only {@link NameVersionDescriptor}s with a type of {@link NameVersionDescriptor#TYPE_PLUGIN}
-	 * will be considered. The unit descriptions passed to this method must have an ID set, but the version may be <code>null</code>
-	 * to include any version of that plug-in.
-	 * 
-	 * @param included list of units to include in the target or <code>null</code> to not use optional bundles
-	 */
-	public void setOptional(NameVersionDescriptor[] optional);
-
-	/**
-	 * Returns a list of descriptors used to add optional bundles to the resolved target.  If optional
-	 * bundles are not being used in this target this method will return <code>null</code>.  The returned
-	 * descriptors will have an ID set, may have a version set and will have a type of {@link NameVersionDescriptor#TYPE_PLUGIN}.
-	 * 
-	 * @return list of name version descriptors or <code>null</code>
-	 */
-	public NameVersionDescriptor[] getOptional();
-
-	/**
-	 * Returns all bundles included in this target definition or <code>null</code>
-	 * if this container is not resolved.  Takes all the bundles available from the
-	 * set target locations (result returned by {@link #getAllBundles()} and applies
-	 * the filters set by {@link #setIncluded(NameVersionDescriptor[])} and 
-	 * {@link #setOptional(NameVersionDescriptor[])} to determine the final list of 
-	 * bundles in this target.
-	 * <p>
-	 * Some of the returned bundles may have non-OK statuses.  These bundles may be missing some
-	 * information (location, version, source target).  To get a bundle's status call
-	 * {@link TargetBundle#getStatus()}.  You can also use {@link #getBundleStatus()} to
-	 * get the complete set of problems.
-	 * </p>
-	 * @see #getBundleStatus()
-	 * @return resolved bundles or <code>null</code>
-	 */
-	public TargetBundle[] getBundles();
-
-	/**
-	 * Returns the list of resolved bundles in this target definition or <code>null</code>. 
-	 * Does not filter based on any includedBundles or optionalBundles set on target locations.
-	 * Returns <code>null</code> if this target has not been resolved. 
-	 * Use {@link #getBundles()} to get the filtered list of bundles.
-	 *  
-	 * @return collection of resolved bundles or <code>null</code>
-	 */
-	public TargetBundle[] getAllBundles();
-
-	/**
-	 * Returns the list of feature models available in this target or <code>null</code> if
-	 * this target has not been resolved.
-	 * 
-	 * @return collection of feature models or <code>null</code>
-	 */
-	public TargetFeature[] getAllFeatures();
-
-	/**
-	 * Resolves all bundles in this target definition by resolving each
-	 * target location in this target definition.
-	 * <p>
-	 * Returns a multi-status containing any non-OK statuses produced when
-	 * resolving each target location in this target.  An OK status will be
-	 * returned if the resolution was successful.  A CANCEL status will be 
-	 * returned if the monitor is canceled. For more information on the contents
-	 * of the status see {@link ITargetLocation#resolve(ITargetDefinition, IProgressMonitor)}
-	 * </p><p>
-	 * Note that the returned status may be different than the result of 
-	 * calling {@link #getBundleStatus()}.
-	 * </p>
-	 * @param monitor progress monitor or <code>null</code>
-	 * @return resolution status
-	 * @throws CoreException if unable to resolve
-	 */
-	public IStatus resolve(IProgressMonitor monitor);
-
-	/**
-	 * Returns whether this target's locations are currently in
-	 * a resolved state.
-	 * 
-	 * @return whether this target's locations are currently in
-	 * a resolved state
-	 */
-	public boolean isResolved();
-
-	/**
-	 * Returns a multi-status containing the bundle status of all target locations
-	 * in this target or <code>null</code> if this target has not been resolved.  For
-	 * information on the statuses collected from the target locations see
-	 * {@link ITargetLocation#getStatus()}.
-	 * 
-	 * @see #getBundles()
-	 * @return multi-status containing status for each target location or <code>null</code>
-	 */
-	public IStatus getBundleStatus();
-
-	/**
 	 * Returns any program arguments that should be used when launching this target
 	 * or <code>null</code> if none.
 	 * 
@@ -295,13 +306,6 @@ public interface ITargetDefinition {
 	 * @param args VM arguments or <code>null</code>
 	 */
 	public void setVMArguments(String args);
-
-	/**
-	 * Returns a handle to this target definition.
-	 * 
-	 * @return target handle
-	 */
-	public ITargetHandle getHandle();
 
 	/**
 	 * Sets implicit dependencies for this target. Bundles in this collection are always

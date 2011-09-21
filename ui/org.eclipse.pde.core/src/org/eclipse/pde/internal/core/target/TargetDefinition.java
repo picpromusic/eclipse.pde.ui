@@ -302,7 +302,7 @@ public class TargetDefinition implements ITargetDefinition {
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.core.target.ITargetDefinition#getBundleStatus()
 	 */
-	public IStatus getBundleStatus() {
+	public IStatus getStatus() {
 		if (isResolved()) {
 			ITargetLocation[] containers = getTargetLocations();
 			if (containers != null) {
@@ -354,6 +354,12 @@ public class TargetDefinition implements ITargetDefinition {
 	 * @see org.eclipse.pde.core.target.ITargetDefinition#setOptional(org.eclipse.pde.core.target.NameVersionDescriptor[])
 	 */
 	public void setOptional(NameVersionDescriptor[] optional) {
+		/* Optional bundles act like included bundles, but they do not represent an
+		 * error if they are missing from the locations. While there is no way to
+		 * create them from the target UI, clients interacting with the target platform
+		 * were using them.  It is not known if there are any clients using optional bundles
+		 * now, but their existence is considered API.
+		*/
 		fOptional = optional;
 
 	}

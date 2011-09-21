@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 
 /**
- * Resolved bundle implementation.
+ * Describes a single bundle in a target definition.
  * 
  * @since 3.8
  */

@@ -46,7 +46,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		assertNotNull("Target didn't resolve",definition.getBundles());
 		assertEquals("Wrong number of included bundles", 2, definition.getBundles().length);
 		
-		IStatus definitionStatus = definition.getBundleStatus();
+		IStatus definitionStatus = definition.getStatus();
 		assertEquals("Wrong severity", IStatus.ERROR, definitionStatus.getSeverity());
 
 		IStatus[] children = definitionStatus.getChildren();
@@ -59,7 +59,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		// Check that removing the included bundles and resolving removes the errors.
 		definition.setIncluded(null);
 		assertTrue(definition.isResolved());
-		assertTrue(definition.getBundleStatus().isOK());
+		assertTrue(definition.getStatus().isOK());
 		assertTrue(definition.getBundles().length > 4);
 	}
 	
@@ -75,7 +75,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		
 		assertNotNull("Target didn't resolve",definition.getBundles());
 		
-		IStatus definitionStatus = definition.getBundleStatus();
+		IStatus definitionStatus = definition.getStatus();
 		assertEquals("Wrong severity", IStatus.INFO, definitionStatus.getSeverity());
 
 		IStatus[] children = definitionStatus.getChildren();
@@ -88,7 +88,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		// Check that removing the optional bundles and resolving removes the errors.
 		definition.setOptional(null);
 		assertTrue(definition.isResolved());
-		assertTrue(definition.getBundleStatus().isOK());
+		assertTrue(definition.getStatus().isOK());
 		assertTrue(definition.getBundles().length > 4);
 	}
 	
@@ -156,7 +156,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		assertNull("Bundles available when unresolved", definition.getBundles());
 		status = profileContainer.resolve(definition, null);
 		assertEquals("Incorrect Severity", IStatus.OK, status.getSeverity());
-		assertEquals("Incorrect Severity", IStatus.ERROR, definition.getBundleStatus().getSeverity());
+		assertEquals("Incorrect Severity", IStatus.ERROR, definition.getStatus().getSeverity());
 		assertTrue(profileContainer.isResolved());
 		assertNotNull("Bundles not available when resolved", profileContainer.getBundles());
 		assertTrue(definition.isResolved());
@@ -175,7 +175,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		definition.setOptional(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});
 		definition.setIncluded(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});
 		assertTrue(definition.isResolved());
-		assertEquals("Incorrect Severity", IStatus.ERROR, definition.getBundleStatus().getSeverity());
+		assertEquals("Incorrect Severity", IStatus.ERROR, definition.getStatus().getSeverity());
 		assertNotNull("Bundles not available when resolved", definition.getBundles());
 		
 		// Setting includes, optional, etc. should not unresolve the target
@@ -526,7 +526,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		
 		assertNotNull("Target didn't resolve",bundles);
 		
-		IStatus definitionStatus = definition.getBundleStatus();
+		IStatus definitionStatus = definition.getStatus();
 		assertEquals("Wrong severity", IStatus.OK, definitionStatus.getSeverity());
 		
 		// Ensure that all source bundles know what they provide source for.
@@ -570,7 +570,7 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		
 		assertNotNull("Target didn't resolve",bundles);
 		
-		IStatus definitionStatus = definition.getBundleStatus();
+		IStatus definitionStatus = definition.getStatus();
 		assertEquals("Wrong severity", IStatus.OK, definitionStatus.getSeverity());
 		
 		bundles = directoryContainer.getBundles();

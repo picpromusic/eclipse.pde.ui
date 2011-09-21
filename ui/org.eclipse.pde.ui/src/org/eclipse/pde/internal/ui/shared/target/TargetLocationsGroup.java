@@ -543,7 +543,7 @@ public class TargetLocationsGroup {
 				}
 				// If a container has a problem, it is displayed as a child, if there is a status outside of the container status (missing bundle, etc.) put it as a separate item
 				if (!hasContainerStatus) {
-					IStatus status = ((ITargetDefinition) inputElement).getBundleStatus();
+					IStatus status = ((ITargetDefinition) inputElement).getStatus();
 					if (status != null && !status.isOK()) {
 						result.add(status);
 					}

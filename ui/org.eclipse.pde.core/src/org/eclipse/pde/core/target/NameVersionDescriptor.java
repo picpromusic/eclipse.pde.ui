@@ -14,7 +14,9 @@ import org.eclipse.equinox.frameworkadmin.BundleInfo;
 
 /**
  * Describes something with a name and version.
+ * 
  * @since 3.8
+ * @noextend This class is not intended to be subclassed by clients.
  */
 public class NameVersionDescriptor {
 
