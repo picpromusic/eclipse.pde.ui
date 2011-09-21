@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2010, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
+import org.eclipse.pde.core.target.*;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.*;
-import org.eclipse.pde.internal.core.target.provisional.*;
 import org.w3c.dom.*;
 
 /**
@@ -179,15 +180,15 @@ public class TargetPersistence35Helper {
 				type = ProfileBundleContainer.TYPE;
 			}
 		}
-		IBundleContainer container = null;
+		ITargetLocation container = null;
 		if (DirectoryBundleContainer.TYPE.equals(type)) {
-			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newDirectoryContainer(path);
+			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newDirectoryLocation(path);
 		} else if (ProfileBundleContainer.TYPE.equals(type)) {
 			String configArea = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_CONFIGURATION);
-			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newProfileContainer(path, configArea.length() > 0 ? configArea : null);
+			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newProfileLocation(path, configArea.length() > 0 ? configArea : null);
 		} else if (FeatureBundleContainer.TYPE.equals(type)) {
 			String version = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_VERSION);
-			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newFeatureContainer(path, location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_ID), version.length() > 0 ? version : null);
+			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newFeatureLocation(path, location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_ID), version.length() > 0 ? version : null);
 		} else if (IUBundleContainer.TYPE.equals(type)) {
 			String includeMode = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_MODE);
 			String includeAllPlatforms = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_ALL_PLATFORMS);
@@ -265,14 +266,14 @@ public class TargetPersistence35Helper {
 			}
 		}
 
-		IBundleContainer[] currentContainers = definition.getBundleContainers();
+		ITargetLocation[] currentContainers = definition.getTargetLocations();
 		if (currentContainers == null || currentContainers.length == 0) {
-			definition.setBundleContainers(new IBundleContainer[] {container});
+			definition.setTargetLocations(new ITargetLocation[] {container});
 		} else {
-			IBundleContainer[] newContainers = new IBundleContainer[currentContainers.length + 1];
+			ITargetLocation[] newContainers = new ITargetLocation[currentContainers.length + 1];
 			System.arraycopy(currentContainers, 0, newContainers, 0, currentContainers.length);
 			newContainers[currentContainers.length] = container;
-			definition.setBundleContainers(newContainers);
+			definition.setTargetLocations(newContainers);
 		}
 	}
 

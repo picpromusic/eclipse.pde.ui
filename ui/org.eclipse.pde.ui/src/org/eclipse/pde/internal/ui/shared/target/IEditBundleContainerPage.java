@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009 IBM Corporation and others.
+ * Copyright (c) 2009, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import org.eclipse.pde.core.target.ITargetLocation;
+
 import org.eclipse.jface.wizard.IWizardPage;
-import org.eclipse.pde.internal.core.target.provisional.IBundleContainer;
 
 /**
  * Interface for wizard pages used to edit bundle containers.
@@ -22,9 +23,9 @@ public interface IEditBundleContainerPage extends IWizardPage {
 
 	/**
 	 * Returns a bundle container containing edited values taken from the wizard page.
-	 * @return bundle container
+	 * @return target location
 	 */
-	public IBundleContainer getBundleContainer();
+	public ITargetLocation getBundleContainer();
 
 	/**
 	 * Informs the wizard page that the wizard is closing and any settings/preferences

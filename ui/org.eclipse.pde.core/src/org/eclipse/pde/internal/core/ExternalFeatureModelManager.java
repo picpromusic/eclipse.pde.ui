@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2010 IBM Corporation and others.
+ * Copyright (c) 2000, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.pde.core.IModelProviderEvent;
 import org.eclipse.pde.core.IModelProviderListener;
+import org.eclipse.pde.core.target.TargetFeature;
 import org.eclipse.pde.internal.core.feature.ExternalFeatureModel;
 import org.eclipse.pde.internal.core.ifeature.IFeature;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
@@ -219,5 +220,52 @@ public class ExternalFeatureModelManager {
 
 	public IFeatureModel[] getModels() {
 		return fModels;
+	}
+
+	public static TargetFeature[] createFeatures(String platformHome, ArrayList additionalLocations, IProgressMonitor monitor) {
+		if (platformHome != null && platformHome.length() > 0) {
+			URL[] featureURLs = PluginPathFinder.getFeaturePaths(platformHome);
+
+			if (additionalLocations.size() == 0)
+				return createFeatures(featureURLs, monitor);
+
+			File[] dirs = new File[additionalLocations.size()];
+			for (int i = 0; i < dirs.length; i++) {
+				String directory = additionalLocations.get(i).toString();
+				File dir = new File(directory, "features"); //$NON-NLS-1$
+				if (!dir.exists())
+					dir = new File(directory);
+				dirs[i] = dir;
+			}
+
+			URL[] newUrls = PluginPathFinder.scanLocations(dirs);
+
+			URL[] result = new URL[featureURLs.length + newUrls.length];
+			System.arraycopy(featureURLs, 0, result, 0, featureURLs.length);
+			System.arraycopy(newUrls, 0, result, featureURLs.length, newUrls.length);
+			return createFeatures(result, monitor);
+		}
+		return new TargetFeature[0];
+	}
+
+	private static TargetFeature[] createFeatures(URL[] featurePaths, IProgressMonitor monitor) {
+		if (monitor == null)
+			monitor = new NullProgressMonitor();
+		monitor.beginTask("", featurePaths.length); //$NON-NLS-1$
+		Map uniqueFeatures = new HashMap();
+		for (int i = 0; i < featurePaths.length; i++) {
+			File manifest = new File(featurePaths[i].getFile(), ICoreConstants.FEATURE_FILENAME_DESCRIPTOR);
+			if (!manifest.exists() || !manifest.isFile()) {
+				monitor.worked(1);
+				continue;
+			}
+			TargetFeature model = new TargetFeature(manifest);
+			if (model != null && model.isLoaded()) {
+				uniqueFeatures.put(model.getId() + "_" + model.getVersion(), model); //$NON-NLS-1$
+			}
+			monitor.worked(1);
+		}
+		Collection models = uniqueFeatures.values();
+		return (TargetFeature[]) models.toArray(new TargetFeature[models.size()]);
 	}
 }

@@ -23,9 +23,8 @@ import org.eclipse.equinox.p2.query.*;
 import org.eclipse.equinox.p2.repository.artifact.IFileArtifactRepository;
 import org.eclipse.equinox.p2.touchpoint.eclipse.query.OSGiBundleQuery;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.PDECore;
-import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
-import org.eclipse.pde.internal.core.target.provisional.*;
 
 /**
  * A bundle container that references IU's in one or more repositories.
@@ -162,9 +161,9 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.internal.core.target.AbstractBundleContainer#resolveFeatures(org.eclipse.pde.internal.core.target.provisional.ITargetDefinition, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.pde.internal.core.target.AbstractBundleContainer#resolveFeatures(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected IFeatureModel[] resolveFeatures(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
+	protected TargetFeature[] resolveFeatures(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
 		fSynchronizer.synchronize(definition, monitor);
 		return fFeatures;
 	}
@@ -174,7 +173,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * NOTE: this method expects the synchronizer to be synchronized and is called
 	 * as a result of a synchronization operation.
 	 */
-	IFeatureModel[] cacheFeatures(ITargetDefinition target) throws CoreException {
+	TargetFeature[] cacheFeatures(ITargetDefinition target) throws CoreException {
 		// Ideally we would compute the list of features specific to this container but that 
 		// would require running the slicer again to follow the dependencies from this 
 		// container's roots.  Instead, here we find all features in the shared profile.  This means
@@ -184,7 +183,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 		Set features = new HashSet();
 		IQueryResult queryResult = fSynchronizer.getProfile().query(QueryUtil.createIUAnyQuery(), null);
 		if (queryResult.isEmpty()) {
-			return new IFeatureModel[0];
+			return new TargetFeature[0];
 		}
 
 		for (Iterator i = queryResult.iterator(); i.hasNext();) {
@@ -199,28 +198,28 @@ public class IUBundleContainer extends AbstractBundleContainer {
 			}
 		}
 		if (features.isEmpty()) {
-			return new IFeatureModel[0];
+			return new TargetFeature[0];
 		}
 
-		// Now get feature models for all known features
-		IFeatureModel[] allFeatures = ((TargetDefinition) target).getFeatureModels(getLocation(false), new NullProgressMonitor());
+		// Now get features for all known features
+		TargetFeature[] allFeatures = ((TargetDefinition) target).resolveFeatures(getLocation(false), new NullProgressMonitor());
 
 		// Build a final set of the models for the features in the profile.
 		List result = new ArrayList();
 		for (int i = 0; i < allFeatures.length; i++) {
-			NameVersionDescriptor candidate = new NameVersionDescriptor(allFeatures[i].getFeature().getId(), allFeatures[i].getFeature().getVersion(), NameVersionDescriptor.TYPE_FEATURE);
+			NameVersionDescriptor candidate = new NameVersionDescriptor(allFeatures[i].getId(), allFeatures[i].getVersion(), NameVersionDescriptor.TYPE_FEATURE);
 			if (features.contains(candidate)) {
 				result.add(allFeatures[i]);
 			}
 		}
-		fFeatures = (IFeatureModel[]) result.toArray(new IFeatureModel[result.size()]);
+		fFeatures = (TargetFeature[]) result.toArray(new TargetFeature[result.size()]);
 		return fFeatures;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.internal.core.target.impl.AbstractBundleContainer#resolveBundles(org.eclipse.pde.internal.core.target.provisional.ITargetDefinition, org.eclipse.core.runtime.IProgressMonitor)
+	 * @see org.eclipse.pde.internal.core.target.impl.AbstractBundleContainer#resolveBundles(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	protected IResolvedBundle[] resolveBundles(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
+	protected TargetBundle[] resolveBundles(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
 		fSynchronizer.synchronize(definition, monitor);
 		return fBundles;
 	}
@@ -249,7 +248,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * NOTE: this method expects the synchronizer to be synchronized and is called
 	 * as a result of a synchronization operation.
 	 */
-	IResolvedBundle[] cacheBundles(ITargetDefinition target) throws CoreException {
+	TargetBundle[] cacheBundles(ITargetDefinition target) throws CoreException {
 		// slice the profile to find the bundles attributed to this container.
 		// Look only for strict dependencies if we are using the slicer.
 		// We can always consider all platforms since the profile wouldn't contain it if it was not interesting
@@ -287,7 +286,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 			return fBundles = null;
 		}
 
-		fBundles = (ResolvedBundle[]) bundles.values().toArray(new ResolvedBundle[bundles.size()]);
+		fBundles = (TargetBundle[]) bundles.values().toArray(new TargetBundle[bundles.size()]);
 		return fBundles;
 	}
 
@@ -389,7 +388,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 		for (Iterator iterator2 = artifacts.iterator(); iterator2.hasNext();) {
 			File file = repo.getArtifactFile((IArtifactKey) iterator2.next());
 			if (file != null) {
-				IResolvedBundle bundle = generateBundle(file);
+				TargetBundle bundle = TargetBundleFactory.getInstance().createTargetBundle(file, this);
 				if (bundle != null) {
 					bundles.put(bundle.getBundleInfo(), bundle);
 				}

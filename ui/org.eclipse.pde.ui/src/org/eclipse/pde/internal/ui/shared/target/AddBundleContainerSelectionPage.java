@@ -10,15 +10,16 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import org.eclipse.pde.core.target.*;
+
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.*;
 import org.eclipse.pde.internal.core.PDECore;
-import org.eclipse.pde.internal.core.target.provisional.*;
+import org.eclipse.pde.internal.core.target.TargetLocationHelper;
 import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.wizards.WizardElement;
 import org.eclipse.pde.ui.IProvisionerWizard;
@@ -36,14 +37,21 @@ import org.eclipse.ui.activities.WorkbenchActivityHelper;
  * Wizard page for selecting the type of bundle container to be added to a target
  * 
  * @see AddBundleContainerWizard
- * @see IBundleContainer
+ * @see ITargetLocation
  */
 public class AddBundleContainerSelectionPage extends WizardSelectionPage {
+
+	private static final String ATTR_TYPE = "type"; //$NON-NLS-1$
 
 	/**
 	 * Extension point that provides target provisioner wizard
 	 */
 	private static final String PROVISIONER_POINT = "targetProvisioners"; //$NON-NLS-1$
+
+	/**
+	 * Extension point that provides target locations
+	 */
+	private static final String LOCATION_POINT = "targetLocations"; //$NON-NLS-1$
 
 	/**
 	 * Section in the dialog settings for this wizard and the wizards created with selection
@@ -55,6 +63,8 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 
 	private Text fDescription;
 	private ITargetDefinition fTarget;
+
+	private Map fNodeMap;
 
 	protected AddBundleContainerSelectionPage(ITargetDefinition target) {
 		super("SelectionPage"); //$NON-NLS-1$
@@ -103,9 +113,13 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 		TableViewer wizardSelectionViewer = new TableViewer(sashForm, SWT.BORDER);
 		wizardSelectionViewer.setContentProvider(new ArrayContentProvider());
 		wizardSelectionViewer.setLabelProvider(new LabelProvider() {
+			Map fLabelProviderMap = new HashMap();
+
 			public String getText(Object element) {
 				if (element instanceof AbstractBundleContainerNode) {
 					return ((AbstractBundleContainerNode) element).getName();
+				} else if (element instanceof IWizardNode) {
+					return getLabelProvider(element).getText(element);
 				}
 				return super.getText(element);
 			}
@@ -113,8 +127,19 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 			public Image getImage(Object element) {
 				if (element instanceof AbstractBundleContainerNode) {
 					return ((AbstractBundleContainerNode) element).getImage();
+				} else if (element instanceof IWizardNode) {
+					return getLabelProvider(element).getImage(element);
 				}
 				return super.getImage(element);
+			}
+
+			private ILabelProvider getLabelProvider(Object element) {
+				ILabelProvider provider = (ILabelProvider) fLabelProviderMap.get(element);
+				if (provider == null) {
+					provider = (ILabelProvider) Platform.getAdapterManager().getAdapter(fNodeMap.get(element), ILabelProvider.class);
+					fLabelProviderMap.put(element, provider);
+				}
+				return provider;
 			}
 		});
 		wizardSelectionViewer.addDoubleClickListener(new IDoubleClickListener() {
@@ -130,8 +155,16 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection) event.getSelection();
 				if (!selection.isEmpty()) {
-					fDescription.setText(((AbstractBundleContainerNode) selection.getFirstElement()).getDescription());
-					setSelectedNode((AbstractBundleContainerNode) selection.getFirstElement());
+					Object element = selection.getFirstElement();
+					if (element instanceof AbstractBundleContainerNode) {
+						fDescription.setText(((AbstractBundleContainerNode) element).getDescription());
+					} else if (element instanceof IWizardNode) {
+						String description = TargetLocationHelper.getInstance().getDescription((String) fNodeMap.get(element));
+						if (description != null) {
+							fDescription.setText(description);
+						}
+					}
+					setSelectedNode((IWizardNode) selection.getFirstElement());
 				}
 			}
 		});
@@ -154,6 +187,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 		List choices = new ArrayList();
 		choices.addAll(getStandardChoices());
 		choices.addAll(getProvisionerExtensionChoices());
+		choices.addAll(getTargetLocationChoices());
 		wizardSelectionViewer.setInput(choices.toArray(new IWizardNode[choices.size()]));
 	}
 
@@ -182,17 +216,17 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						IBundleContainer container = fPage1.getBundleContainer();
+						ITargetLocation container = fPage1.getBundleContainer();
 						if (container != null) {
 							fPage1.storeSettings();
-							IBundleContainer[] oldContainers = fTarget.getBundleContainers();
+							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
 							if (oldContainers == null) {
-								fTarget.setBundleContainers(new IBundleContainer[] {container});
+								fTarget.setTargetLocations(new ITargetLocation[] {container});
 							} else {
-								IBundleContainer[] newContainers = new IBundleContainer[oldContainers.length + 1];
+								ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + 1];
 								System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
 								newContainers[newContainers.length - 1] = container;
-								fTarget.setBundleContainers(newContainers);
+								fTarget.setTargetLocations(newContainers);
 							}
 						}
 						return true;
@@ -222,17 +256,17 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						IBundleContainer container = fPage1.getBundleContainer();
+						ITargetLocation container = fPage1.getBundleContainer();
 						if (container != null) {
 							fPage1.storeSettings();
-							IBundleContainer[] oldContainers = fTarget.getBundleContainers();
+							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
 							if (oldContainers == null) {
-								fTarget.setBundleContainers(new IBundleContainer[] {container});
+								fTarget.setTargetLocations(new ITargetLocation[] {container});
 							} else {
-								IBundleContainer[] newContainers = new IBundleContainer[oldContainers.length + 1];
+								ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + 1];
 								System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
 								newContainers[newContainers.length - 1] = container;
-								fTarget.setBundleContainers(newContainers);
+								fTarget.setTargetLocations(newContainers);
 							}
 						}
 						return true;
@@ -257,17 +291,17 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 
 					public boolean performFinish() {
 						try {
-							IBundleContainer[] containers = ((AddFeatureContainersPage) getPages()[0]).getBundleContainers();
+							ITargetLocation[] containers = ((AddFeatureContainersPage) getPages()[0]).getBundleContainers();
 							if (containers != null) {
 								((AddFeatureContainersPage) getPages()[0]).storeSettings();
-								IBundleContainer[] oldContainers = fTarget.getBundleContainers();
+								ITargetLocation[] oldContainers = fTarget.getTargetLocations();
 								if (oldContainers == null) {
-									fTarget.setBundleContainers(containers);
+									fTarget.setTargetLocations(containers);
 								} else {
-									IBundleContainer[] newContainers = new IBundleContainer[oldContainers.length + containers.length];
+									ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + containers.length];
 									System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
 									System.arraycopy(containers, 0, newContainers, oldContainers.length, containers.length);
-									fTarget.setBundleContainers(newContainers);
+									fTarget.setTargetLocations(newContainers);
 								}
 							}
 							return true;
@@ -295,17 +329,17 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						IBundleContainer container = ((EditIUContainerPage) getPages()[0]).getBundleContainer();
+						ITargetLocation container = ((EditIUContainerPage) getPages()[0]).getBundleContainer();
 						if (container != null) {
 							((EditIUContainerPage) getPages()[0]).storeSettings();
-							IBundleContainer[] oldContainers = fTarget.getBundleContainers();
+							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
 							if (oldContainers == null) {
-								fTarget.setBundleContainers(new IBundleContainer[] {container});
+								fTarget.setTargetLocations(new ITargetLocation[] {container});
 							} else {
-								IBundleContainer[] newContainers = new IBundleContainer[oldContainers.length + 1];
+								ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + 1];
 								System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
 								newContainers[newContainers.length - 1] = container;
-								fTarget.setBundleContainers(newContainers);
+								fTarget.setTargetLocations(newContainers);
 							}
 						}
 						return true;
@@ -349,6 +383,34 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					if (!WorkbenchActivityHelper.filterItem(pc)) {
 						list.add(createExtensionNode(element));
 					}
+				}
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * Returns a list of choices created from the ITargetLocation extension
+	 * @return list of wizard nodes
+	 */
+	private List getTargetLocationChoices() {
+		List list = new ArrayList();
+		IExtensionRegistry registry = Platform.getExtensionRegistry();
+		IExtensionPoint point = registry.getExtensionPoint(PDECore.PLUGIN_ID, LOCATION_POINT);
+		if (point == null)
+			return list;
+		IExtension[] extensions = point.getExtensions();
+		for (int i = 0; i < extensions.length; i++) {
+			IConfigurationElement[] elements = extensions[i].getConfigurationElements();
+			for (int j = 0; j < elements.length; j++) {
+				String type = elements[j].getAttribute(ATTR_TYPE);
+				IWizardNode node = (IWizardNode) Platform.getAdapterManager().getAdapter(type, IWizardNode.class);
+				if (node != null) {
+					if (fNodeMap == null) {
+						fNodeMap = new HashMap(4);
+					}
+					fNodeMap.put(node, type);
+					list.add(node);
 				}
 			}
 		}
@@ -415,15 +477,15 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 								}
 								try {
 									// First try the specified dir, then try the plugins dir
-									IBundleContainer container = getTargetPlatformService().newDirectoryContainer(dirs[i].getPath());
-									IBundleContainer[] oldContainers = fTarget.getBundleContainers();
+									ITargetLocation container = getTargetPlatformService().newDirectoryLocation(dirs[i].getPath());
+									ITargetLocation[] oldContainers = fTarget.getTargetLocations();
 									if (oldContainers == null) {
-										fTarget.setBundleContainers(new IBundleContainer[] {container});
+										fTarget.setTargetLocations(new ITargetLocation[] {container});
 									} else {
-										IBundleContainer[] newContainers = new IBundleContainer[oldContainers.length + 1];
+										ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + 1];
 										System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
 										newContainers[oldContainers.length] = container;
-										fTarget.setBundleContainers(newContainers);
+										fTarget.setTargetLocations(newContainers);
 									}
 								} catch (CoreException ex) {
 									ErrorDialog.openError(getShell(), Messages.AddBundleContainerSelectionPage_0, Messages.AddBundleContainerSelectionPage_5, ex.getStatus());

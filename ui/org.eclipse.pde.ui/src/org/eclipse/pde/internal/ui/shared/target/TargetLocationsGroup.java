@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import org.eclipse.pde.core.target.*;
+
 import java.util.*;
 import java.util.List;
 import org.eclipse.core.runtime.*;
@@ -20,7 +22,6 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.pde.internal.core.target.*;
-import org.eclipse.pde.internal.core.target.provisional.*;
 import org.eclipse.pde.internal.ui.SWTFactory;
 import org.eclipse.pde.internal.ui.editor.FormLayoutFactory;
 import org.eclipse.pde.internal.ui.editor.targetdefinition.TargetEditor;
@@ -40,7 +41,7 @@ import org.eclipse.ui.forms.widgets.FormToolkit;
  * @see TargetEditor
  * @see TargetDefinitionContentPage
  * @see ITargetDefinition
- * @see IBundleContainer
+ * @see ITargetLocation
  */
 public class TargetLocationsGroup {
 
@@ -187,7 +188,7 @@ public class TargetLocationsGroup {
 	private void initializeTreeViewer(Tree tree) {
 		fTreeViewer = new TreeViewer(tree);
 		fTreeViewer.setContentProvider(new BundleContainerContentProvider());
-		fTreeViewer.setLabelProvider(new StyledBundleLabelProvider(true, false));
+		fTreeViewer.setLabelProvider(new TargetLocationLabelProvider(true, false));
 		fTreeViewer.setComparator(new ViewerComparator() {
 			public int compare(Viewer viewer, Object e1, Object e2) {
 				// Status at the end of the list
@@ -290,17 +291,17 @@ public class TargetLocationsGroup {
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
 		if (!selection.isEmpty()) {
 			Object selected = selection.getFirstElement();
-			IBundleContainer oldContainer = null;
-			if (selected instanceof IBundleContainer) {
-				oldContainer = (IBundleContainer) selected;
+			ITargetLocation oldContainer = null;
+			if (selected instanceof ITargetLocation) {
+				oldContainer = (ITargetLocation) selected;
 			} else if (selected instanceof IUWrapper) {
 				oldContainer = ((IUWrapper) selected).getParent();
-			} else if (selected instanceof IResolvedBundle) {
+			} else if (selected instanceof TargetBundle) {
 				TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
 				if (treeSelection.length > 0) {
 					Object parent = treeSelection[0].getParentItem().getData();
-					if (parent instanceof IBundleContainer) {
-						oldContainer = (IBundleContainer) parent;
+					if (parent instanceof ITargetLocation) {
+						oldContainer = (ITargetLocation) parent;
 					}
 				}
 			}
@@ -310,9 +311,9 @@ public class TargetLocationsGroup {
 				WizardDialog dialog = new WizardDialog(parent, wizard);
 				if (dialog.open() == Window.OK) {
 					// Replace the old container with the new one
-					IBundleContainer newContainer = wizard.getBundleContainer();
+					ITargetLocation newContainer = wizard.getBundleContainer();
 					if (newContainer != null) {
-						IBundleContainer[] containers = fTarget.getBundleContainers();
+						ITargetLocation[] containers = fTarget.getTargetLocations();
 						java.util.List newContainers = new ArrayList(containers.length);
 						for (int i = 0; i < containers.length; i++) {
 							if (!containers[i].equals(oldContainer)) {
@@ -320,7 +321,7 @@ public class TargetLocationsGroup {
 							}
 						}
 						newContainers.add(newContainer);
-						fTarget.setBundleContainers((IBundleContainer[]) newContainers.toArray(new IBundleContainer[newContainers.size()]));
+						fTarget.setTargetLocations((ITargetLocation[]) newContainers.toArray(new ITargetLocation[newContainers.size()]));
 
 						// Update the table
 						contentsChanged(false);
@@ -335,14 +336,14 @@ public class TargetLocationsGroup {
 
 	private void handleRemove() {
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-		IBundleContainer[] containers = fTarget.getBundleContainers();
+		ITargetLocation[] containers = fTarget.getTargetLocations();
 		if (!selection.isEmpty() && containers != null && containers.length > 0) {
 			List toRemove = new ArrayList();
 			boolean removedSite = false;
 			boolean removedContainer = false;
 			for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
 				Object currentSelection = iterator.next();
-				if (currentSelection instanceof IBundleContainer) {
+				if (currentSelection instanceof ITargetLocation) {
 					if (currentSelection instanceof IUBundleContainer) {
 						removedSite = true;
 					}
@@ -356,12 +357,12 @@ public class TargetLocationsGroup {
 
 			if (removedContainer) {
 				Set newContainers = new HashSet();
-				newContainers.addAll(Arrays.asList(fTarget.getBundleContainers()));
+				newContainers.addAll(Arrays.asList(fTarget.getTargetLocations()));
 				newContainers.removeAll(toRemove);
 				if (newContainers.size() > 0) {
-					fTarget.setBundleContainers((IBundleContainer[]) newContainers.toArray(new IBundleContainer[newContainers.size()]));
+					fTarget.setTargetLocations((ITargetLocation[]) newContainers.toArray(new ITargetLocation[newContainers.size()]));
 				} else {
-					fTarget.setBundleContainers(null);
+					fTarget.setTargetLocations(null);
 				}
 
 				// If we remove a site container, the content change update must force a re-resolve bug 275458 / bug 275401
@@ -389,7 +390,7 @@ public class TargetLocationsGroup {
 		Map toUpdate = new HashMap();
 		for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
 			Object currentSelection = iterator.next();
-			if (currentSelection instanceof IBundleContainer)
+			if (currentSelection instanceof ITargetLocation)
 				toUpdate.put(currentSelection, new HashSet(0));
 			else if (currentSelection instanceof IUWrapper) {
 				IUWrapper wrapper = (IUWrapper) currentSelection;
@@ -430,7 +431,7 @@ public class TargetLocationsGroup {
 
 	private void updateButtons() {
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-		fEditButton.setEnabled(!selection.isEmpty() && (selection.getFirstElement() instanceof IBundleContainer || selection.getFirstElement() instanceof IUWrapper));
+		fEditButton.setEnabled(!selection.isEmpty() && (selection.getFirstElement() instanceof ITargetLocation || selection.getFirstElement() instanceof IUWrapper));
 		// If any container is selected, allow the remove (the remove ignores non-container entries)
 		boolean removeAllowed = false;
 		boolean updateAllowed = false;
@@ -443,7 +444,7 @@ public class TargetLocationsGroup {
 			if (current instanceof IUBundleContainer) {
 				updateAllowed = true;
 			}
-			if (current instanceof IBundleContainer) {
+			if (current instanceof ITargetLocation) {
 				removeAllowed = true;
 			}
 			if (current instanceof IUWrapper) {
@@ -467,16 +468,16 @@ public class TargetLocationsGroup {
 	}
 
 	/**
-	 * Content provider for the tree, primary input is a ITargetDefinition, children are IBundleContainers
+	 * Content provider for the tree, primary input is a ITargetDefinition, children are ITargetLocation
 	 */
 	class BundleContainerContentProvider implements ITreeContentProvider {
 
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof ITargetDefinition) {
-				IBundleContainer[] containers = ((ITargetDefinition) parentElement).getBundleContainers();
+				ITargetLocation[] containers = ((ITargetDefinition) parentElement).getTargetLocations();
 				return containers != null ? containers : new Object[0];
-			} else if (parentElement instanceof IBundleContainer) {
-				IBundleContainer container = (IBundleContainer) parentElement;
+			} else if (parentElement instanceof ITargetLocation) {
+				ITargetLocation container = (ITargetLocation) parentElement;
 				if (container.isResolved()) {
 					IStatus status = container.getStatus();
 					if (!status.isOK() && !status.isMultiStatus()) {
@@ -531,7 +532,7 @@ public class TargetLocationsGroup {
 			if (inputElement instanceof ITargetDefinition) {
 				boolean hasContainerStatus = false;
 				Collection result = new ArrayList();
-				IBundleContainer[] containers = ((ITargetDefinition) inputElement).getBundleContainers();
+				ITargetLocation[] containers = ((ITargetDefinition) inputElement).getTargetLocations();
 				if (containers != null) {
 					for (int i = 0; i < containers.length; i++) {
 						result.add(containers[i]);

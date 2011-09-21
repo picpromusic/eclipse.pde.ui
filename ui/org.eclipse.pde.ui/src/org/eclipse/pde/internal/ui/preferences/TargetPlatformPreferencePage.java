@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 EclipseSource Corporation and others.
+ * Copyright (c) 2009, 2011 EclipseSource Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,8 @@
  *     IBM Corporation - ongoing enhancements
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.preferences;
+
+import org.eclipse.pde.core.target.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
@@ -30,9 +32,8 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.pde.internal.core.*;
 import org.eclipse.pde.internal.core.target.*;
-import org.eclipse.pde.internal.core.target.provisional.*;
 import org.eclipse.pde.internal.ui.*;
-import org.eclipse.pde.internal.ui.shared.target.StyledBundleLabelProvider;
+import org.eclipse.pde.internal.ui.shared.target.TargetLocationLabelProvider;
 import org.eclipse.pde.internal.ui.util.SWTUtil;
 import org.eclipse.pde.internal.ui.util.SharedLabelProvider;
 import org.eclipse.pde.internal.ui.wizards.target.*;
@@ -341,7 +342,7 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 		Composite detailsComposite = SWTFactory.createComposite(comp, 1, 1, GridData.FILL_HORIZONTAL, 0, 0);
 		SWTFactory.createLabel(detailsComposite, PDEUIMessages.TargetPlatformPreferencePage2_25, 1);
 		fDetails = new TableViewer(detailsComposite);
-		fDetails.setLabelProvider(new StyledBundleLabelProvider(true, true));
+		fDetails.setLabelProvider(new TargetLocationLabelProvider(true, true));
 		fDetails.setContentProvider(new ArrayContentProvider());
 		gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.heightHint = 50;
@@ -597,7 +598,7 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 	protected void updateDetails() {
 		IStructuredSelection selection = (IStructuredSelection) fTableViewer.getSelection();
 		if (selection.size() == 1) {
-			fDetails.setInput(((ITargetDefinition) selection.getFirstElement()).getBundleContainers());
+			fDetails.setInput(((ITargetDefinition) selection.getFirstElement()).getTargetLocations());
 		} else {
 			fDetails.setInput(null);
 		}
@@ -782,7 +783,7 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 							// Ignore the qualifier when comparing (otherwise N builds always newer than I builds)
 							Version platformOsgiVersion = Platform.getBundle(ORG_ECLIPSE_OSGI).getVersion();
 							platformOsgiVersion = new Version(platformOsgiVersion.getMajor(), platformOsgiVersion.getMinor(), platformOsgiVersion.getMicro());
-							IResolvedBundle[] bundles;
+							TargetBundle[] bundles;
 							bundles = fActiveTarget.getAllBundles();
 							if (bundles != null) {
 								for (int index = 0; index < bundles.length; index++) {

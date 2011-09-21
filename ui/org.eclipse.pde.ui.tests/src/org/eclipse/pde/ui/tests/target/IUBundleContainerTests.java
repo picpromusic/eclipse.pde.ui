@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corporation and others.
+ * Copyright (c) 2009, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,8 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 package org.eclipse.pde.ui.tests.target;
+
+import org.eclipse.pde.core.target.*;
 
 import java.io.*;
 import java.net.URI;
@@ -26,7 +28,6 @@ import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.target.*;
-import org.eclipse.pde.internal.core.target.provisional.*;
 import org.eclipse.pde.internal.ui.tests.macro.MacroPlugin;
 
 /**
@@ -92,7 +93,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 			// create a target that references just a high level root
 			IUBundleContainer container = createContainer(features1);
 			ITargetDefinition target = getTargetService().newTarget();
-			target.setBundleContainers(new IBundleContainer[]{container});
+			target.setTargetLocations(new ITargetLocation[]{container});
 			List infos = getAllBundleInfos(target);
 			Set names = collectAllSymbolicNames(infos);
 			assertEquals(expectedBundles.length, infos.size());
@@ -102,7 +103,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 
 			// Now modify the target to have just a lower level root.  The extra higher level stuff should get removed.
 			container = createContainer(features2);
-			target.setBundleContainers(new IBundleContainer[]{container});
+			target.setTargetLocations(new ITargetLocation[]{container});
 			infos = getAllBundleInfos(target);
 			names = collectAllSymbolicNames(infos);
 			assertEquals(expectedBundles2.length, infos.size());
@@ -190,8 +191,8 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	 */
 	public void testContentEqualNull() throws Exception {		
 		ITargetPlatformService service = getTargetService();
-		IUBundleContainer c3 = (IUBundleContainer) service.newIUContainer(new String[]{"bundle.a1", "bundle.a2"}, new String[]{"1.0.0", "1.0.0"}, null, 0);
-		IUBundleContainer c4 = (IUBundleContainer) service.newIUContainer(new String[]{"bundle.a1", "bundle.a2"}, new String[]{"1.0.0", "1.0.0"}, null, 0);
+		IUBundleContainer c3 = (IUBundleContainer) service.newIULocation(new String[]{"bundle.a1", "bundle.a2"}, new String[]{"1.0.0", "1.0.0"}, null, 0);
+		IUBundleContainer c4 = (IUBundleContainer) service.newIULocation(new String[]{"bundle.a1", "bundle.a2"}, new String[]{"1.0.0", "1.0.0"}, null, 0);
 		assertTrue("Contents should be equivalent", c3.isContentEqual(c4));
 	}
 	
@@ -202,8 +203,8 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	 */
 	public void testContentNotEqualNull() throws Exception {		
 		ITargetPlatformService service = getTargetService();
-		IUBundleContainer c3 = (IUBundleContainer) service.newIUContainer(new String[]{"bundle.a1", "bundle.a2"}, new String[]{"1.0.0", "1.0.0"}, null, 1);
-		IUBundleContainer c4 = (IUBundleContainer) service.newIUContainer(new String[]{"bundle.b1", "bundle.b2"}, new String[]{"1.0.0", "1.0.0"}, null, 0);
+		IUBundleContainer c3 = (IUBundleContainer) service.newIULocation(new String[]{"bundle.a1", "bundle.a2"}, new String[]{"1.0.0", "1.0.0"}, null, 1);
+		IUBundleContainer c4 = (IUBundleContainer) service.newIULocation(new String[]{"bundle.b1", "bundle.b2"}, new String[]{"1.0.0", "1.0.0"}, null, 0);
 		assertFalse("Contents should not be equivalent", c3.isContentEqual(c4));
 	}	
 	
@@ -219,7 +220,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		try {
 			IUBundleContainer container = createContainer(unitIds);
 			ITargetDefinition target = getTargetService().newTarget();
-			target.setBundleContainers(new IBundleContainer[]{container});
+			target.setTargetLocations(new ITargetLocation[]{container});
 			List infos = getAllBundleInfos(target);
 			Set names = collectAllSymbolicNames(infos);
 			assertEquals(bundleIds.length, infos.size());
@@ -248,7 +249,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	protected void doPersistanceTest(String[] unitIds, String[] bundleIds) throws Exception {
 		IUBundleContainer container = createContainer(unitIds);
 		ITargetDefinition target = getTargetService().newTarget();
-		target.setBundleContainers(new IBundleContainer[]{container});
+		target.setTargetLocations(new ITargetLocation[]{container});
 	
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 		TargetDefinitionPersistenceHelper.persistXML(target, outputStream);
@@ -282,7 +283,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		String[]unitIds = new String[]{"feature.b.feature.group"};
 		IUBundleContainer container = createContainer(unitIds);
 		ITargetDefinition targetB = getTargetService().newTarget();
-		targetB.setBundleContainers(new IBundleContainer[]{container});
+		targetB.setTargetLocations(new ITargetLocation[]{container});
 		getTargetService().saveTargetDefinition(targetB);
 		setTargetPlatform(targetB);
 		
@@ -290,7 +291,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		unitIds = new String[]{"feature.a.feature.group"};
 		container = createContainer(unitIds);
 		ITargetDefinition targetA = getTargetService().newTarget();
-		targetA.setBundleContainers(new IBundleContainer[]{container});
+		targetA.setTargetLocations(new ITargetLocation[]{container});
 		getTargetService().saveTargetDefinition(targetA);
 		setTargetPlatform(targetA);
 		
@@ -335,7 +336,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	 * @throws Exception
 	 */
 	protected IUBundleContainer createContainer(IInstallableUnit[] units, URI[] repositories) throws Exception {
-		return (IUBundleContainer) getTargetService().newIUContainer(units, repositories, IUBundleContainer.INCLUDE_REQUIRED);
+		return (IUBundleContainer) getTargetService().newIULocation(units, repositories, IUBundleContainer.INCLUDE_REQUIRED);
 	}
 	
 	/**
@@ -368,7 +369,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	public void testAddIUs() throws Exception {
 		IUBundleContainer c1 = createContainer(new String[]{"feature.a.feature.group"});
 		ITargetDefinition target = getTargetService().newTarget();
-		target.setBundleContainers(new IUBundleContainer[]{c1});
+		target.setTargetLocations(new IUBundleContainer[]{c1});
 		IStatus resolve = target.resolve(null);
 		assertTrue(resolve.isOK());
 		
@@ -377,7 +378,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		// get new unresolved copy of the target
 		target = handle.getTargetDefinition();
 		IUBundleContainer c2 = createContainer(new String[]{"feature.b.feature.group"});
-		target.setBundleContainers(new IUBundleContainer[]{c2});
+		target.setTargetLocations(new IUBundleContainer[]{c2});
 		
 		List infos = getAllBundleInfos(target);
 		Set names = collectAllSymbolicNames(infos);
@@ -402,7 +403,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	public void testRemoveIUs() throws Exception {
 		IUBundleContainer c1 = createContainer(new String[]{"feature.b.feature.group"});
 		ITargetDefinition target = getTargetService().newTarget();
-		target.setBundleContainers(new IUBundleContainer[]{c1});
+		target.setTargetLocations(new IUBundleContainer[]{c1});
 		IStatus resolve = target.resolve(null);
 		assertTrue(resolve.isOK());
 		
@@ -411,7 +412,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		// get new unresolved copy of the target
 		target = handle.getTargetDefinition();
 		IUBundleContainer c2 = createContainer(new String[]{"feature.a.feature.group"});
-		target.setBundleContainers(new IUBundleContainer[]{c2});
+		target.setTargetLocations(new IUBundleContainer[]{c2});
 		
 		List infos = getAllBundleInfos(target);
 		Set names = collectAllSymbolicNames(infos);
@@ -437,7 +438,7 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		IUBundleContainer c1 = createContainer(new String[]{"feature.a.feature.group"});
 		IUBundleContainer c2 = createContainer(new String[]{"feature.b.feature.group"});
 		ITargetDefinition target = getTargetService().newTarget();
-		target.setBundleContainers(new IUBundleContainer[]{c1, c2});
+		target.setTargetLocations(new IUBundleContainer[]{c1, c2});
 		IStatus resolve = target.resolve(null);
 		assertTrue(resolve.isOK());
 				

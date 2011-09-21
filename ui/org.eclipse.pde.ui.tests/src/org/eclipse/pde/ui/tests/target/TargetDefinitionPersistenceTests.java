@@ -10,9 +10,10 @@
  *******************************************************************************/
 package org.eclipse.pde.ui.tests.target;
 
+import org.eclipse.pde.core.target.*;
+
 import org.eclipse.pde.internal.core.target.IUBundleContainer;
 
-import org.eclipse.pde.internal.core.target.provisional.IBundleContainer;
 
 import java.io.*;
 import java.net.*;
@@ -26,7 +27,6 @@ import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.pde.core.plugin.TargetPlatform;
 import org.eclipse.pde.internal.core.target.*;
-import org.eclipse.pde.internal.core.target.provisional.*;
 import org.eclipse.pde.internal.ui.tests.macro.MacroPlugin;
 import org.osgi.framework.ServiceReference;
 
@@ -65,7 +65,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 	 * @return resolved location
 	 * @throws CoreException 
 	 */
-	protected String getResolvedLocation(IBundleContainer container) throws CoreException {
+	protected String getResolvedLocation(ITargetLocation container) throws CoreException {
 		return ((AbstractBundleContainer)container).getLocation(true);
 	}
 	
@@ -226,22 +226,22 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		definition.setImplicitDependencies(implicit);
 		
 		// Directory container
-		IBundleContainer dirContainer = getTargetService().newDirectoryContainer(TargetPlatform.getDefaultLocation() + "/plugins");
+		ITargetLocation dirContainer = getTargetService().newDirectoryLocation(TargetPlatform.getDefaultLocation() + "/plugins");
 		// Profile container with specific config area
-		IBundleContainer profileContainer = getTargetService().newProfileContainer(TargetPlatform.getDefaultLocation(), new File(Platform.getConfigurationLocation().getURL().getFile()).getAbsolutePath());
+		ITargetLocation profileContainer = getTargetService().newProfileLocation(TargetPlatform.getDefaultLocation(), new File(Platform.getConfigurationLocation().getURL().getFile()).getAbsolutePath());
 		// Feature container with specific version
 		IPath location = getJdtFeatureLocation();
 		String segment = location.lastSegment();
 		int index = segment.indexOf('_');
 		assertTrue("Missing version id", index > 0);
 		String version = segment.substring(index + 1);
-		IBundleContainer featureContainer = getTargetService().newFeatureContainer("${eclipse_home}", "org.eclipse.jdt", version);
+		ITargetLocation featureContainer = getTargetService().newFeatureLocation("${eclipse_home}", "org.eclipse.jdt", version);
 		// Profile container restricted to just two bundles
-		IBundleContainer restrictedProfileContainer = getTargetService().newProfileContainer(TargetPlatform.getDefaultLocation(), null);
+		ITargetLocation restrictedProfileContainer = getTargetService().newProfileLocation(TargetPlatform.getDefaultLocation(), null);
 	
 		// Site bundle containers with different settings
-		IUBundleContainer siteContainer = (IUBundleContainer)getTargetService().newIUContainer(new IInstallableUnit[]{}, new URI[]{new URI("TESTURI"), new URI("TESTURI2")}, IUBundleContainer.INCLUDE_ALL_ENVIRONMENTS);
-		IUBundleContainer siteContainer2 = (IUBundleContainer)getTargetService().newIUContainer(new String[]{"unit1","unit2"},new String[]{"1.0", "2.0"}, new URI[]{new URI("TESTURI"), new URI("TESTURI2")}, IUBundleContainer.INCLUDE_REQUIRED);
+		IUBundleContainer siteContainer = (IUBundleContainer)getTargetService().newIULocation(new IInstallableUnit[]{}, new URI[]{new URI("TESTURI"), new URI("TESTURI2")}, IUBundleContainer.INCLUDE_ALL_ENVIRONMENTS);
+		IUBundleContainer siteContainer2 = (IUBundleContainer)getTargetService().newIULocation(new String[]{"unit1","unit2"},new String[]{"1.0", "2.0"}, new URI[]{new URI("TESTURI"), new URI("TESTURI2")}, IUBundleContainer.INCLUDE_REQUIRED);
 		
 		NameVersionDescriptor[] restrictions = new NameVersionDescriptor[]{
 				new NameVersionDescriptor("org.eclipse.jdt.launching", null),
@@ -255,7 +255,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		};	
 		definition.setOptional(optional);
 		
-		definition.setBundleContainers(new IBundleContainer[]{dirContainer, profileContainer, featureContainer, restrictedProfileContainer, siteContainer, siteContainer2});
+		definition.setTargetLocations(new ITargetLocation[]{dirContainer, profileContainer, featureContainer, restrictedProfileContainer, siteContainer, siteContainer2});
 	}
 	
 	/**
@@ -311,7 +311,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getImplicitDependencies());
 		assertNull(target.getJREContainer());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 1, containers.length);
 		assertTrue("Container should be a profile container", containers[0] instanceof ProfileBundleContainer);
 		assertEquals("Wrong home location", new Path(TargetPlatform.getDefaultLocation()),
@@ -337,7 +337,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getImplicitDependencies());
 		assertNull(target.getJREContainer());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 1, containers.length);
 		assertTrue("Container should be a directory container", containers[0] instanceof DirectoryBundleContainer);
 		assertEquals("Wrong home location", new Path(TargetPlatform.getDefaultLocation()).append("plugins"),
@@ -372,7 +372,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertTrue("Missing ", set.remove("org.eclipse.debug.core"));
 		assertTrue(set.isEmpty());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 1, containers.length);
 		assertTrue("Container should be a directory container", containers[0] instanceof DirectoryBundleContainer);
 		assertEquals("Wrong home location", new Path(TargetPlatform.getDefaultLocation()).append("plugins"),
@@ -398,7 +398,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getJREContainer());
 		assertNull(target.getImplicitDependencies());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 3, containers.length);
 		assertTrue(containers[0] instanceof ProfileBundleContainer);
 		assertTrue(containers[1] instanceof DirectoryBundleContainer);
@@ -434,7 +434,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getJREContainer());
 		assertNull(target.getImplicitDependencies());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 2, containers.length);
 		assertTrue(containers[0] instanceof FeatureBundleContainer);
 		assertTrue(containers[1] instanceof FeatureBundleContainer);
@@ -462,7 +462,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getJREContainer());
 		assertNull(target.getImplicitDependencies());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of containers", 3, containers.length);
 		assertTrue(containers[0] instanceof ProfileBundleContainer);
 		assertTrue(containers[1] instanceof FeatureBundleContainer);
@@ -508,7 +508,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getJREContainer());
 		assertNull(target.getImplicitDependencies());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 3, containers.length);
 		assertTrue(containers[0] instanceof ProfileBundleContainer);
 		assertTrue(containers[1] instanceof FeatureBundleContainer);
@@ -554,7 +554,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertNull(target.getImplicitDependencies());
 		assertNull(target.getJREContainer());
 		
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 2, containers.length);
 		assertTrue("Container should be a profile container", containers[0] instanceof ProfileBundleContainer);
 		assertTrue("Container should be a profile container", containers[1] instanceof FeatureBundleContainer);
@@ -599,7 +599,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 	public void testEmptyContentSection() throws Exception {
 		ITargetDefinition target = readOldTarget("emptycontent");
 			
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals("Wrong number of bundles", 1, containers.length);
 		assertTrue("Container should be a directory container", containers[0] instanceof DirectoryBundleContainer);
 		assertEquals("Wrong home location", new Path(TargetPlatform.getDefaultLocation()).append("plugins"),
@@ -619,7 +619,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 	 */
 	public void testMigrationOfUseAllWithRestrictions() throws Exception {
 		ITargetDefinition target = readOldTarget("eclipse-serverside");
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals(6, containers.length);
 		validateTypeAndLocation((AbstractBundleContainer) containers[0], ProfileBundleContainer.class, "${resource_loc:/target-platforms/eclipse-equinox-SDK-3.5M5/eclipse}");
 		validateTypeAndLocation((AbstractBundleContainer) containers[1], DirectoryBundleContainer.class, "${resource_loc:/target-platforms/eclipse-3.5M5-delta-pack/eclipse}");
@@ -669,10 +669,10 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		target.setWS("carbon");
 		asssrtSequenceNumber("WS", currentSeqNo, targetDef);
 		
-		IBundleContainer[] newContainers = new IBundleContainer[1];
+		ITargetLocation[] newContainers = new ITargetLocation[1];
 		newContainers[0] = new DirectoryBundleContainer("Path");
 		currentSeqNo = targetDef.getSequenceNumber();
-		target.setBundleContainers(newContainers);
+		target.setTargetLocations(newContainers);
 		asssrtSequenceNumber("Bundle Containers", currentSeqNo, targetDef);
 	}
 
@@ -682,7 +682,7 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 	
 	public void testIncludeSource() throws Exception {
 		ITargetDefinition target = readOldTarget("SoftwareSiteTarget");
-		IBundleContainer[] containers = target.getBundleContainers();
+		ITargetLocation[] containers = target.getTargetLocations();
 		assertEquals(1, containers.length);
 		assertTrue(containers[0] instanceof IUBundleContainer);
 		IUBundleContainer iubc = (IUBundleContainer) containers[0];

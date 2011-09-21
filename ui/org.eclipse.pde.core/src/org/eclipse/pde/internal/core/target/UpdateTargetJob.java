@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
+import org.eclipse.pde.core.target.ITargetLocation;
+
 import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.pde.internal.core.target.provisional.IBundleContainer;
 
 /**
  * Job that will update a set of installable units from a set of bundle containers.  Containers that 
@@ -48,7 +49,7 @@ public class UpdateTargetJob extends Job {
 	 * previously running update jobs will be cancelled.  If a listener is provided it will be added to
 	 * the scheduled job.
 	 * 
-	 * @param toUpdate maps {@link IBundleContainer}s that to the {@link Set} of {@link IInstallableUnit}s 
+	 * @param toUpdate maps {@link ITargetLocation}s that to the {@link Set} of {@link IInstallableUnit}s 
 	 * that should be updated.  If the container maps to an empty set, all IUs from the container will be updated.
 	 * @param listener job change listener that will be added to the created job, can be <code>null</code>
 	 */
@@ -80,7 +81,7 @@ public class UpdateTargetJob extends Job {
 			for (Iterator i = toUpdate.entrySet().iterator(); i.hasNext();) {
 				try {
 					Map.Entry entry = (Map.Entry) i.next();
-					IBundleContainer container = (IBundleContainer) entry.getKey();
+					ITargetLocation container = (ITargetLocation) entry.getKey();
 					monitor.subTask(NLS.bind(Messages.UpdateTargetJob_UpdatingContainer, ((AbstractBundleContainer) container).getLocation(false)));
 					if (container instanceof IUBundleContainer)
 						result |= ((IUBundleContainer) container).update((Set) entry.getValue(), progress.newChild(1));
