@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.io.*;
 import java.net.URI;
 import java.util.regex.Matcher;
@@ -22,6 +20,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.p2.metadata.Version;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.ICoreConstants;
 import org.eclipse.pde.internal.core.PDECore;
 import org.w3c.dom.*;
@@ -47,7 +46,6 @@ public class TargetDefinitionPersistenceHelper {
 	static final String ATTR_LOCATION_TYPE = "type"; //$NON-NLS-1$
 	static final String ATTR_USE_DEFAULT = "useDefault"; //$NON-NLS-1$
 	static final String INCLUDE_BUNDLES = "includeBundles"; //$NON-NLS-1$
-	static final String OPTIONAL_BUNDLES = "optionalBundles"; //$NON-NLS-1$
 	static final String ENVIRONMENT = "environment"; //$NON-NLS-1$
 	static final String OS = "os"; //$NON-NLS-1$
 	static final String WS = "ws"; //$NON-NLS-1$
@@ -70,7 +68,6 @@ public class TargetDefinitionPersistenceHelper {
 	public static final String MODE_PLANNER = "planner"; //$NON-NLS-1$
 	static final String ATTR_INCLUDE_ALL_PLATFORMS = "includeAllPlatforms"; //$NON-NLS-1$
 	static final String ATTR_INCLUDE_SOURCE = "includeSource"; //$NON-NLS-1$
-	static final String ATTR_OPTIONAL = "optional"; //$NON-NLS-1$
 	static final String ATTR_VERSION = "version"; //$NON-NLS-1$
 	static final String ATTR_CONFIGURATION = "configuration"; //$NON-NLS-1$
 	static final String ATTR_SEQUENCE_NUMBER = "sequenceNumber"; //$NON-NLS-1$
@@ -137,12 +134,6 @@ public class TargetDefinitionPersistenceHelper {
 			Element includedElement = doc.createElement(INCLUDE_BUNDLES);
 			serializeBundles(doc, includedElement, included);
 			rootElement.appendChild(includedElement);
-		}
-		NameVersionDescriptor[] optional = definition.getOptional();
-		if (optional != null) {
-			Element optionalElement = doc.createElement(OPTIONAL_BUNDLES);
-			serializeBundles(doc, optionalElement, optional);
-			rootElement.appendChild(optionalElement);
 		}
 
 		if (definition.getOS() != null || definition.getWS() != null || definition.getArch() != null || definition.getNL() != null) {

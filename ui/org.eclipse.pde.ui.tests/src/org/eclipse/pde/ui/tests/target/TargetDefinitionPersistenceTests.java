@@ -248,13 +248,6 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 				new NameVersionDescriptor("org.eclipse.jdt.debug", null)
 		};	
 		definition.setIncluded(restrictions);
-		// Add some optional bundles
-		NameVersionDescriptor[] optional = new NameVersionDescriptor[]{
-				new NameVersionDescriptor("org.eclipse.debug.examples.core", null),
-				new NameVersionDescriptor("org.eclipse.debug.examples.ui", null)
-		};	
-		definition.setOptional(optional);
-		
 		definition.setTargetLocations(new ITargetLocation[]{dirContainer, profileContainer, featureContainer, restrictedProfileContainer, siteContainer, siteContainer2});
 	}
 	
@@ -562,18 +555,15 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 				new Path(getResolvedLocation(containers[0])));
 		assertEquals("Wrong feature location", "org.eclipse.jdt", ((FeatureBundleContainer)containers[1]).getFeatureId());
 		
-		
+		// Old optional settings are added to includes
 		NameVersionDescriptor[] included = new NameVersionDescriptor[]{
 				new NameVersionDescriptor("org.eclipse.debug.core", null),
 				new NameVersionDescriptor("org.eclipse.debug.ui", null),
 				new NameVersionDescriptor("org.eclipse.jdt.debug", null),
 				new NameVersionDescriptor("org.eclipse.jdt.debug.ui", null),
-				new NameVersionDescriptor("org.eclipse.jdt.launching", null)
-		};	
-		
-		NameVersionDescriptor[] optional = new NameVersionDescriptor[]{
+				new NameVersionDescriptor("org.eclipse.jdt.launching", null),
 				new NameVersionDescriptor("org.eclipse.debug.examples.core", null),
-				new NameVersionDescriptor("org.eclipse.debug.examples.ui", null),
+				new NameVersionDescriptor("org.eclipse.debug.examples.ui", null)
 		};	
 		
 		NameVersionDescriptor[] actual = target.getIncluded();
@@ -581,13 +571,6 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		assertEquals("Wrong number of inclusions", included.length, actual.length);
 		for (int j = 0; j < actual.length; j++) {
 			assertEquals("Wrong restriction", included[j], actual[j]);
-		}
-		
-		actual = target.getOptional();
-		assertNotNull(actual);
-		assertEquals("Wrong number of optionals", optional.length, actual.length);
-		for (int j = 0; j < actual.length; j++) {
-			assertEquals("Wrong restriction", optional[j], actual[j]);
 		}
 	}
 	

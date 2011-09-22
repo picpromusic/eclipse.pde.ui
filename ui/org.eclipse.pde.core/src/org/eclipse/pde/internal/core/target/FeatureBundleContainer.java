@@ -164,11 +164,7 @@ public class FeatureBundleContainer extends AbstractBundleContainer {
 				}
 			}
 
-			// Because we used the directory container to get our bundles, we need to replace their parent
-			for (int i = 0; i < bundles.length; i++) {
-				bundles[i].setParentContainer(this);
-			}
-			List result = TargetDefinition.getMatchingBundles(bundles, (NameVersionDescriptor[]) matchInfos.toArray(new NameVersionDescriptor[matchInfos.size()]), null, this);
+			List result = TargetDefinition.getMatchingBundles(bundles, (NameVersionDescriptor[]) matchInfos.toArray(new NameVersionDescriptor[matchInfos.size()]));
 			return (TargetBundle[]) result.toArray(new TargetBundle[result.size()]);
 		} finally {
 			if (model != null) {

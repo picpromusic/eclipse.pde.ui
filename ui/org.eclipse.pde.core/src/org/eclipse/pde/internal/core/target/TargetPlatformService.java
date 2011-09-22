@@ -610,10 +610,4 @@ public class TargetPlatformService implements ITargetPlatformService {
 		return new IUBundleContainer(unitIds, versions, repositories, resolutionFlags);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.pde.core.target.ITargetPlatformService#createTargetBundle(java.io.File, org.eclipse.pde.core.target.ITargetLocation)
-	 */
-	public TargetBundle createTargetBundle(File file, ITargetLocation location) throws CoreException {
-		return TargetBundleFactory.getInstance().createTargetBundle(file, location);
-	}
 }

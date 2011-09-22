@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.*;
+import org.eclipse.pde.core.target.*;
 import org.w3c.dom.*;
 
 /**
@@ -78,6 +77,10 @@ public class TargetPersistence35Helper {
 	</implicitDependencies>
 	</target>
 	 */
+	/**
+	 * Support for optional bundles was removed in 3.8, optional bundles should be treated like included bundles
+	 */
+	static final String OPTIONAL_BUNDLES = "optionalBundles"; //$NON-NLS-1$
 
 	public static void initFromDoc(ITargetDefinition definition, Element root) throws CoreException {
 		String name = root.getAttribute(TargetDefinitionPersistenceHelper.ATTR_NAME);
@@ -167,7 +170,6 @@ public class TargetPersistence35Helper {
 	 * @param location document element representing a bundle container
 	 * @param included set to contain included bundles, possibly <code>null</code>
 	 * @param optional set to contain optional bundles, possible <code>null</code>
-	 * @return bundle container instance
 	 * @throws CoreException
 	 */
 	private static void deserializeBundleContainer(ITargetDefinition definition, Element location) throws CoreException {
@@ -235,36 +237,21 @@ public class TargetPersistence35Helper {
 			container = new IUBundleContainer(iuIDs, iuVer, uris, flags);
 		}
 
+		List includedBundles = null;
 		NodeList list = location.getChildNodes();
 		for (int i = 0; i < list.getLength(); ++i) {
 			Node node = list.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
 				Element element = (Element) node;
-				if (element.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.INCLUDE_BUNDLES)) {
-					NameVersionDescriptor[] included = deserializeBundles(element);
-					NameVersionDescriptor[] currentIncluded = definition.getIncluded();
-					if (currentIncluded == null || currentIncluded.length == 0) {
-						definition.setIncluded(included);
-					} else {
-						NameVersionDescriptor[] newIncluded = new NameVersionDescriptor[currentIncluded.length + included.length];
-						System.arraycopy(currentIncluded, 0, newIncluded, 0, currentIncluded.length);
-						System.arraycopy(included, 0, newIncluded, currentIncluded.length, included.length);
-						definition.setIncluded(newIncluded);
+				if (element.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.INCLUDE_BUNDLES) || element.getNodeName().equalsIgnoreCase(OPTIONAL_BUNDLES)) {
+					if (includedBundles == null) {
+						includedBundles = new ArrayList();
 					}
-				} else if (element.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.OPTIONAL_BUNDLES)) {
-					NameVersionDescriptor[] optional = deserializeBundles(element);
-					NameVersionDescriptor[] currentOptional = definition.getIncluded();
-					if (currentOptional == null || currentOptional.length == 0) {
-						definition.setIncluded(optional);
-					} else {
-						NameVersionDescriptor[] newOptional = new NameVersionDescriptor[currentOptional.length + optional.length];
-						System.arraycopy(currentOptional, 0, newOptional, 0, currentOptional.length);
-						System.arraycopy(optional, 0, newOptional, currentOptional.length, optional.length);
-						definition.setIncluded(newOptional);
-					}
+					includedBundles.addAll(deserializeBundles(element));
 				}
 			}
 		}
+		definition.setIncluded(includedBundles == null ? null : (NameVersionDescriptor[]) includedBundles.toArray(new NameVersionDescriptor[includedBundles.size()]));
 
 		ITargetLocation[] currentContainers = definition.getTargetLocations();
 		if (currentContainers == null || currentContainers.length == 0) {
@@ -277,7 +264,7 @@ public class TargetPersistence35Helper {
 		}
 	}
 
-	private static NameVersionDescriptor[] deserializeBundles(Element bundleContainer) {
+	private static List/*NameVersionDescriptor*/deserializeBundles(Element bundleContainer) {
 		NodeList nodes = bundleContainer.getChildNodes();
 		List bundles = new ArrayList(nodes.getLength());
 		for (int j = 0; j < nodes.getLength(); ++j) {
@@ -291,7 +278,7 @@ public class TargetPersistence35Helper {
 				}
 			}
 		}
-		return (NameVersionDescriptor[]) bundles.toArray(new NameVersionDescriptor[bundles.size()]);
+		return bundles;
 	}
 
 }

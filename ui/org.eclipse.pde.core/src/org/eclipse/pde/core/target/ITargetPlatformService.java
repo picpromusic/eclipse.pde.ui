@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.core.target;
 
-import java.io.File;
 import java.net.URI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.*;
@@ -225,12 +224,4 @@ public interface ITargetPlatformService {
 	 */
 	public void loadTargetDefinition(ITargetDefinition definition, String targetExtensionId) throws CoreException;
 
-	/**
-	 * Returns a resolved bundle for the given file or <code>null</code> if none.
-	 * @param file root jar or folder that contains a bundle
-	 * @param location the target location providing this bundle
-	 * @return resolved bundle or <code>null</code>
-	 * @exception CoreException if not a valid bundle
-	 */
-	public TargetBundle createTargetBundle(File file, ITargetLocation location) throws CoreException;
 }

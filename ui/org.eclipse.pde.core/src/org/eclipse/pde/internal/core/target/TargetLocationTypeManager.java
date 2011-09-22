@@ -10,56 +10,75 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.ITargetLocation;
-import org.eclipse.pde.core.target.ITargetLocationFactory;
-
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.core.runtime.*;
+import org.eclipse.pde.core.target.ITargetLocation;
+import org.eclipse.pde.core.target.ITargetLocationFactory;
 import org.eclipse.pde.internal.core.PDECore;
-import org.w3c.dom.Element;
 
 /**
  * Keeps a track of the contributed Target Locations and provides helper functions to 
  * access them
  *
  */
-public class TargetLocationHelper {
+public class TargetLocationTypeManager {
 
 	private static final String ATTR_TYPE = "type"; //$NON-NLS-1$
 	private static final String ATTR_LOCFACTORY = "locationFactory"; //$NON-NLS-1$
 	private static final String TARGET_LOC_EXTPT = "targetLocations"; //$NON-NLS-1$
 
-	static Map fExtentionMap;
-	static Map fFactoryMap;
-	static TargetLocationHelper INSTANCE;
+	private Map fExtentionMap;
+	private Map fFactoryMap;
 
-	private TargetLocationHelper() {
+	static TargetLocationTypeManager INSTANCE;
+
+	private TargetLocationTypeManager() {
 		//singleton
+		fExtentionMap = new HashMap();
+		fFactoryMap = new HashMap();
+		readExtentions();
 	}
 
-	public static TargetLocationHelper getInstance() {
+	/**
+	 * @return the singleton instanceof this manager
+	 */
+	public static TargetLocationTypeManager getInstance() {
 		if (INSTANCE == null) {
-			INSTANCE = new TargetLocationHelper();
-			fExtentionMap = new HashMap();
-			fFactoryMap = new HashMap();
-
-			readExtentions();
+			INSTANCE = new TargetLocationTypeManager();
 		}
 		return INSTANCE;
 	}
 
 	/**
-	 * Prepares the instance of <code>ITargetLocation</code> using the contributed factory for the given type
+	 * Returns a description from the factory that supports the location type or <code>null</code> if no factory
+	 * can be found.
+	 * 
 	 * @param type	target location identifier
-	 * @param locationElement	location tag from the target definition XML
-	 * @return
-	 * 		instance of <code>ITargetLocation</code> 
+	 * @return	description for the target location
 	 */
-	public ITargetLocation getTargetLocation(String type, Element locationElement) {
+	public String getDescription(String type) {
 		ITargetLocationFactory factory = getFactory(type);
 		if (factory != null) {
-			return factory.getTargetLocation(locationElement.toString());
+			return factory.getDescription(type);
+		}
+		return null;
+	}
+
+	/**
+	 * Returns an instance of {@link ITargetLocation} from the factory that supports
+	 * the location type.  Will throw a {@link CoreException} if no factory can be
+	 * found or the xml is invalid.
+	 * 
+	 * @param type string identifying the type of target location, see {@link ITargetLocation#getType()}
+	 * @param serializedXML xml string containing serialized location, see {@link ITargetLocation#serialize()}
+	 * @return an instance of <code>ITargetLocation</code>
+	 * @throws CoreException if there is a problem finding a factory or the xml is invalid 
+	 */
+	public ITargetLocation getTargetLocation(String type, String serializedXML) throws CoreException {
+		ITargetLocationFactory factory = getFactory(type);
+		if (factory != null) {
+			return factory.getTargetLocation(type, serializedXML);
 		}
 		return null;
 	}
@@ -87,7 +106,7 @@ public class TargetLocationHelper {
 		}
 	}
 
-	private static void readExtentions() {
+	private void readExtentions() {
 		IExtensionRegistry registry = Platform.getExtensionRegistry();
 		IExtensionPoint point = registry.getExtensionPoint(PDECore.PLUGIN_ID, TARGET_LOC_EXTPT);
 		if (point == null)
@@ -102,16 +121,6 @@ public class TargetLocationHelper {
 				}
 			}
 		}
-
 	}
 
-	/**
-	 * Provides the description for the target location
-	 * @param type	target location identifier
-	 * @return	description for the target location
-	 */
-	public String getDescription(String type) {
-		ITargetLocationFactory factory = getFactory(type);
-		return factory.getDescription();
-	}
 }

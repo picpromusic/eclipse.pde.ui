@@ -78,7 +78,7 @@ public class DirectoryBundleContainer extends AbstractBundleContainer {
 					return new TargetBundle[0];
 				}
 				try {
-					TargetBundle rb = TargetBundleFactory.getInstance().createTargetBundle(files[i], this);
+					TargetBundle rb = new TargetBundle(files[i]);
 					if (rb != null) {
 						bundles.add(rb);
 					}

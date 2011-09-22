@@ -388,7 +388,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 		for (Iterator iterator2 = artifacts.iterator(); iterator2.hasNext();) {
 			File file = repo.getArtifactFile((IArtifactKey) iterator2.next());
 			if (file != null) {
-				TargetBundle bundle = TargetBundleFactory.getInstance().createTargetBundle(file, this);
+				TargetBundle bundle = new TargetBundle(file);
 				if (bundle != null) {
 					bundles.put(bundle.getBundleInfo(), bundle);
 				}

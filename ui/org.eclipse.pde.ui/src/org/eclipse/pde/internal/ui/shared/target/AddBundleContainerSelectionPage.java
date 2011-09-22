@@ -19,7 +19,7 @@ import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.*;
 import org.eclipse.pde.internal.core.PDECore;
-import org.eclipse.pde.internal.core.target.TargetLocationHelper;
+import org.eclipse.pde.internal.core.target.TargetLocationTypeManager;
 import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.wizards.WizardElement;
 import org.eclipse.pde.ui.IProvisionerWizard;
@@ -159,7 +159,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					if (element instanceof AbstractBundleContainerNode) {
 						fDescription.setText(((AbstractBundleContainerNode) element).getDescription());
 					} else if (element instanceof IWizardNode) {
-						String description = TargetLocationHelper.getInstance().getDescription((String) fNodeMap.get(element));
+						String description = TargetLocationTypeManager.getInstance().getDescription((String) fNodeMap.get(element));
 						if (description != null) {
 							fDescription.setText(description);
 						}

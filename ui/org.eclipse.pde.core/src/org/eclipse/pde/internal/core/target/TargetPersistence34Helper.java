@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.CoreException;
@@ -19,6 +17,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.environments.IExecutionEnvironment;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.util.VMUtil;
 import org.w3c.dom.*;
 
@@ -228,7 +227,6 @@ public class TargetPersistence34Helper {
 		List containers = new ArrayList();
 		NodeList list = content.getChildNodes();
 		List included = new ArrayList(list.getLength());
-		List optional = new ArrayList();
 		for (int i = 0; i < list.getLength(); ++i) {
 			Node node = list.item(i);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
@@ -240,19 +238,14 @@ public class TargetPersistence34Helper {
 						if (lNode.getNodeType() == Node.ELEMENT_NODE) {
 							Element plugin = (Element) lNode;
 							String id = plugin.getAttribute(TargetDefinitionPersistenceHelper.ATTR_ID);
-							boolean isOptional = plugin.getAttribute(TargetDefinitionPersistenceHelper.ATTR_OPTIONAL).equalsIgnoreCase(Boolean.toString(true));
 							if (id.length() > 0) {
 								NameVersionDescriptor info = new NameVersionDescriptor(id, null);
-								if (isOptional) {
-									optional.add(info);
-								} else {
-									included.add(info);
-								}
+								included.add(info);
 							}
 						}
 					}
 					// Primary container is only added by default if useAllPlugins='true'
-					if (included.size() > 0 || optional.size() > 0) {
+					if (included.size() > 0) {
 						containers.add(primaryContainer);
 					}
 				} else if (element.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.EXTRA_LOCATIONS)) {
@@ -286,12 +279,9 @@ public class TargetPersistence34Helper {
 			}
 		}
 		// restrictions are global to all containers
-		if (!useAll && (included.size() > 0 || optional.size() > 0)) {
+		if (!useAll && included.size() > 0) {
 			if (included.size() > 0) {
 				definition.setIncluded((NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]));
-			}
-			if (optional.size() > 0) {
-				definition.setOptional((NameVersionDescriptor[]) optional.toArray(new NameVersionDescriptor[optional.size()]));
 			}
 		}
 		return containers;

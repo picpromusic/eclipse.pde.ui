@@ -63,34 +63,6 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		assertTrue(definition.getBundles().length > 4);
 	}
 	
-	public void testMissingOptionalBundles() throws Exception {
-		ITargetDefinition definition = getNewTarget();
-		
-		ITargetLocation directoryContainer = getTargetService().newDirectoryLocation(TargetPlatform.getDefaultLocation() + "/plugins");
-		ITargetLocation profileContainer = getTargetService().newProfileLocation(TargetPlatform.getDefaultLocation(), null);
-		
-		definition.setTargetLocations(new ITargetLocation[]{directoryContainer, profileContainer});
-		definition.setOptional(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});
-		definition.resolve(null);
-		
-		assertNotNull("Target didn't resolve",definition.getBundles());
-		
-		IStatus definitionStatus = definition.getStatus();
-		assertEquals("Wrong severity", IStatus.INFO, definitionStatus.getSeverity());
-
-		IStatus[] children = definitionStatus.getChildren();
-		assertEquals("Wrong number of statuses", 2, children.length);
-		assertEquals("Wrong severity", IStatus.INFO, children[0].getSeverity());
-		assertEquals(TargetBundle.STATUS_PLUGIN_DOES_NOT_EXIST, children[0].getCode());
-		assertEquals("Wrong severity", IStatus.INFO, children[1].getSeverity());
-		assertEquals(TargetBundle.STATUS_VERSION_DOES_NOT_EXIST, children[1].getCode());
-		
-		// Check that removing the optional bundles and resolving removes the errors.
-		definition.setOptional(null);
-		assertTrue(definition.isResolved());
-		assertTrue(definition.getStatus().isOK());
-		assertTrue(definition.getBundles().length > 4);
-	}
 	
 	public void testInvalidBundleContainers() throws Exception {
 		ITargetDefinition definition = getNewTarget();
@@ -172,17 +144,14 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 		assertEquals("Incorrect Severity", IStatus.OK, status.getSeverity());
 		assertEquals("Incorrect Severity", IStatus.OK, includesContainer.getStatus().getSeverity());
 		definition.setTargetLocations(new ITargetLocation[]{brokenContainer, profileContainer});
-		definition.setOptional(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});
 		definition.setIncluded(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});
 		assertTrue(definition.isResolved());
 		assertEquals("Incorrect Severity", IStatus.ERROR, definition.getStatus().getSeverity());
 		assertNotNull("Bundles not available when resolved", definition.getBundles());
 		
-		// Setting includes, optional, etc. should not unresolve the target
-		definition.setOptional(null);
+		// Setting includes, etc. should not unresolve the target
 		definition.setIncluded(null);
 		assertTrue(definition.isResolved());
-		definition.setOptional(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});
 		definition.setIncluded(new NameVersionDescriptor[]{new NameVersionDescriptor("bogus",null),new NameVersionDescriptor("org.eclipse.platform","666.666.666")});		assertTrue(definition.isResolved());
 		definition.setName("name");
 		definition.setOS("os");
@@ -547,45 +516,6 @@ public class TargetDefinitionResolutionTests extends AbstractTargetTest {
 				assertTrue("Non-source bundle in source feature", bundles[i].isSourceBundle());
 				assertEquals("Incorrect source target", bundles[i].getBundleInfo().getSymbolicName(),bundles[i].getSourceTarget().getSymbolicName()+".source");
 			}
-		}
-	}
-	
-	/**
-	 * Tests that resolved bundles know what their parent container is
-	 * @throws Exception
-	 */
-	public void testGetParentContainer() throws Exception {
-		ITargetDefinition definition = getNewTarget();
-		
-		ITargetLocation directoryContainer = getTargetService().newDirectoryLocation(TargetPlatform.getDefaultLocation() + "/plugins");
-		
-		ITargetLocation profileContainer = getTargetService().newProfileLocation(TargetPlatform.getDefaultLocation(), null);
-		
-		ITargetLocation featureContainer = getTargetService().newFeatureLocation(TargetPlatform.getDefaultLocation(), "org.eclipse.jdt", null);
-		
-		definition.setTargetLocations(new ITargetLocation[]{directoryContainer, profileContainer, featureContainer});
-		definition.resolve(null);
-		
-		TargetBundle[] bundles = definition.getBundles();
-		
-		assertNotNull("Target didn't resolve",bundles);
-		
-		IStatus definitionStatus = definition.getStatus();
-		assertEquals("Wrong severity", IStatus.OK, definitionStatus.getSeverity());
-		
-		bundles = directoryContainer.getBundles();
-		for (int i = 0; i < bundles.length; i++) {
-			assertEquals("Wrong parent", directoryContainer, bundles[i].getParentContainer());
-		}
-		
-		bundles = profileContainer.getBundles();
-		for (int i = 0; i < bundles.length; i++) {
-			assertEquals("Wrong parent", profileContainer, bundles[i].getParentContainer());
-		}
-		
-		bundles = featureContainer.getBundles();
-		for (int i = 0; i < bundles.length; i++) {
-			assertEquals("Wrong parent", featureContainer, bundles[i].getParentContainer());
 		}
 	}
 	

@@ -41,7 +41,6 @@ public class TargetDefinition implements ITargetDefinition {
 
 	// included and optional filtering
 	private NameVersionDescriptor[] fIncluded;
-	private NameVersionDescriptor[] fOptional;
 
 	// arguments
 	private String fProgramArgs;
@@ -203,25 +202,24 @@ public class TargetDefinition implements ITargetDefinition {
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.core.target.ITargetDefinition#setBundleContainers(org.eclipse.pde.core.target.ITargetLocation[])
 	 */
-	public void setTargetLocations(ITargetLocation[] containers) {
+	public void setTargetLocations(ITargetLocation[] locations) {
 		incrementSequenceNumber();
 		// Clear the feature model cache as it is based on the bundle container locations
 		fFeatureModels = null;
 		fOtherBundles = null;
 
-		if (containers != null && containers.length == 0) {
-			containers = null;
+		if (locations != null && locations.length == 0) {
+			locations = null;
 		}
 
-		fContainers = containers;
+		fContainers = locations;
 
-		if (containers == null) {
+		if (locations == null) {
 			fIncluded = null;
-			fOptional = null;
 		} else {
-			for (int i = 0; i < containers.length; i++) {
-				if (containers[i] instanceof AbstractBundleContainer) {
-					((AbstractBundleContainer) containers[i]).associateWithTarget(this);
+			for (int i = 0; i < locations.length; i++) {
+				if (locations[i] instanceof AbstractBundleContainer) {
+					((AbstractBundleContainer) locations[i]).associateWithTarget(this);
 				}
 			}
 		}
@@ -243,7 +241,6 @@ public class TargetDefinition implements ITargetDefinition {
 		}
 		if (fContainers == null) {
 			fIncluded = null;
-			fOptional = null;
 		}
 	}
 
@@ -351,27 +348,6 @@ public class TargetDefinition implements ITargetDefinition {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.core.target.ITargetDefinition#setOptional(org.eclipse.pde.core.target.NameVersionDescriptor[])
-	 */
-	public void setOptional(NameVersionDescriptor[] optional) {
-		/* Optional bundles act like included bundles, but they do not represent an
-		 * error if they are missing from the locations. While there is no way to
-		 * create them from the target UI, clients interacting with the target platform
-		 * were using them.  It is not known if there are any clients using optional bundles
-		 * now, but their existence is considered API.
-		*/
-		fOptional = optional;
-
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.pde.core.target.ITargetDefinition#getOptional()
-	 */
-	public NameVersionDescriptor[] getOptional() {
-		return fOptional;
-	}
-
-	/* (non-Javadoc)
 	 * @see org.eclipse.pde.core.target.ITargetDefinition#getBundles()
 	 */
 	public TargetBundle[] getBundles() {
@@ -421,10 +397,8 @@ public class TargetDefinition implements ITargetDefinition {
 
 	private TargetBundle[] filterBundles(TargetBundle[] bundles, NameVersionDescriptor[] filter) {
 		if (filter == null) {
-			// All bundles are included, but still need to check for optional bundles
-			ITargetLocation parent = fContainers != null && fContainers.length > 0 ? fContainers[0] : null;
-			List resolved = getMatchingBundles(bundles, null, fOptional, parent);
-			return (TargetBundle[]) resolved.toArray(new TargetBundle[resolved.size()]);
+			// No filtering to do
+			return bundles;
 		}
 		if (filter.length == 0) {
 			return new TargetBundle[0];
@@ -485,8 +459,7 @@ public class TargetDefinition implements ITargetDefinition {
 		}
 
 		// Return matching bundles
-		ITargetLocation parent = fContainers != null && fContainers.length > 0 ? fContainers[0] : null;
-		List result = getMatchingBundles(bundles, (NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]), fOptional, containsFeatures ? null : parent);
+		List result = getMatchingBundles(bundles, (NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]));
 
 		// Add in missing features as resolved bundles with error statuses
 		if (containsFeatures && !missingFeatures.isEmpty()) {
@@ -495,7 +468,7 @@ public class TargetDefinition implements ITargetDefinition {
 				BundleInfo info = new BundleInfo(missing.getId(), missing.getVersion(), null, BundleInfo.NO_LEVEL, false);
 				String message = NLS.bind(Messages.TargetDefinition_RequiredFeatureCouldNotBeFound, missing.getId());
 				Status status = new Status(IStatus.ERROR, PDECore.PLUGIN_ID, TargetBundle.STATUS_FEATURE_DOES_NOT_EXIST, message, null);
-				result.add(new TargetBundle(info, parent, status, null, false, false));
+				result.add(new InvalidTargetBundle(info, status));
 			}
 		}
 
@@ -513,13 +486,11 @@ public class TargetDefinition implements ITargetDefinition {
 	 * </p> 
 	 * @param collection bundles to resolve against match criteria
 	 * @param included bundles to include or <code>null</code> if no restrictions
-	 * @param optional optional bundles or <code>null</code> of no optional bundles
-	 * @param errorParentContainer 
 	 * 
 	 * @return list of IResolvedBundle bundles that match this container's restrictions
 	 */
-	static List getMatchingBundles(TargetBundle[] collection, NameVersionDescriptor[] included, NameVersionDescriptor[] optional, ITargetLocation errorParentContainer) {
-		if (included == null && optional == null) {
+	static List getMatchingBundles(TargetBundle[] collection, NameVersionDescriptor[] included) {
+		if (included == null) {
 			ArrayList result = new ArrayList();
 			result.addAll(Arrays.asList(collection));
 			return result;
@@ -543,27 +514,9 @@ public class TargetDefinition implements ITargetDefinition {
 		} else {
 			for (int i = 0; i < included.length; i++) {
 				BundleInfo info = new BundleInfo(included[i].getId(), included[i].getVersion(), null, BundleInfo.NO_LEVEL, false);
-				TargetBundle bundle = resolveBundle(bundleMap, info, false, errorParentContainer);
+				TargetBundle bundle = resolveBundle(bundleMap, info);
 				if (bundle != null) {
 					resolved.add(bundle);
-				}
-			}
-		}
-		if (optional != null) {
-			for (int i = 0; i < optional.length; i++) {
-				BundleInfo option = new BundleInfo(optional[i].getId(), optional[i].getVersion(), null, BundleInfo.NO_LEVEL, false);
-				TargetBundle resolveBundle = resolveBundle(bundleMap, option, true, errorParentContainer);
-				if (resolveBundle != null) {
-					IStatus status = resolveBundle.getStatus();
-					if (status.isOK()) {
-						// add to list if not there already
-						if (!resolved.contains(resolveBundle)) {
-							resolved.add(resolveBundle);
-						}
-					} else {
-						// missing optional bundle - add it to the list
-						resolved.add(resolveBundle);
-					}
 				}
 			}
 		}
@@ -586,7 +539,7 @@ public class TargetDefinition implements ITargetDefinition {
 	 * @param errorParentContainer bundle container the resolved bundle belongs too
 	 * @return resolved bundle or <code>null</code>
 	 */
-	private static TargetBundle resolveBundle(Map bundleMap, BundleInfo info, boolean optional, ITargetLocation errorParentContainer) {
+	private static TargetBundle resolveBundle(Map bundleMap, BundleInfo info) {
 		List list = (List) bundleMap.get(info.getSymbolicName());
 		if (list != null) {
 			String version = info.getVersion();
@@ -604,40 +557,26 @@ public class TargetDefinition implements ITargetDefinition {
 				}
 				// select the last one
 				TargetBundle rb = (TargetBundle) list.get(list.size() - 1);
-				rb.setOptional(optional);
 				return rb;
 			}
 			Iterator iterator = list.iterator();
 			while (iterator.hasNext()) {
 				TargetBundle bundle = (TargetBundle) iterator.next();
 				if (bundle.getBundleInfo().getVersion().equals(version)) {
-					((TargetBundle) bundle).setOptional(optional);
 					return bundle;
 				}
 			}
 			// VERSION DOES NOT EXIST
-			if (errorParentContainer == null) {
-				return null;
-			}
 			int sev = IStatus.ERROR;
 			String message = NLS.bind(Messages.AbstractBundleContainer_1, new Object[] {info.getVersion(), info.getSymbolicName()});
-			if (optional) {
-				sev = IStatus.INFO;
-				message = NLS.bind(Messages.AbstractBundleContainer_2, new Object[] {info.getVersion(), info.getSymbolicName()});
-			}
-			return new TargetBundle(info, errorParentContainer, new Status(sev, PDECore.PLUGIN_ID, TargetBundle.STATUS_VERSION_DOES_NOT_EXIST, message, null), null, optional, false);
+			IStatus status = new Status(sev, PDECore.PLUGIN_ID, TargetBundle.STATUS_VERSION_DOES_NOT_EXIST, message, null);
+			return new InvalidTargetBundle(info, status);
 		}
 		// DOES NOT EXIST
-		if (errorParentContainer == null) {
-			return null;
-		}
 		int sev = IStatus.ERROR;
 		String message = NLS.bind(Messages.AbstractBundleContainer_3, info.getSymbolicName());
-		if (optional) {
-			sev = IStatus.INFO;
-			message = NLS.bind(Messages.AbstractBundleContainer_4, info.getSymbolicName());
-		}
-		return new TargetBundle(info, errorParentContainer, new Status(sev, PDECore.PLUGIN_ID, TargetBundle.STATUS_PLUGIN_DOES_NOT_EXIST, message, null), null, optional, false);
+		IStatus status = new Status(sev, PDECore.PLUGIN_ID, TargetBundle.STATUS_PLUGIN_DOES_NOT_EXIST, message, null);
+		return new InvalidTargetBundle(info, status);
 	}
 
 	/* (non-Javadoc)
@@ -748,7 +687,7 @@ public class TargetDefinition implements ITargetDefinition {
 	public boolean isContentEqual(ITargetDefinition definition) {
 		if (isNullOrEqual(getName(), definition.getName()) && isNullOrEqual(getArch(), definition.getArch()) && isNullOrEqual(getNL(), definition.getNL()) && isNullOrEqual(getOS(), definition.getOS()) && isNullOrEqual(getWS(), definition.getWS()) && isNullOrEqual(getProgramArguments(), definition.getProgramArguments()) && isNullOrEqual(getVMArguments(), definition.getVMArguments()) && isNullOrEqual(getJREContainer(), definition.getJREContainer())) {
 			// Check includes/optional
-			if (isNullOrEqual(getIncluded(), definition.getIncluded()) && isNullOrEqual(getOptional(), definition.getOptional())) {
+			if (isNullOrEqual(getIncluded(), definition.getIncluded())) {
 				// Check containers
 				ITargetLocation[] c1 = getTargetLocations();
 				ITargetLocation[] c2 = definition.getTargetLocations();
@@ -772,7 +711,7 @@ public class TargetDefinition implements ITargetDefinition {
 	public boolean isContentEquivalent(ITargetDefinition definition) {
 		if (isNullOrEqual(getArch(), definition.getArch()) && isNullOrEqual(getNL(), definition.getNL()) && isNullOrEqual(getOS(), definition.getOS()) && isNullOrEqual(getWS(), definition.getWS()) && isArgsNullOrEqual(getProgramArguments(), definition.getProgramArguments()) && isArgsNullOrEqual(getVMArguments(), definition.getVMArguments()) && isNullOrEqual(getJREContainer(), definition.getJREContainer())) {
 			// Check includes/optional
-			if (isNullOrEqual(getIncluded(), definition.getIncluded()) && isNullOrEqual(getOptional(), definition.getOptional())) {
+			if (isNullOrEqual(getIncluded(), definition.getIncluded())) {
 				// Check containers
 				ITargetLocation[] c1 = getTargetLocations();
 				ITargetLocation[] c2 = definition.getTargetLocations();
@@ -1017,9 +956,8 @@ public class TargetDefinition implements ITargetDefinition {
 		TargetBundle[] allExtraBundles = getOtherBundles();
 
 		NameVersionDescriptor[] included = getIncluded();
-		NameVersionDescriptor[] optional = getOptional();
 
-		if (included == null && optional == null) {
+		if (included == null) {
 			Set result = new HashSet();
 			result.addAll(Arrays.asList(allFeatures));
 			result.addAll(Arrays.asList(allExtraBundles));
@@ -1038,16 +976,6 @@ public class TargetDefinition implements ITargetDefinition {
 				for (int j = 0; j < allFeatures.length; j++) {
 					if (allFeatures[j].getFeature().getId().equals(included[i].getId())) {
 						result.add(allFeatures[j]);
-					}
-				}
-			}
-		}
-
-		if (optional != null) {
-			for (int i = 0; i < optional.length; i++) {
-				for (int j = 0; j < allExtraBundles.length; j++) {
-					if (allExtraBundles[j].getBundleInfo().getSymbolicName().equals(optional[i].getId())) {
-						result.add(allExtraBundles[j]);
 					}
 				}
 			}

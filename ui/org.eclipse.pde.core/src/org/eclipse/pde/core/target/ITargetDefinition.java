@@ -57,7 +57,7 @@ public interface ITargetDefinition {
 	 * Returns all bundles included in this target definition or <code>null</code>
 	 * if this container is not resolved. Takes all the bundles available from the
 	 * set target locations (returned by {@link #getAllBundles()} and applies
-	 * the filters (returned by {@link #getIncluded()} and {@link #getOptional()})
+	 * the filters (returned by {@link #getIncluded()})
 	 * to determine the final list of bundles in this target.
 	 * <p>
 	 * Some of the returned bundles may have non-OK statuses. These bundles may be 
@@ -71,7 +71,7 @@ public interface ITargetDefinition {
 
 	/**
 	 * Returns a list of all resolved bundles in this target definition or <code>null</code>. 
-	 * Does not filter based on any filters ({@link #getIncluded()} and {@link #getOptional()}).
+	 * Does not filter based on any filters ({@link #getIncluded()}.
 	 * Returns <code>null</code> if this target has not been resolved. 
 	 * Use {@link #getBundles()} to get the filtered list of bundles.
 	 *  
@@ -163,25 +163,6 @@ public interface ITargetDefinition {
 	 * @param included list of descriptors to include in the target or <code>null</code> to include all plug-ins
 	 */
 	public void setIncluded(NameVersionDescriptor[] included);
-
-	/**
-	 * Returns a list of descriptors used to add optional bundles to the resolved target.  If optional
-	 * bundles are not being used in this target this method will return <code>null</code>.  The returned
-	 * descriptors will have an ID set, may have a version set and will have a type of {@link NameVersionDescriptor#TYPE_PLUGIN}.
-	 * 
-	 * @return list of name version descriptors or <code>null</code>
-	 */
-	public NameVersionDescriptor[] getOptional();
-
-	/**
-	 * Sets a list of descriptors used to add optional bundles to the resolved target.  To not use optional bundles
-	 * pass <code>null</code> as the argument.  Only {@link NameVersionDescriptor}s with a type of {@link NameVersionDescriptor#TYPE_PLUGIN}
-	 * will be considered. The unit descriptions passed to this method must have an ID set, but the version may be <code>null</code>
-	 * to include any version of that plug-in.
-	 * 
-	 * @param included list of units to include in the target or <code>null</code> to not use optional bundles
-	 */
-	public void setOptional(NameVersionDescriptor[] optional);
 
 	/**
 	 * Returns JRE container path that this target definition should be built against,

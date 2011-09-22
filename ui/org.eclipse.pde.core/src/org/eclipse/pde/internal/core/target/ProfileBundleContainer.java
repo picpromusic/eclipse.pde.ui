@@ -11,8 +11,7 @@
 package org.eclipse.pde.internal.core.target;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.*;
 import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
@@ -128,28 +127,28 @@ public class ProfileBundleContainer extends AbstractBundleContainer {
 		if (source == null) {
 			source = new BundleInfo[0];
 		}
-		TargetBundle[] all = new TargetBundle[infos.length + source.length];
-		SubMonitor localMonitor = SubMonitor.convert(monitor, Messages.DirectoryBundleContainer_0, all.length);
+		List/*<TargetBundle>*/all = new ArrayList/*<TargetBundle>*/();
+		SubMonitor localMonitor = SubMonitor.convert(monitor, Messages.DirectoryBundleContainer_0, infos.length + source.length);
+		// Add executable bundles
 		for (int i = 0; i < infos.length; i++) {
 			if (monitor.isCanceled()) {
 				return new TargetBundle[0];
 			}
-			BundleInfo info = infos[i];
-			all[i] = resolveBundle(info, false);
+			URI location = infos[i].getLocation();
+			all.add(new TargetBundle(URIUtil.toFile(location)));
 			localMonitor.worked(1);
 		}
-		int index = 0;
-		for (int i = infos.length; i < all.length; i++) {
+		// Add source bundles
+		for (int i = 0; i < source.length; i++) {
 			if (monitor.isCanceled()) {
 				return new TargetBundle[0];
 			}
-			BundleInfo info = source[index];
-			all[i] = resolveBundle(info, true);
-			index++;
+			URI location = source[i].getLocation();
+			all.add(new TargetBundle(URIUtil.toFile(location)));
 			localMonitor.worked(1);
 		}
 		localMonitor.done();
-		return all;
+		return (TargetBundle[]) all.toArray(new TargetBundle[all.size()]);
 	}
 
 	/* (non-Javadoc)
@@ -181,7 +180,7 @@ public class ProfileBundleContainer extends AbstractBundleContainer {
 					throw new OperationCanceledException();
 				}
 				try {
-					TargetBundle rb = TargetBundleFactory.getInstance().createTargetBundle(files[i], this);
+					TargetBundle rb = new TargetBundle(files[i]);
 					if (rb != null) {
 						all.add(rb);
 					}

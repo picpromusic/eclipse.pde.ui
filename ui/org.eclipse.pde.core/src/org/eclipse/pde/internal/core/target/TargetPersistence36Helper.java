@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.*;
+import org.eclipse.pde.core.target.*;
 import org.w3c.dom.*;
 
 /**
@@ -73,7 +72,7 @@ public class TargetPersistence36Helper {
 						}
 					}
 					definition.setTargetLocations((ITargetLocation[]) bundleContainers.toArray(new ITargetLocation[bundleContainers.size()]));
-				} else if (nodeName.equalsIgnoreCase(TargetDefinitionPersistenceHelper.INCLUDE_BUNDLES)) {
+				} else if (nodeName.equalsIgnoreCase(TargetDefinitionPersistenceHelper.INCLUDE_BUNDLES) || nodeName.equalsIgnoreCase(TargetPersistence35Helper.OPTIONAL_BUNDLES)) {
 					NodeList children = element.getChildNodes();
 					List included = new ArrayList();
 					for (int j = 0; j < children.getLength(); ++j) {
@@ -91,22 +90,18 @@ public class TargetPersistence36Helper {
 							}
 						}
 					}
-					definition.setIncluded((NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]));
-				} else if (nodeName.equalsIgnoreCase(TargetDefinitionPersistenceHelper.OPTIONAL_BUNDLES)) {
-					NodeList children = element.getChildNodes();
-					List optional = new ArrayList();
-					for (int j = 0; j < children.getLength(); ++j) {
-						Node child = children.item(j);
-						if (child.getNodeType() == Node.ELEMENT_NODE) {
-							Element optionalElement = (Element) child;
-							if (optionalElement.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.PLUGIN)) {
-								String id = optionalElement.getAttribute(TargetDefinitionPersistenceHelper.ATTR_ID);
-								String version = optionalElement.getAttribute(TargetDefinitionPersistenceHelper.ATTR_VERSION);
-								optional.add(new NameVersionDescriptor(id, version.length() > 0 ? version : null));
-							}
+					// Don't overwrite includes with optional or vice versa
+					NameVersionDescriptor[] previousIncluded = definition.getIncluded();
+					if (previousIncluded == null || previousIncluded.length == 0) {
+						definition.setIncluded((NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]));
+					} else {
+						List allIncluded = new ArrayList();
+						for (int j = 0; j < previousIncluded.length; j++) {
+							allIncluded.add(previousIncluded[j]);
 						}
+						allIncluded.addAll(included);
+						definition.setIncluded((NameVersionDescriptor[]) allIncluded.toArray(new NameVersionDescriptor[included.size()]));
 					}
-					definition.setOptional((NameVersionDescriptor[]) optional.toArray(new NameVersionDescriptor[optional.size()]));
 				} else if (nodeName.equalsIgnoreCase(TargetDefinitionPersistenceHelper.ENVIRONMENT)) {
 					NodeList envEntries = element.getChildNodes();
 					for (int j = 0; j < envEntries.getLength(); ++j) {

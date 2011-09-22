@@ -19,18 +19,15 @@ import org.eclipse.core.runtime.*;
  * <p>
  * Clients are allowed to provide their own implementations. For the target definition
  * to be persisted correctly, clients must provide a factory through the 
- * <code>org.eclipse.pde.core.targetLocations</code> extension point. To display
- * an implementation in the PDE UI, clients must supply an adapter factory for 
- * the following:
+ * <code>org.eclipse.pde.core.targetLocations</code> extension point.
  * </p><p>
- * <code>String</code> to <code>IWizardNode</code>: Takes the target location 
- * identifier (String) and returns an IWizardNode object to supply the wizard
- * to create a new location.
+ * To display an implementation in the PDE UI, clients must supply an adapter factory 
+ * that adapts their ITargetLocation implementation to the following: 
  * </p><p>
- * <code>String</code> to <code>ILabelProvider</code>: Takes the target location
- * identifier (String) and returns a label provider that will supply the text 
- * and image for the target location.
- * <p>
+ * <code>IWizardNode</code>: Provides a IWizardNode object to supply a wizard for creating new locations of this type
+ * </p><p>
+ * <code>ILabelProvider</code>: Provides label text and image for the location implementation in the UI
+ * </p>
  * 
  * @since 3.8
  */
@@ -129,9 +126,10 @@ public interface ITargetLocation extends IAdaptable {
 	public String[] getVMArguments();
 
 	/**
-	 * Save the location attributes
-	 * @return
-	 * 		an XML string representing the location
+	 * Returns an XML String that stores information about this location so that it can be instantiated 
+	 * later using a {@link ITargetLocationFactory}.
+	 * 
+	 * @return an XML string storing all location information
 	 */
 	public String serialize();
 }
