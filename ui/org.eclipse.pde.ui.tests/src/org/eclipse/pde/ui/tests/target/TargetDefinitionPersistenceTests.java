@@ -558,12 +558,12 @@ public class TargetDefinitionPersistenceTests extends TestCase {
 		// Old optional settings are added to includes
 		NameVersionDescriptor[] included = new NameVersionDescriptor[]{
 				new NameVersionDescriptor("org.eclipse.debug.core", null),
+				new NameVersionDescriptor("org.eclipse.debug.examples.core", null),
+				new NameVersionDescriptor("org.eclipse.debug.examples.ui", null),
 				new NameVersionDescriptor("org.eclipse.debug.ui", null),
 				new NameVersionDescriptor("org.eclipse.jdt.debug", null),
 				new NameVersionDescriptor("org.eclipse.jdt.debug.ui", null),
-				new NameVersionDescriptor("org.eclipse.jdt.launching", null),
-				new NameVersionDescriptor("org.eclipse.debug.examples.core", null),
-				new NameVersionDescriptor("org.eclipse.debug.examples.ui", null)
+				new NameVersionDescriptor("org.eclipse.jdt.launching", null)
 		};	
 		
 		NameVersionDescriptor[] actual = target.getIncluded();
