@@ -174,7 +174,7 @@ public class ExportTargetJob extends Job {
 			monitor.subTask(PDECoreMessages.ExportTargetExportFeatures);
 			for (int i = 0; i < features.length; i++) {
 				if (shouldExport((IFeatureModel) features[i].getAdapter(IFeatureModel.class)))
-					copy(features[i].getInstallLocation(), featureDir, fileSystem, monitor);
+					copy(features[i].getLocation(), featureDir, fileSystem, monitor);
 			}
 		}
 

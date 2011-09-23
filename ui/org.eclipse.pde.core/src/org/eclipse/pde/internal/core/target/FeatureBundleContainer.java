@@ -122,7 +122,7 @@ public class FeatureBundleContainer extends AbstractBundleContainer {
 			if (features.length == 0) {
 				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind(Messages.FeatureBundleContainer_1, fId)));
 			}
-			File location = new File(features[0].getInstallLocation());
+			File location = new File(features[0].getLocation());
 			if (!location.exists()) {
 				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind(Messages.FeatureBundleContainer_0, location.toString())));
 			}

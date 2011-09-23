@@ -14,14 +14,22 @@ import java.io.*;
 import java.net.URL;
 import java.util.*;
 import org.eclipse.core.runtime.*;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.core.IModelProviderEvent;
 import org.eclipse.pde.core.IModelProviderListener;
 import org.eclipse.pde.core.target.TargetFeature;
 import org.eclipse.pde.internal.core.feature.ExternalFeatureModel;
 import org.eclipse.pde.internal.core.ifeature.IFeature;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
+import org.eclipse.pde.internal.core.target.Messages;
 import org.osgi.framework.Version;
 
+/**
+ * Manages the features known to the PDE state that come from the target platform.
+ * <p>
+ * Contains utility methods to create feature models for locations.
+ * </p>
+ */
 public class ExternalFeatureModelManager {
 
 	/**
@@ -29,9 +37,10 @@ public class ExternalFeatureModelManager {
 	 * file.
 	 * 
 	 * @param manifest feature XML file in the local file system
-	 * @return ExternalFeatureModel or null
+	 * @return {@link ExternalFeatureModel} containing information loaded from the xml
+	 * @throws CoreException if there is a problem reading the feature xml
 	 */
-	public static IFeatureModel createModel(File manifest) {
+	public static IFeatureModel createModel(File manifest) throws CoreException {
 		ExternalFeatureModel model = new ExternalFeatureModel();
 		model.setInstallLocation(manifest.getParent());
 		InputStream stream = null;
@@ -39,7 +48,8 @@ public class ExternalFeatureModelManager {
 			stream = new BufferedInputStream(new FileInputStream(manifest));
 			model.load(stream, false);
 			return model;
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
+			throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind(Messages.TargetFeature_FileDoesNotExist, manifest)));
 		} finally {
 			if (stream != null) {
 				try {
@@ -48,7 +58,6 @@ public class ExternalFeatureModelManager {
 				}
 			}
 		}
-		return null;
 	}
 
 	public static IFeatureModel[] createModels(String platformHome, ArrayList additionalLocations, IProgressMonitor monitor) {
@@ -88,10 +97,14 @@ public class ExternalFeatureModelManager {
 				monitor.worked(1);
 				continue;
 			}
-			IFeatureModel model = createModel(manifest);
-			if (model != null && model.isLoaded()) {
-				IFeature feature = model.getFeature();
-				uniqueFeatures.put(feature.getId() + "_" + feature.getVersion(), model); //$NON-NLS-1$
+			try {
+				IFeatureModel model = createModel(manifest);
+				if (model != null && model.isLoaded()) {
+					IFeature feature = model.getFeature();
+					uniqueFeatures.put(feature.getId() + "_" + feature.getVersion(), model); //$NON-NLS-1$
+				}
+			} catch (CoreException e) {
+				PDECore.log(e);
 			}
 			monitor.worked(1);
 		}
@@ -259,9 +272,11 @@ public class ExternalFeatureModelManager {
 				monitor.worked(1);
 				continue;
 			}
-			TargetFeature model = new TargetFeature(manifest);
-			if (model != null && model.isLoaded()) {
+			try {
+				TargetFeature model = new TargetFeature(manifest);
 				uniqueFeatures.put(model.getId() + "_" + model.getVersion(), model); //$NON-NLS-1$
+			} catch (CoreException e) {
+				// Ignore bad files in the collection
 			}
 			monitor.worked(1);
 		}

@@ -64,11 +64,11 @@ public class TargetBundle {
 	 * an archive file. The manifest of the bundle will be read to collect the additional
 	 * information.
 	 * 
-	 * @param file the location of the bundle (directory or archive) to open
-	 * @throws IOException if there is a problem opening the bundle or its manifest
+	 * @param bundleLocation the location of the bundle (directory or archive) to open
+	 * @throws CoreException if there is a problem opening the bundle or its manifest
 	 */
-	public TargetBundle(File file) throws CoreException {
-		initialize(file);
+	public TargetBundle(File bundleLocation) throws CoreException {
+		initialize(bundleLocation);
 	}
 
 	/**
@@ -148,6 +148,9 @@ public class TargetBundle {
 	 * @param file the bundle to initialize from
 	 */
 	private void initialize(File file) throws CoreException {
+		if (file == null || !file.exists()) {
+			throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind(Messages.TargetFeature_FileDoesNotExist, file)));
+		}
 		Map manifest = ManifestUtils.loadManifest(file);
 		try {
 			fInfo = new BundleInfo(file.toURI());
