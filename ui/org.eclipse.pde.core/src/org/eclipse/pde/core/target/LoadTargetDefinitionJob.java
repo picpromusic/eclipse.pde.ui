@@ -27,7 +27,6 @@ import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.core.plugin.TargetPlatform;
 import org.eclipse.pde.internal.core.*;
-import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
 import org.eclipse.pde.internal.core.target.*;
 
 /**
@@ -560,10 +559,9 @@ public class LoadTargetDefinitionJob extends WorkspaceJob {
 			if (includes == null || !featuresFound) {
 				// Add all features to the list
 				for (int i = 0; i < allFeatures.length; i++) {
-					IFeatureModel feature = (IFeatureModel) allFeatures[i].getAdapter(IFeatureModel.class);
-					featureList.append(feature.getFeature().getId());
+					featureList.append(allFeatures[i].getId());
 					featureList.append('@');
-					featureList.append(feature.getFeature().getVersion());
+					featureList.append(allFeatures[i].getVersion());
 					if (i < allFeatures.length - 1) {
 						featureList.append(',');
 					}

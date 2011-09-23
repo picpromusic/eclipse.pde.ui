@@ -418,39 +418,38 @@ public class TargetDefinition implements ITargetDefinition {
 			} else if (filter[i].getType() == NameVersionDescriptor.TYPE_FEATURE) {
 				containsFeatures = true;
 				TargetFeature[] features = getAllFeatures();
-				IFeatureModel bestMatch = null;
+				TargetFeature bestMatch = null;
 				for (int j = 0; j < features.length; j++) {
 					TargetFeature feature = features[j];
-					IFeatureModel featureModel = (IFeatureModel) feature.getAdapter(IFeatureModel.class);
-					if (featureModel.getFeature().getId().equals(filter[i].getId())) {
+					if (feature.getId().equals(filter[i].getId())) {
 						if (filter[i].getVersion() != null) {
 							// Try to find an exact feature match
-							if (filter[i].getVersion().equals(featureModel.getFeature().getVersion())) {
+							if (filter[i].getVersion().equals(feature.getVersion())) {
 								// Exact match
-								bestMatch = featureModel;
+								bestMatch = feature;
 								break;
 							}
 						} else if (bestMatch != null) {
 							// If no version specified take the highest version
-							Version v1 = Version.parseVersion(featureModel.getFeature().getVersion());
-							Version v2 = Version.parseVersion(bestMatch.getFeature().getVersion());
+							Version v1 = Version.parseVersion(feature.getVersion());
+							Version v2 = Version.parseVersion(bestMatch.getVersion());
 							if (v1.compareTo(v2) > 0) {
-								bestMatch = featureModel;
+								bestMatch = feature;
 							}
 						}
 
 						if (bestMatch == null) {
 							// If we can't find a version match, just take any name match
-							bestMatch = featureModel;
+							bestMatch = feature;
 						}
 					}
 				}
 
 				// Add the required plugins from the feature to the list of includes
 				if (bestMatch != null) {
-					IFeaturePlugin[] plugins = bestMatch.getFeature().getPlugins();
+					NameVersionDescriptor[] plugins = bestMatch.getPlugins();
 					for (int j = 0; j < plugins.length; j++) {
-						included.add(new NameVersionDescriptor(plugins[j].getId(), plugins[j].getVersion()));
+						included.add(plugins[j]);
 					}
 				} else {
 					missingFeatures.add(filter[i]);
@@ -458,8 +457,8 @@ public class TargetDefinition implements ITargetDefinition {
 			}
 		}
 
-		// Return matching bundles
-		List result = getMatchingBundles(bundles, (NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]));
+		// Return matching bundles, if we are organizing by feature, do not create invalid target bundles for missing bundle includes
+		List result = getMatchingBundles(bundles, (NameVersionDescriptor[]) included.toArray(new NameVersionDescriptor[included.size()]), !containsFeatures);
 
 		// Add in missing features as resolved bundles with error statuses
 		if (containsFeatures && !missingFeatures.isEmpty()) {
@@ -480,16 +479,17 @@ public class TargetDefinition implements ITargetDefinition {
 	 * and/or version in the specified criteria. When no version is specified
 	 * the newest version (if any) is selected.
 	 * <p>
-	 * If a parent error container is specified, bundles listed in the included and optional filters that
-	 * are not found in the given collection will be added as IResolvedBundles with error statuses explaining
-	 * the problem.  If no parent container is specified, missing included and optional bundles will be ignored.
-	 * </p> 
+	 * If handleMissingBundles is <code>true</code>, the returned list will contain {@link InvalidTargetBundle}s
+	 * for any included filters that do not have a matching bundle in the collection. The invalid bundles
+	 * will contain statuses describing what couldn't be matched.
+	 * </p>
 	 * @param collection bundles to resolve against match criteria
 	 * @param included bundles to include or <code>null</code> if no restrictions
+	 * @param handleMissingBundles whether to create {@link InvalidTargetBundle}s for missing includes
 	 * 
 	 * @return list of IResolvedBundle bundles that match this container's restrictions
 	 */
-	static List getMatchingBundles(TargetBundle[] collection, NameVersionDescriptor[] included) {
+	static List getMatchingBundles(TargetBundle[] collection, NameVersionDescriptor[] included, boolean handleMissingBundles) {
 		if (included == null) {
 			ArrayList result = new ArrayList();
 			result.addAll(Arrays.asList(collection));
@@ -514,7 +514,7 @@ public class TargetDefinition implements ITargetDefinition {
 		} else {
 			for (int i = 0; i < included.length; i++) {
 				BundleInfo info = new BundleInfo(included[i].getId(), included[i].getVersion(), null, BundleInfo.NO_LEVEL, false);
-				TargetBundle bundle = resolveBundle(bundleMap, info);
+				TargetBundle bundle = resolveBundle(bundleMap, info, handleMissingBundles);
 				if (bundle != null) {
 					resolved.add(bundle);
 				}
@@ -528,18 +528,18 @@ public class TargetDefinition implements ITargetDefinition {
 	 * keys of symbolic names and values are lists of {@link TargetBundle}'s available
 	 * that match the names.
 	 * <p>
-	 * If an parent container for errors is provided, if a resolve bundle matching the requirements cannot be found
-	 * a IResolvedBundle will be returned containing an status.  If no parent container is specified,
-	 * missing bundles will result in a return value of <code>null</code>
+	 * If handleMissingBundles is <code>true</code>, a {@link InvalidTargetBundle} will be created and 
+	 * returned if the give info does not match up with a map entry. The returned bundle will have
+	 * a status giving more details on what is missing. If handleMissingBundles is <code>false</code>,
+	 * <code>null</code> will be returned.
 	 * </p>
 	 * 
 	 * @param bundleMap available bundles to resolve against
 	 * @param info name and version to match against
-	 * @param optional whether the bundle is optional
-	 * @param errorParentContainer bundle container the resolved bundle belongs too
+	 * @param handleMissingBundles whether to return an {@link InvalidTargetBundle} for a info that does not match with a map entry or <code>null</code>
 	 * @return resolved bundle or <code>null</code>
 	 */
-	private static TargetBundle resolveBundle(Map bundleMap, BundleInfo info) {
+	private static TargetBundle resolveBundle(Map bundleMap, BundleInfo info, boolean handleMissingBundles) {
 		List list = (List) bundleMap.get(info.getSymbolicName());
 		if (list != null) {
 			String version = info.getVersion();
@@ -566,13 +566,20 @@ public class TargetDefinition implements ITargetDefinition {
 					return bundle;
 				}
 			}
+
 			// VERSION DOES NOT EXIST
+			if (!handleMissingBundles) {
+				return null;
+			}
 			int sev = IStatus.ERROR;
 			String message = NLS.bind(Messages.AbstractBundleContainer_1, new Object[] {info.getVersion(), info.getSymbolicName()});
 			IStatus status = new Status(sev, PDECore.PLUGIN_ID, TargetBundle.STATUS_VERSION_DOES_NOT_EXIST, message, null);
 			return new InvalidTargetBundle(info, status);
 		}
 		// DOES NOT EXIST
+		if (!handleMissingBundles) {
+			return null;
+		}
 		int sev = IStatus.ERROR;
 		String message = NLS.bind(Messages.AbstractBundleContainer_3, info.getSymbolicName());
 		IStatus status = new Status(sev, PDECore.PLUGIN_ID, TargetBundle.STATUS_PLUGIN_DOES_NOT_EXIST, message, null);

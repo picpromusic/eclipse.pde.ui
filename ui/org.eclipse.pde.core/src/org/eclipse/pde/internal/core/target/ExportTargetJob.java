@@ -23,8 +23,6 @@ import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.PDECoreMessages;
-import org.eclipse.pde.internal.core.feature.ExternalFeatureModel;
-import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
 
 /**
  * This job exports the bundles and features that make up your target.
@@ -123,12 +121,10 @@ public class ExportTargetJob extends Job {
 		return false;
 	}
 
-	private boolean shouldExport(IFeatureModel feature) {
+	private boolean shouldExport(TargetFeature feature) {
 		if (filter == null)
 			return true;
-		if (!feature.isEnabled() || !(feature instanceof ExternalFeatureModel))
-			return false;
-		NameVersionDescriptor descriptor = new NameVersionDescriptor(feature.getFeature().getId(), feature.getFeature().getVersion(), NameVersionDescriptor.TYPE_FEATURE);
+		NameVersionDescriptor descriptor = new NameVersionDescriptor(feature.getId(), feature.getVersion(), NameVersionDescriptor.TYPE_FEATURE);
 		return shouldExport(descriptor);
 	}
 
@@ -173,7 +169,7 @@ public class ExportTargetJob extends Job {
 		if (features != null) {
 			monitor.subTask(PDECoreMessages.ExportTargetExportFeatures);
 			for (int i = 0; i < features.length; i++) {
-				if (shouldExport((IFeatureModel) features[i].getAdapter(IFeatureModel.class)))
+				if (shouldExport(features[i]))
 					copy(features[i].getLocation(), featureDir, fileSystem, monitor);
 			}
 		}

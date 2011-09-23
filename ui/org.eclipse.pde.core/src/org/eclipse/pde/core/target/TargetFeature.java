@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.internal.core.*;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
+import org.eclipse.pde.internal.core.ifeature.IFeaturePlugin;
 import org.eclipse.pde.internal.core.target.Messages;
 
 /**
@@ -22,7 +23,7 @@ import org.eclipse.pde.internal.core.target.Messages;
  * 
  * @since 3.8
  */
-public class TargetFeature implements IAdaptable {
+public class TargetFeature {
 
 	private IFeatureModel featureModel;
 
@@ -72,14 +73,19 @@ public class TargetFeature implements IAdaptable {
 		return featureModel.getInstallLocation();
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
+	/**
+	 * Returns a list of name version descriptor that describes the set of 
+	 * plug-ins that this feature includes.
+	 * 
+	 * @return a list of name version descriptors, possibly empty
 	 */
-	public Object getAdapter(Class adapter) {
-		if (IFeatureModel.class == adapter) {
-			return featureModel;
+	public NameVersionDescriptor[] getPlugins() {
+		IFeaturePlugin[] plugins = featureModel.getFeature().getPlugins();
+		NameVersionDescriptor[] result = new NameVersionDescriptor[plugins.length];
+		for (int i = 0; i < plugins.length; i++) {
+			result[i] = new NameVersionDescriptor(plugins[i].getId(), plugins[i].getVersion());
 		}
-		return null;
+		return result;
 	}
 
 	/**
@@ -101,6 +107,15 @@ public class TargetFeature implements IAdaptable {
 			}
 		}
 		featureModel = ExternalFeatureModelManager.createModel(featureXML);
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString() {
+		StringBuffer result = new StringBuffer();
+		result.append(getId()).append(' ').append(getVersion()).append(" (Feature)"); //$NON-NLS-1$
+		return result.toString();
 	}
 
 }

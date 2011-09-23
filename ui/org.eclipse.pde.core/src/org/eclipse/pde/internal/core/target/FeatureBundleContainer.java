@@ -164,7 +164,7 @@ public class FeatureBundleContainer extends AbstractBundleContainer {
 				}
 			}
 
-			List result = TargetDefinition.getMatchingBundles(bundles, (NameVersionDescriptor[]) matchInfos.toArray(new NameVersionDescriptor[matchInfos.size()]));
+			List result = TargetDefinition.getMatchingBundles(bundles, (NameVersionDescriptor[]) matchInfos.toArray(new NameVersionDescriptor[matchInfos.size()]), true);
 			return (TargetBundle[]) result.toArray(new TargetBundle[result.size()]);
 		} finally {
 			if (model != null) {
