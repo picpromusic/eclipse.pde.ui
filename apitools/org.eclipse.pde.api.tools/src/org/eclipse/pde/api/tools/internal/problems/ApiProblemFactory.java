@@ -650,10 +650,7 @@ public class ApiProblemFactory {
 	
 	/**
 	 * Returns the problem severity id for the given problem parameters.
-	 * @param category
-	 * @param element
-	 * @param kind
-	 * @param flags
+	 * @param problem the problem to get severity for
 	 * @return the id of the preference to use to lookup the user specified severity level for the given {@link IApiProblem}
 	 */
 	public static String getProblemSeverityId(IApiProblem problem) {
@@ -726,4 +723,5 @@ public class ApiProblemFactory {
 		}
 		return null;
 	}
+	
 }

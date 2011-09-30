@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corporation and others.
+ * Copyright (c) 2009, 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -65,7 +65,22 @@ public class UseSearchRequestor implements IApiSearchRequestor {
 	 * The default {@link ReferenceAnalyzer} for detecting illegal API use
 	 * @see #includesIllegalUse()
 	 */
-	ReferenceAnalyzer fAnalyzer = null;
+	private ReferenceAnalyzer fAnalyzer = null;
+	
+	/**
+	 * The string root location of any api_filter files to apply, possbly <code>null</code> 
+	 */
+	private String fFilterRoot = null;
+	
+	/**
+	 * The filter store for the current component, only one is cached at a time
+	 */
+	private ReferenceFilterStore fCurrentFilterStore = null;
+	
+	/**
+	 * Provide more verbose output if debug flag is set
+	 */
+	private boolean debug = false;
 	
 	/**
 	 * Constructor
@@ -89,6 +104,22 @@ public class UseSearchRequestor implements IApiSearchRequestor {
 	 * @see org.eclipse.pde.api.tools.internal.provisional.search.IApiSearchRequestor#acceptComponent(org.eclipse.pde.api.tools.internal.provisional.model.IApiComponent)
 	 */
 	public boolean acceptComponent(IApiComponent component) {
+		if (fFilterRoot != null){
+			
+			
+			
+			// TODO Change debug value back from true
+			debug = true;
+			
+			
+			
+			fCurrentFilterStore = new ReferenceFilterStore(fFilterRoot, component.getSymbolicName(), debug);
+			if (fCurrentFilterStore.getFilterCount() == 0){
+				// If no relevant filters are found, skip filtering
+				fCurrentFilterStore.dispose();
+				fCurrentFilterStore = null;
+			}
+		}
 		try {
 			if(!component.isSystemComponent() && getScope().encloses(component)) {
 				if(includesIllegalUse()) {
@@ -156,23 +187,39 @@ public class UseSearchRequestor implements IApiSearchRequestor {
 		try {
 			IApiMember member = reference.getResolvedReference();
 			if(member != null) {
+				// Check for component filtering
 				IApiComponent component = member.getApiComponent();
 				if(!fComponentIds.contains(component.getSymbolicName()) || component.equals(reference.getMember().getApiComponent())) {
 					return false;
 				}
+
+				// Check search type filtering
+				boolean searchTypeValid = false;			
 				if(isIllegalUse(reference) || (includesAPI() && includesInternal())) {
-					return true;
+					searchTypeValid = true;
 				}
 				IApiAnnotations annots = component.getApiDescription().resolveAnnotations(member.getHandle());
 				if(annots != null) {
 					int vis = annots.getVisibility();
 					if(VisibilityModifiers.isAPI(vis) && includesAPI()) {
-						return true;
+						searchTypeValid = true;
 					}
 					else if(VisibilityModifiers.isPrivate(vis) && includesInternal()) {
-						return true;
+						searchTypeValid = true;
 					}
 				}
+				if (!searchTypeValid){
+					return false;
+				}
+				
+				// Check against api_filters file
+				if (fCurrentFilterStore != null){
+					if (fCurrentFilterStore.isFiltered(reference)){
+						return false;
+					}
+				}
+				
+				return true;
 			}
 		}
 		catch(CoreException ce) {
@@ -259,5 +306,21 @@ public class UseSearchRequestor implements IApiSearchRequestor {
 	 */
 	public void setJarPatterns(String[] patterns) {
 		jarPatterns = patterns;
+	}
+	
+	/**
+	 * Set the root directory location of api_filter files that should be used to filter the accepted references
+	 * @param filterRoot string file location of any api_filter files to apply or <code>null</code> to not filter
+	 */
+	public void setFilterRoot(String filterRoot){
+		this.fFilterRoot = filterRoot;
+	}
+	
+	/**
+	 * Sets whether this requestor is in debug mode, with more verbose output.  Default is <code>false</code>.
+	 * @param debug new debug setting
+	 */
+	public void setDebug(boolean debug){
+		this.debug = debug;
 	}
 }

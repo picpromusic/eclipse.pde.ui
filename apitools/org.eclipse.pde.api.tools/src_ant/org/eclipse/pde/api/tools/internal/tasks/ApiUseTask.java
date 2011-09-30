@@ -108,6 +108,11 @@ public final class ApiUseTask extends CommonUtilsTask {
 	private FilteredElements includedElements = null;
 	
 	/**
+	 * Root directory of api_filters files to apply
+	 */
+	private String filterRoot = null;
+	
+	/**
 	 * Set the location of the current product you want to search.
 	 * 
 	 * <p>It can be a .zip, .jar, .tgz, .tar.gz file, or a directory that corresponds to 
@@ -292,11 +297,10 @@ public final class ApiUseTask extends CommonUtilsTask {
 			TreeSet scope = new TreeSet(Util.componentsorter);
 			getContext(baseline, ids, scope);
 			ApiSearchEngine engine = new ApiSearchEngine();
-			UseSearchRequestor requestor = new UseSearchRequestor(
-					ids,
-					(IApiElement[]) scope.toArray(new IApiElement[scope.size()]), 
-					getSearchFlags());
+			UseSearchRequestor requestor = new UseSearchRequestor(ids, (IApiElement[]) scope.toArray(new IApiElement[scope.size()]), getSearchFlags());
+			requestor.setFilterRoot(filterRoot);
 			requestor.setJarPatterns(archivePatterns);
+			requestor.setDebug(debug);
 			// override API descriptions as required
 			if (apiPatterns != null || internalPatterns != null) {
 				// modify API descriptions
@@ -491,14 +495,19 @@ public final class ApiUseTask extends CommonUtilsTask {
 			System.out.println("Searching for internal references : " + this.considerinternal); //$NON-NLS-1$
 			System.out.println("Searching for illegal API use : "+ this.considerillegaluse); //$NON-NLS-1$
 			if (this.excludeListLocation != null) {
-				System.out.println("exclude list location : " + this.excludeListLocation); //$NON-NLS-1$
+				System.out.println("Exclude list location : " + this.excludeListLocation); //$NON-NLS-1$
 			} else {
 				System.out.println("No exclude list location"); //$NON-NLS-1$
 			}
 			if (this.includeListLocation != null) {
-				System.out.println("include list location : " + this.includeListLocation); //$NON-NLS-1$
+				System.out.println("Include list location : " + this.includeListLocation); //$NON-NLS-1$
 			} else {
 				System.out.println("No include list location"); //$NON-NLS-1$
+			}
+			if (this.filterRoot != null) {
+				System.out.println("API Filter location : " + this.filterRoot); //$NON-NLS-1$
+			} else {
+				System.out.println("No API filter location"); //$NON-NLS-1$
 			}
 			if(this.scopepattern == null) {
 				System.out.println("No scope pattern defined - searching all bundles"); //$NON-NLS-1$
@@ -570,5 +579,29 @@ public final class ApiUseTask extends CommonUtilsTask {
 	 */
 	public void setIncludeList(String includeListLocation) {
 		this.includeListLocation = includeListLocation;
+	}
+	
+	/**
+	 * Set the root directory of API filters to use during the use scan.
+	 *
+	 * The argument is the root directory of the .api_filters files that should be used to filter references.
+	 * 
+	 * The .api_filters files specify specific problems to ignore during api analysis. During the use scan, the 
+	 * problem filters will be converted to a list of references that will be filtered from the use scan results.
+	 *
+	 * The root is specified using an absolute path.
+	 * The root needs to contain the following structure: 
+	 * <pre>
+	 * root
+	 *  |
+	 *  +-- component name (i.e. org.eclipse.jface)
+	 *         |
+	 *         +--- .api_filters
+	 * </pre>
+	 *
+	 * @param filters the root of the .api_filters files
+	 */
+	public void setFilters(String filtersRoot) {
+		this.filterRoot = filtersRoot; 
 	}
 }
