@@ -51,21 +51,6 @@ public class TargetLocationTypeManager {
 	}
 
 	/**
-	 * Returns a description from the factory that supports the location type or <code>null</code> if no factory
-	 * can be found.
-	 * 
-	 * @param type	target location identifier
-	 * @return	description for the target location
-	 */
-	public String getDescription(String type) {
-		ITargetLocationFactory factory = getFactory(type);
-		if (factory != null) {
-			return factory.getDescription(type);
-		}
-		return null;
-	}
-
-	/**
 	 * Returns an instance of {@link ITargetLocation} from the factory that supports
 	 * the location type.  Will throw a {@link CoreException} if no factory can be
 	 * found or the xml is invalid.

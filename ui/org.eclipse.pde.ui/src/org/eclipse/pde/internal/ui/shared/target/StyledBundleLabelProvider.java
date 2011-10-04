@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.core.target.*;
-
 import com.ibm.icu.text.MessageFormat;
 import java.net.URI;
 import org.eclipse.core.runtime.*;
@@ -20,11 +18,12 @@ import org.eclipse.equinox.internal.p2.metadata.TranslationSupport;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
 import org.eclipse.pde.internal.core.target.*;
 import org.eclipse.pde.internal.ui.PDEPlugin;
 import org.eclipse.pde.internal.ui.PDEPluginImages;
-import org.eclipse.pde.internal.ui.shared.target.TargetLocationsGroup.IUWrapper;
+import org.eclipse.pde.internal.ui.shared.target.IUContentProvider.IUWrapper;
 import org.eclipse.pde.internal.ui.util.SharedLabelProvider;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.ISharedImages;

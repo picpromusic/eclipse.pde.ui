@@ -369,4 +369,11 @@
             type="org.eclipse.jdt.core.IPackageFragmentRoot">
       </propertyTester>
    </extension>
+    <extension
+          point="org.eclipse.pde.core.targetLocations">
+       <targetLocation
+             locationFactory="org.eclipse.pde.internal.core.target.IULocationFactory"
+             type="org.eclipse.pde.core.InstallableUnit">
+       </targetLocation>
+    </extension>
 </plugin>

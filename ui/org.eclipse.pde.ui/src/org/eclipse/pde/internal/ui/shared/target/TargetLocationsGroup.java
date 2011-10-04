@@ -10,21 +10,20 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.util.*;
 import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
-import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.target.*;
 import org.eclipse.pde.internal.ui.SWTFactory;
 import org.eclipse.pde.internal.ui.editor.FormLayoutFactory;
 import org.eclipse.pde.internal.ui.editor.targetdefinition.TargetEditor;
+import org.eclipse.pde.internal.ui.shared.target.IUContentProvider.IUWrapper;
 import org.eclipse.pde.internal.ui.wizards.target.TargetDefinitionContentPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
@@ -187,7 +186,7 @@ public class TargetLocationsGroup {
 	 */
 	private void initializeTreeViewer(Tree tree) {
 		fTreeViewer = new TreeViewer(tree);
-		fTreeViewer.setContentProvider(new BundleContainerContentProvider());
+		fTreeViewer.setContentProvider(new TargetLocationContentProvider());
 		fTreeViewer.setLabelProvider(new TargetLocationLabelProvider(true, false));
 		fTreeViewer.setComparator(new ViewerComparator() {
 			public int compare(Viewer viewer, Object e1, Object e2) {
@@ -470,43 +469,38 @@ public class TargetLocationsGroup {
 	/**
 	 * Content provider for the tree, primary input is a ITargetDefinition, children are ITargetLocation
 	 */
-	class BundleContainerContentProvider implements ITreeContentProvider {
+	class TargetLocationContentProvider implements ITreeContentProvider {
+
+		Map fParentMap = new HashMap();
 
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof ITargetDefinition) {
 				ITargetLocation[] containers = ((ITargetDefinition) parentElement).getTargetLocations();
 				return containers != null ? containers : new Object[0];
-			} else if (parentElement instanceof ITargetLocation) {
-				ITargetLocation container = (ITargetLocation) parentElement;
-				if (container.isResolved()) {
-					IStatus status = container.getStatus();
+			} else if (parentElement instanceof AbstractBundleContainer) {
+				AbstractBundleContainer location = (AbstractBundleContainer) parentElement;
+				if (location.isResolved()) {
+					IStatus status = location.getStatus();
 					if (!status.isOK() && !status.isMultiStatus()) {
 						return new Object[] {status};
 					}
 					if (fShowContentButton.getSelection()) {
-						return container.getBundles();
+						return location.getBundles();
 					} else if (!status.isOK()) {
 						// Show multi-status children so user can easily see problems
 						if (status.isMultiStatus()) {
 							return status.getChildren();
 						}
-					} else if (parentElement instanceof IUBundleContainer) {
-						// Show the IUs as children
-						try {
-							// if this is a bundle container then we must be sure that all bundle containers are
-							// happy since they all share the same profile.
-							if (!P2TargetUtils.isResolved(fTarget)) {
-								return new Object[0];
-							}
-							IInstallableUnit[] units = ((IUBundleContainer) parentElement).getInstallableUnits();
-							// Wrap the units so that they remember their parent container
-							List wrappedUnits = new ArrayList(units.length);
-							for (int i = 0; i < units.length; i++) {
-								wrappedUnits.add(new IUWrapper(units[i], (IUBundleContainer) parentElement));
-							}
-							return wrappedUnits.toArray();
-						} catch (CoreException e) {
-							return new Object[] {e.getStatus()};
+					}
+				}
+			} else if (parentElement instanceof ITargetLocation) {
+				ITargetLocation location = (ITargetLocation) parentElement;
+				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance().getContentProvider(location.getType());
+				if (contentProvider != null) {
+					Object[] result = contentProvider.getChildren(parentElement);
+					if (result != null && result.length > 0) {
+						for (int i = 0; i < result.length; i++) {
+							fParentMap.put(result[i], parentElement);
 						}
 					}
 				}
@@ -517,13 +511,17 @@ public class TargetLocationsGroup {
 		}
 
 		public Object getParent(Object element) {
-			if (element instanceof IUWrapper) {
-				return ((IUWrapper) element).getParent();
-			}
-			return null;
+			return fParentMap.get(element);
 		}
 
 		public boolean hasChildren(Object element) {
+			if (!(element instanceof AbstractBundleContainer) && (element instanceof ITargetLocation)) {
+				ITargetLocation location = (ITargetLocation) element;
+				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance().getContentProvider(location.getType());
+				if (contentProvider != null) {
+					return contentProvider.hasChildren(element);
+				}
+			}
 			// Since we are already resolved we can't be more efficient
 			return getChildren(element).length > 0;
 		}
@@ -562,27 +560,4 @@ public class TargetLocationsGroup {
 		}
 
 	}
-
-	/**
-	 * Wraps an installable unit so that it knows what bundle container parent it belongs to
-	 * in the tree.
-	 */
-	class IUWrapper {
-		private IInstallableUnit fIU;
-		private IUBundleContainer fParent;
-
-		public IUWrapper(IInstallableUnit unit, IUBundleContainer parent) {
-			fIU = unit;
-			fParent = parent;
-		}
-
-		public IInstallableUnit getIU() {
-			return fIU;
-		}
-
-		public IUBundleContainer getParent() {
-			return fParent;
-		}
-	}
-
 }

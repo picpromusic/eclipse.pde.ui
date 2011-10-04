@@ -10,12 +10,8 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.core.target.ITargetLocation;
-
-import java.util.HashMap;
-import java.util.Map;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.core.target.AbstractBundleContainer;
 import org.eclipse.swt.graphics.Image;
 
@@ -28,14 +24,12 @@ public class TargetLocationLabelProvider extends StyledBundleLabelProvider {
 		super(showVersion, appendResolvedVariables);
 	}
 
-	Map fLabelProviderMap;
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.StyledCellLabelProvider#update(org.eclipse.jface.viewers.ViewerCell)
 	 */
 	public void update(ViewerCell cell) {
 		Object element = cell.getElement();
-		if (element instanceof ITargetLocation) {
+		if (!(element instanceof AbstractBundleContainer) && (element instanceof ITargetLocation)) {
 			ILabelProvider provider = getLabelProvider((ITargetLocation) element);
 			if (provider instanceof StyledCellLabelProvider) {
 				((StyledCellLabelProvider) provider).update(cell);
@@ -78,14 +72,6 @@ public class TargetLocationLabelProvider extends StyledBundleLabelProvider {
 	}
 
 	private ILabelProvider getLabelProvider(ITargetLocation location) {
-		if (fLabelProviderMap == null) {
-			fLabelProviderMap = new HashMap(4);
-		}
-		ILabelProvider provider = (ILabelProvider) fLabelProviderMap.get(location);
-		if (provider == null) {
-			provider = (ILabelProvider) Platform.getAdapterManager().getAdapter(location.getType(), ILabelProvider.class);
-			fLabelProviderMap.put(location.getType(), provider);
-		}
-		return provider;
+		return TargetProvisionerManager.getInstance().getLabelProvider(location.getType());
 	}
 }

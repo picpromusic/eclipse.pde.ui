@@ -33,13 +33,4 @@ public interface ITargetLocationFactory {
 	 */
 	public ITargetLocation getTargetLocation(String type, String serializedXML) throws CoreException;
 
-	/**
-	 * Returns a string description for the provided target location type or <code>null</code> if the
-	 * type is not supported by this factory.
-	 * 
-	 * @param type the string type describing the implementation of ITargetLocation to get the description for, see {@link ITargetLocation#getType()}
-	 * @return a description for the target location or <code>null</code>
-	 */
-	public String getDescription(String type);
-
 }

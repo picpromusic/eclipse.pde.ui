@@ -26,7 +26,7 @@ import org.osgi.framework.BundleException;
  * 
  * @since 3.5
  */
-public abstract class AbstractBundleContainer implements ITargetLocation {
+public abstract class AbstractBundleContainer extends PlatformObject implements ITargetLocation {
 
 	/**
 	 * Resolved bundles or <code>null</code> if unresolved
@@ -254,10 +254,4 @@ public abstract class AbstractBundleContainer implements ITargetLocation {
 		return ""; //$NON-NLS-1$
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-	 */
-	public Object getAdapter(Class adapter) {
-		return Platform.getAdapterManager().getAdapter(this, adapter);
-	}
 }

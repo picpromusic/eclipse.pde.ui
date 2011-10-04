@@ -10,10 +10,12 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.eclipse.core.runtime.*;
 import org.eclipse.pde.core.target.*;
 import org.w3c.dom.*;
@@ -200,56 +202,14 @@ public class TargetPersistence38Helper {
 		} else if (FeatureBundleContainer.TYPE.equals(type)) {
 			String version = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_VERSION);
 			container = TargetDefinitionPersistenceHelper.getTargetPlatformService().newFeatureLocation(path, location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_ID), version.length() > 0 ? version : null);
-		} else if (IUBundleContainer.TYPE.equals(type)) {
-			String includeMode = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_MODE);
-			String includeAllPlatforms = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_ALL_PLATFORMS);
-			String includeSource = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_SOURCE);
-			NodeList list = location.getChildNodes();
-			List ids = new ArrayList();
-			List versions = new ArrayList();
-			List repos = new ArrayList();
-			for (int i = 0; i < list.getLength(); ++i) {
-				Node node = list.item(i);
-				if (node.getNodeType() == Node.ELEMENT_NODE) {
-					// TODO: missing id/version
-					Element element = (Element) node;
-					if (element.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.INSTALLABLE_UNIT)) {
-						String id = element.getAttribute(TargetDefinitionPersistenceHelper.ATTR_ID);
-						if (id.length() > 0) {
-							String version = element.getAttribute(TargetDefinitionPersistenceHelper.ATTR_VERSION);
-							if (version.length() > 0) {
-								ids.add(id);
-								versions.add(version);
-							}
-						}
-					} else if (element.getNodeName().equalsIgnoreCase(TargetDefinitionPersistenceHelper.REPOSITORY)) {
-						String loc = element.getAttribute(TargetDefinitionPersistenceHelper.LOCATION);
-						if (loc.length() > 0) {
-							try {
-								repos.add(new URI(loc));
-							} catch (URISyntaxException e) {
-								// TODO: illegal syntax
-							}
-						}
-					}
-				}
-			}
-			String[] iuIDs = (String[]) ids.toArray(new String[ids.size()]);
-			String[] iuVer = (String[]) versions.toArray(new String[versions.size()]);
-			URI[] uris = (URI[]) repos.toArray(new URI[repos.size()]);
-
-			int flags = IUBundleContainer.INCLUDE_REQUIRED;
-			if (includeMode != null && includeMode.trim().length() > 0) {
-				if (includeMode.equals(TargetDefinitionPersistenceHelper.MODE_SLICER)) {
-					flags = 0;
-				}
-			}
-			flags |= Boolean.valueOf(includeAllPlatforms).booleanValue() ? IUBundleContainer.INCLUDE_ALL_ENVIRONMENTS : 0;
-			flags |= Boolean.valueOf(includeSource).booleanValue() ? IUBundleContainer.INCLUDE_SOURCE : 0;
-			container = new IUBundleContainer(iuIDs, iuVer, uris, flags);
 		} else {
 			// The container is of an unknown type, should have a contribution through
-			container = TargetLocationTypeManager.getInstance().getTargetLocation(type, location.toString());
+			try {
+				StreamResult result = new StreamResult(new StringWriter());
+				TransformerFactory.newInstance().newTransformer().transform(new DOMSource(location), result);
+				container = TargetLocationTypeManager.getInstance().getTargetLocation(type, result.getWriter().toString());
+			} catch (Exception e) {
+			}
 		}
 		return container;
 	}

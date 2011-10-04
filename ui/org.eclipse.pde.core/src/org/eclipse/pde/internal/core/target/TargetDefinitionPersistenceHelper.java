@@ -11,7 +11,6 @@
 package org.eclipse.pde.internal.core.target;
 
 import java.io.*;
-import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.xml.parsers.*;
@@ -19,7 +18,6 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import org.eclipse.core.runtime.*;
-import org.eclipse.equinox.p2.metadata.Version;
 import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.ICoreConstants;
 import org.eclipse.pde.internal.core.PDECore;
@@ -288,48 +286,29 @@ public class TargetDefinitionPersistenceHelper {
 		return result.toString();
 	}
 
-	private static Element serializeBundleContainer(Document doc, ITargetLocation containers) throws CoreException, SAXException, IOException, ParserConfigurationException {
+	private static Element serializeBundleContainer(Document doc, ITargetLocation targetLocation) throws CoreException, SAXException, IOException, ParserConfigurationException {
 		Element containerElement = doc.createElement(LOCATION);
-		if (!(containers instanceof IUBundleContainer)) {
-			containerElement.setAttribute(ATTR_LOCATION_PATH, containers.getLocation(false));
+		if (targetLocation instanceof DirectoryBundleContainer || targetLocation instanceof FeatureBundleContainer || targetLocation instanceof ProfileBundleContainer ) {
+			containerElement.setAttribute(ATTR_LOCATION_PATH, targetLocation.getLocation(false));
 		}
-		containerElement.setAttribute(ATTR_LOCATION_TYPE, containers.getType());
-		if (containers instanceof DirectoryBundleContainer) {
+		containerElement.setAttribute(ATTR_LOCATION_TYPE, targetLocation.getType());
+		if (targetLocation instanceof DirectoryBundleContainer) {
 			//do nothing;
-		} else if (containers instanceof FeatureBundleContainer) {
-			containerElement.setAttribute(ATTR_ID, ((FeatureBundleContainer) containers).getFeatureId());
-			String version = ((FeatureBundleContainer) containers).getFeatureVersion();
+		} else if (targetLocation instanceof FeatureBundleContainer) {
+			containerElement.setAttribute(ATTR_ID, ((FeatureBundleContainer) targetLocation).getFeatureId());
+			String version = ((FeatureBundleContainer) targetLocation).getFeatureVersion();
 			if (version != null) {
 				containerElement.setAttribute(ATTR_VERSION, version);
 			}
-		} else if (containers instanceof ProfileBundleContainer) {
-			String configurationArea = ((ProfileBundleContainer) containers).getConfigurationLocation();
+		} else if (targetLocation instanceof ProfileBundleContainer) {
+			String configurationArea = ((ProfileBundleContainer) targetLocation).getConfigurationLocation();
 			if (configurationArea != null) {
 				containerElement.setAttribute(ATTR_CONFIGURATION, configurationArea);
 			}
-		} else if (containers instanceof IUBundleContainer) {
-			IUBundleContainer iubc = (IUBundleContainer) containers;
-			containerElement.setAttribute(ATTR_INCLUDE_MODE, iubc.getIncludeAllRequired() ? MODE_PLANNER : MODE_SLICER);
-			containerElement.setAttribute(ATTR_INCLUDE_ALL_PLATFORMS, Boolean.toString(iubc.getIncludeAllEnvironments()));
-			containerElement.setAttribute(ATTR_INCLUDE_SOURCE, Boolean.toString(iubc.getIncludeSource()));
-			String[] ids = iubc.getIds();
-			Version[] versions = iubc.getVersions();
-			for (int i = 0; i < ids.length; i++) {
-				Element unit = doc.createElement(INSTALLABLE_UNIT);
-				unit.setAttribute(ATTR_ID, ids[i]);
-				unit.setAttribute(ATTR_VERSION, versions[i].toString());
-				containerElement.appendChild(unit);
-			}
-			URI[] repositories = iubc.getRepositories();
-			if (repositories != null) {
-				for (int i = 0; i < repositories.length; i++) {
-					Element repo = doc.createElement(REPOSITORY);
-					repo.setAttribute(LOCATION, repositories[i].toASCIIString());
-					containerElement.appendChild(repo);
-				}
-			}
 		} else {
-			String xml = containers.serialize();
+			String xml = targetLocation.serialize();
+			if (xml == null)
+				return null;
 			Document document = getDocumentBuilder().parse(new ByteArrayInputStream(xml.getBytes("UTF-8"))); //$NON-NLS-1$
 			NodeList locationNode = document.getElementsByTagName(LOCATION);
 			if (locationNode == null || locationNode.getLength() == 0) {

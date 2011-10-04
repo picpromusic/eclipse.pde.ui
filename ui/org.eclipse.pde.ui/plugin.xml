@@ -2165,4 +2165,16 @@
          </enablement>
       </consolePageParticipant>
    </extension>
+   <extension
+         point="org.eclipse.pde.ui.targetProvisioners">
+      <provisioner
+            class="org.eclipse.pde.internal.ui.shared.target.InstallableUnitWizard"
+            icon="icons/obj16/metadata_repo_obj.gif"
+            id="org.eclipse.pde.ui.InstallableUnit"
+            name="%targetProvisioner.IU.name">
+         <description>
+            %targetProvisioner.IU.description
+         </description>
+      </provisioner>
+   </extension>
 </plugin>

@@ -13,8 +13,15 @@
 package org.eclipse.pde.internal.core.target;
 
 import java.io.File;
+import java.io.StringWriter;
 import java.net.URI;
 import java.util.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.internal.p2.director.PermissiveSlicer;
 import org.eclipse.equinox.p2.engine.IProfile;
@@ -25,6 +32,8 @@ import org.eclipse.equinox.p2.touchpoint.eclipse.query.OSGiBundleQuery;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.PDECore;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * A bundle container that references IU's in one or more repositories.
@@ -157,7 +166,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * @see org.eclipse.pde.internal.core.target.impl.AbstractBundleContainer#getType()
 	 */
 	public String getType() {
-		return TYPE;
+		return PDECore.PLUGIN_ID + "." + TYPE; //$NON-NLS-1$
 	}
 
 	/* (non-Javadoc)
@@ -575,5 +584,49 @@ public class IUBundleContainer extends AbstractBundleContainer {
 		fSynchronizer.setIncludeAllRequired((fFlags & INCLUDE_REQUIRED) == INCLUDE_REQUIRED);
 		fSynchronizer.setIncludeAllEnvironments((fFlags & INCLUDE_ALL_ENVIRONMENTS) == INCLUDE_ALL_ENVIRONMENTS);
 		fSynchronizer.setIncludeSource((fFlags & INCLUDE_SOURCE) == INCLUDE_SOURCE);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.internal.core.target.AbstractBundleContainer#serialize()
+	 */
+	public String serialize() {
+		Element containerElement;
+		Document document;
+		try {
+			DocumentBuilder docBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			document = docBuilder.newDocument();
+			containerElement = document.createElement(TargetDefinitionPersistenceHelper.LOCATION);
+		} catch (Exception e) {
+			return null;
+		}
+		containerElement.setAttribute(TargetDefinitionPersistenceHelper.ATTR_LOCATION_TYPE, getType());
+		containerElement.setAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_MODE, getIncludeAllRequired() ? TargetDefinitionPersistenceHelper.MODE_PLANNER : TargetDefinitionPersistenceHelper.MODE_SLICER);
+		containerElement.setAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_ALL_PLATFORMS, Boolean.toString(getIncludeAllEnvironments()));
+		containerElement.setAttribute(TargetDefinitionPersistenceHelper.ATTR_INCLUDE_SOURCE, Boolean.toString(getIncludeSource()));
+		String[] ids = getIds();
+		Version[] versions = getVersions();
+		for (int i = 0; i < ids.length; i++) {
+			Element unit = document.createElement(TargetDefinitionPersistenceHelper.INSTALLABLE_UNIT);
+			unit.setAttribute(TargetDefinitionPersistenceHelper.ATTR_ID, ids[i]);
+			unit.setAttribute(TargetDefinitionPersistenceHelper.ATTR_VERSION, versions[i].toString());
+			containerElement.appendChild(unit);
+		}
+		URI[] repositories = getRepositories();
+		if (repositories != null) {
+			for (int i = 0; i < repositories.length; i++) {
+				Element repo = document.createElement(TargetDefinitionPersistenceHelper.REPOSITORY);
+				repo.setAttribute(TargetDefinitionPersistenceHelper.LOCATION, repositories[i].toASCIIString());
+				containerElement.appendChild(repo);
+			}
+		}
+
+		try {
+			document.appendChild(containerElement);
+			StreamResult result = new StreamResult(new StringWriter());
+			TransformerFactory.newInstance().newTransformer().transform(new DOMSource(document), result);
+			return result.getWriter().toString();
+		} catch (TransformerException ex) {
+			return null;
+		}
 	}
 }
