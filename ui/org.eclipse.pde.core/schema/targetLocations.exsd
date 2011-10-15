@@ -63,6 +63,13 @@
                </appInfo>
             </annotation>
          </attribute>
+         <attribute name="canUpdate" type="boolean" use="required">
+            <annotation>
+               <documentation>
+                  Specifies if this target location can update itself. Providing true will notifiy the location if update is sought. If false, the update notfication will not be sent.
+               </documentation>
+            </annotation>
+         </attribute>
       </complexType>
    </element>
 

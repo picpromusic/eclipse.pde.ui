@@ -316,14 +316,14 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * 
 	 * @param toUpdate the set of IU ids in this container to consider updating.  If empty
 	 * then update everything
-	 * @return a bitmasked int indicating how/if this container changed.  See DIRTY and UPDATED. 
+	 * @return true if UPDATED. false if DIRTY. 
 	 * @exception CoreException if unable to retrieve IU's
 	 */
-	public synchronized int update(Set toUpdate, IProgressMonitor monitor) throws CoreException {
+	public synchronized boolean update(Set toUpdate, IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor, 100);
 		IQueryable source = P2TargetUtils.getQueryableMetadata(fRepos, progress.newChild(30));
-		int dirty = 0;
-		int updated = 0;
+		boolean dirty = false;
+		boolean updated = false;
 		SubMonitor loopProgress = progress.newChild(70).setWorkRemaining(fIds.length);
 		for (int i = 0; i < fIds.length; i++) {
 			if (!toUpdate.isEmpty() && !toUpdate.contains(fIds[i]))
@@ -337,19 +337,19 @@ public class IUBundleContainer extends AbstractBundleContainer {
 			IInstallableUnit iu = (IInstallableUnit) it.next();
 			// if the version is different from the spec (up or down), record the change.
 			if (!iu.getVersion().equals(fVersions[i])) {
-				updated = UpdateTargetJob.UPDATED;
+				updated = true; //UpdateTargetJob.UPDATED;
 				// if the spec was not specific (e.g., 0.0.0) the target def itself has changed.
 				if (!fVersions[i].equals(Version.emptyVersion)) {
 					fVersions[i] = iu.getVersion();
-					dirty = UpdateTargetJob.DIRTY;
+					dirty = true; //UpdateTargetJob.DIRTY;
 				}
 			}
 		}
-		if (updated == UpdateTargetJob.UPDATED) {
+		if (updated) {
 			// Things have changed so mark the container as unresolved
 			clearResolutionStatus();
 		}
-		return dirty | updated;
+		return dirty || updated;
 	}
 
 	protected void clearResolutionStatus() {

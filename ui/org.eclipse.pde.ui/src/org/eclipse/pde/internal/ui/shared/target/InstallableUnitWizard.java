@@ -17,7 +17,7 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.core.target.IUBundleContainer;
 import org.eclipse.pde.internal.ui.PDEPlugin;
-import org.eclipse.pde.ui.IProvisionerWizard;
+import org.eclipse.pde.ui.ITargetLocationProvider;
 import org.eclipse.swt.graphics.Image;
 
 /**
@@ -27,7 +27,7 @@ import org.eclipse.swt.graphics.Image;
  * org.eclipse.pde.ui.targetProvisioner 
  *
  */
-public class InstallableUnitWizard extends Wizard implements IProvisionerWizard {
+public class InstallableUnitWizard extends Wizard implements ITargetLocationProvider {
 
 	private ITargetDefinition fTarget;
 
@@ -68,7 +68,7 @@ public class InstallableUnitWizard extends Wizard implements IProvisionerWizard 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.ui.IProvisionerWizard#setTargetDefinition(org.eclipse.pde.core.target.ITargetDefinition)
+	 * @see org.eclipse.pde.ui.ITargetLocationProvider#setTargetDefinition(org.eclipse.pde.core.target.ITargetDefinition)
 	 */
 	public void setTargetDefinition(ITargetDefinition target) {
 		fTarget = target;
@@ -76,14 +76,14 @@ public class InstallableUnitWizard extends Wizard implements IProvisionerWizard 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.ui.IProvisionerWizard#getLocations()
+	 * @see org.eclipse.pde.ui.ITargetLocationProvider#getLocations()
 	 */
 	public ITargetLocation[] getLocations() {
 		return new ITargetLocation[] {fLocation};
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.ui.IProvisionerWizard#getLabelProvider()
+	 * @see org.eclipse.pde.ui.ITargetLocationProvider#getLabelProvider()
 	 */
 	public ILabelProvider getLabelProvider() {
 		if (fLabelProvider == null) {
@@ -93,7 +93,7 @@ public class InstallableUnitWizard extends Wizard implements IProvisionerWizard 
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.ui.IProvisionerWizard#getContentProvider()
+	 * @see org.eclipse.pde.ui.ITargetLocationProvider#getContentProvider()
 	 */
 	public ITreeContentProvider getContentProvider() {
 		if (fContentProvider == null) {

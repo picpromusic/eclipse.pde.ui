@@ -372,6 +372,7 @@
     <extension
           point="org.eclipse.pde.core.targetLocations">
        <targetLocation
+             canUpdate="true"
              locationFactory="org.eclipse.pde.internal.core.target.IULocationFactory"
              type="org.eclipse.pde.core.InstallableUnit">
        </targetLocation>

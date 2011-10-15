@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.ITargetLocation;
-
 import java.util.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.IJobChangeListener;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.equinox.p2.metadata.IInstallableUnit;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.pde.core.target.ITargetLocation;
 
 /**
  * Job that will update a set of installable units from a set of bundle containers.  Containers that 
@@ -82,9 +81,13 @@ public class UpdateTargetJob extends Job {
 				try {
 					Map.Entry entry = (Map.Entry) i.next();
 					ITargetLocation container = (ITargetLocation) entry.getKey();
-					monitor.subTask(NLS.bind(Messages.UpdateTargetJob_UpdatingContainer, ((AbstractBundleContainer) container).getLocation(false)));
-					if (container instanceof IUBundleContainer)
-						result |= ((IUBundleContainer) container).update((Set) entry.getValue(), progress.newChild(1));
+					monitor.subTask(NLS.bind(Messages.UpdateTargetJob_UpdatingContainer, container.getLocation(false)));
+					boolean status = container.update((Set) entry.getValue(), progress.newChild(1));
+					if (status == true) { //UPDATED
+						result |= UPDATED;
+					} else {
+						result |= DIRTY;
+					}
 				} catch (CoreException e1) {
 					return e1.getStatus();
 				} finally {

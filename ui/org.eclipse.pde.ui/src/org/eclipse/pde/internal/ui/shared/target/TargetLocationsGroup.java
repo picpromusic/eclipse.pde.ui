@@ -187,7 +187,7 @@ public class TargetLocationsGroup {
 	private void initializeTreeViewer(Tree tree) {
 		fTreeViewer = new TreeViewer(tree);
 		fTreeViewer.setContentProvider(new TargetLocationContentProvider());
-		fTreeViewer.setLabelProvider(new TargetLocationLabelProvider(true, false));
+		fTreeViewer.setLabelProvider(new TargetLocationLabelProvider(true, false, fTarget));
 		fTreeViewer.setComparator(new ViewerComparator() {
 			public int compare(Viewer viewer, Object e1, Object e2) {
 				// Status at the end of the list
@@ -386,21 +386,31 @@ public class TargetLocationsGroup {
 		// go over the selection and make a map from container to set of ius to update.
 		// if the set is empty then the whole container is to be updated.
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
+		ITreeContentProvider contentProvider = (ITreeContentProvider) fTreeViewer.getContentProvider();
 		Map toUpdate = new HashMap();
 		for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
 			Object currentSelection = iterator.next();
 			if (currentSelection instanceof ITargetLocation)
 				toUpdate.put(currentSelection, new HashSet(0));
-			else if (currentSelection instanceof IUWrapper) {
-				IUWrapper wrapper = (IUWrapper) currentSelection;
-				Set iuSet = (Set) toUpdate.get(wrapper.getParent());
-				if (iuSet == null) {
-					iuSet = new HashSet();
-					iuSet.add(wrapper.getIU().getId());
-					toUpdate.put(wrapper.getParent(), iuSet);
-				} else if (!iuSet.isEmpty())
-					iuSet.add(wrapper.getIU().getId());
+			else {
+				Object parent = contentProvider.getParent(currentSelection);
+				Set children = (Set) toUpdate.get(parent);
+				if (children == null) {
+					children = new HashSet(0);
+					toUpdate.put(parent, children);
+				}
+				children.add(currentSelection);
 			}
+			/*			else if (currentSelection instanceof IUWrapper) {
+							IUWrapper wrapper = (IUWrapper) currentSelection;
+							Set iuSet = (Set) toUpdate.get(wrapper.getParent());
+							if (iuSet == null) {
+								iuSet = new HashSet();
+								iuSet.add(wrapper.getIU().getId());
+								toUpdate.put(wrapper.getParent(), iuSet);
+							} else if (!iuSet.isEmpty())
+								iuSet.add(wrapper.getIU().getId());
+						}*/
 		}
 		if (toUpdate.isEmpty())
 			return;
@@ -434,21 +444,21 @@ public class TargetLocationsGroup {
 		// If any container is selected, allow the remove (the remove ignores non-container entries)
 		boolean removeAllowed = false;
 		boolean updateAllowed = false;
+		ITreeContentProvider contentProvider = (ITreeContentProvider) fTreeViewer.getContentProvider();
 		Iterator iter = selection.iterator();
 		while (iter.hasNext()) {
 			if (removeAllowed && updateAllowed) {
 				break;
 			}
 			Object current = iter.next();
-			if (current instanceof IUBundleContainer) {
-				updateAllowed = true;
-			}
 			if (current instanceof ITargetLocation) {
 				removeAllowed = true;
-			}
-			if (current instanceof IUWrapper) {
-				removeAllowed = true;
-				updateAllowed = true;
+				updateAllowed = TargetLocationTypeManager.getInstance().canUpdate(((ITargetLocation) current).getType());
+			} else {
+				Object parent = contentProvider.getParent(contentProvider);
+				if (parent != null && parent instanceof ITargetLocation) {
+					updateAllowed = TargetLocationTypeManager.getInstance().canUpdate(((ITargetLocation) parent).getType());
+				}
 			}
 		}
 		fRemoveButton.setEnabled(removeAllowed);
@@ -471,7 +481,7 @@ public class TargetLocationsGroup {
 	 */
 	class TargetLocationContentProvider implements ITreeContentProvider {
 
-		Map fParentMap = new HashMap();
+//		Map fParentMap = new HashMap();
 
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof ITargetDefinition) {
@@ -495,13 +505,16 @@ public class TargetLocationsGroup {
 				}
 			} else if (parentElement instanceof ITargetLocation) {
 				ITargetLocation location = (ITargetLocation) parentElement;
-				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance().getContentProvider(location.getType());
+				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance(fTarget).getContentProvider(location.getType());
 				if (contentProvider != null) {
-					Object[] result = contentProvider.getChildren(parentElement);
-					if (result != null && result.length > 0) {
-						for (int i = 0; i < result.length; i++) {
-							fParentMap.put(result[i], parentElement);
+					Object[] children = contentProvider.getChildren(parentElement);
+					TargetLocationElement[] result = new TargetLocationElement[children.length];
+					if (children != null && children.length > 0) {
+						for (int i = 0; i < children.length; i++) {
+//							fParentMap.put(result[i], parentElement);
+							result[i] = new TargetLocationElement(children[i], location);
 						}
+						return result;
 					}
 				}
 			} else if (parentElement instanceof MultiStatus) {
@@ -511,13 +524,17 @@ public class TargetLocationsGroup {
 		}
 
 		public Object getParent(Object element) {
-			return fParentMap.get(element);
+//			return fParentMap.get(element);
+			if (element instanceof TargetLocationElement) {
+				return ((TargetLocationElement) element).getParent();
+			}
+			return null;
 		}
 
 		public boolean hasChildren(Object element) {
 			if (!(element instanceof AbstractBundleContainer) && (element instanceof ITargetLocation)) {
 				ITargetLocation location = (ITargetLocation) element;
-				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance().getContentProvider(location.getType());
+				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance(fTarget).getContentProvider(location.getType());
 				if (contentProvider != null) {
 					return contentProvider.hasChildren(element);
 				}
@@ -559,5 +576,19 @@ public class TargetLocationsGroup {
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		}
 
+	}
+
+	class TargetLocationElement {
+		Object element;
+		ITargetLocation location;
+
+		TargetLocationElement(Object element, ITargetLocation location) {
+			this.element = element;
+			this.location = location;
+		}
+
+		public ITargetLocation getParent() {
+			return location;
+		}
 	}
 }

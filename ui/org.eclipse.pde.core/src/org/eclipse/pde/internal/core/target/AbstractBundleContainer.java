@@ -12,6 +12,7 @@ package org.eclipse.pde.internal.core.target;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.VariablesPlugin;
@@ -234,6 +235,10 @@ public abstract class AbstractBundleContainer extends PlatformObject implements 
 			return null;
 		}
 		return fVMArgs;
+	}
+
+	public boolean update(Set toUpdate, IProgressMonitor monitor) throws CoreException {
+		return true;
 	}
 
 	/**

@@ -11,8 +11,10 @@
 package org.eclipse.pde.internal.ui.shared.target;
 
 import org.eclipse.jface.viewers.*;
+import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.core.target.AbstractBundleContainer;
+import org.eclipse.pde.internal.ui.shared.target.TargetLocationsGroup.TargetLocationElement;
 import org.eclipse.swt.graphics.Image;
 
 /**
@@ -20,8 +22,11 @@ import org.eclipse.swt.graphics.Image;
  */
 public class TargetLocationLabelProvider extends StyledBundleLabelProvider {
 
-	public TargetLocationLabelProvider(boolean showVersion, boolean appendResolvedVariables) {
+	private ITargetDefinition fTarget;
+
+	public TargetLocationLabelProvider(boolean showVersion, boolean appendResolvedVariables, ITargetDefinition target) {
 		super(showVersion, appendResolvedVariables);
+		fTarget = target;
 	}
 
 	/* (non-Javadoc)
@@ -52,8 +57,14 @@ public class TargetLocationLabelProvider extends StyledBundleLabelProvider {
 			if (provider != null) {
 				return provider.getImage(element);
 			}
+		} else if (element instanceof TargetLocationElement) {
+			ITargetLocation location = ((TargetLocationElement) element).getParent();
+			ILabelProvider provider = getLabelProvider(location);
+			if (provider != null) {
+				return provider.getImage(element);
+			}
 		}
-		return null;
+		return super.getImage(element);
 	}
 
 	/* (non-Javadoc)
@@ -68,10 +79,10 @@ public class TargetLocationLabelProvider extends StyledBundleLabelProvider {
 				return provider.getText(element);
 			}
 		}
-		return null;
+		return super.getText(element);
 	}
 
 	private ILabelProvider getLabelProvider(ITargetLocation location) {
-		return TargetProvisionerManager.getInstance().getLabelProvider(location.getType());
+		return TargetProvisionerManager.getInstance(fTarget).getLabelProvider(location.getType());
 	}
 }

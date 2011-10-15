@@ -15,9 +15,10 @@ import java.util.Map;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.viewers.ILabelProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
+import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.ui.PDEPlugin;
-import org.eclipse.pde.ui.IProvisionerWizard;
+import org.eclipse.pde.ui.ITargetLocationProvider;
 
 /**
  * Gathers and provides the contributed target provisioner contributed to org.eclipse.pde.ui.targetProvisioner
@@ -27,28 +28,32 @@ public class TargetProvisionerManager {
 
 	private static final String ATTR_TYPE = "type"; //$NON-NLS-1$
 	private static final String ATTR_CLASS = "class"; //$NON-NLS-1$
-	private static final String TARGET_PROVISIONER_EXTPT = "targetProvisioners"; //$NON-NLS-1$
+	private static final String TARGET_PROVISIONER_EXTPT = "targetLocationProviders"; //$NON-NLS-1$
 
 	private Map fExtentionMap;
-	private Map fWizardMap;
+	private Map fProviderMap;
+	private ITargetDefinition fTarget;
 
-	private static TargetProvisionerManager INSTANCE;
+	private static HashMap fManagerMap = new HashMap(4);
 
-	private TargetProvisionerManager() {
+	private TargetProvisionerManager(ITargetDefinition target) {
 		//singleton
 		fExtentionMap = new HashMap(4);
-		fWizardMap = new HashMap(4);
+		fProviderMap = new HashMap(4);
+		fTarget = target;
 		readExtentions();
 	}
 
 	/**
 	 * @return the singleton instanceof this manager
 	 */
-	public static TargetProvisionerManager getInstance() {
-		if (INSTANCE == null) {
-			INSTANCE = new TargetProvisionerManager();
+	public static TargetProvisionerManager getInstance(ITargetDefinition target) {
+		Object manager = fManagerMap.get(target);
+		if (manager == null) {
+			manager = new TargetProvisionerManager(target);
+			fManagerMap.put(target, manager);
 		}
-		return INSTANCE;
+		return (TargetProvisionerManager) manager;
 	}
 
 	/**
@@ -59,9 +64,9 @@ public class TargetProvisionerManager {
 	 * @return label provider contributed for the provided type
 	 */
 	public ILabelProvider getLabelProvider(String type) {
-		IProvisionerWizard wizard = getWizard(type);
-		if (wizard != null) {
-			return wizard.getLabelProvider();
+		ITargetLocationProvider locationProvider = getLocationProvider(type);
+		if (locationProvider != null) {
+			return locationProvider.getLabelProvider();
 		}
 		return null;
 	}
@@ -74,26 +79,28 @@ public class TargetProvisionerManager {
 	 * @return content provider contributed for the provided type
 	 */
 	public ITreeContentProvider getContentProvider(String type) {
-		IProvisionerWizard wizard = getWizard(type);
-		if (wizard != null) {
-			return wizard.getContentProvider();
+		ITargetLocationProvider lcoationProvider = getLocationProvider(type);
+		if (lcoationProvider != null) {
+			return lcoationProvider.getContentProvider();
 		}
 		return null;
 	}
 
-	private IProvisionerWizard getWizard(String type) {
-		IProvisionerWizard wizard = (IProvisionerWizard) fWizardMap.get(type);
-		if (wizard == null) {
+	public ITargetLocationProvider getLocationProvider(String type) {
+		ITargetLocationProvider locationProvider = (ITargetLocationProvider) fProviderMap.get(type);
+		if (locationProvider == null) {
 			try {
 				IConfigurationElement element = (IConfigurationElement) fExtentionMap.get(type);
 				if (element != null) {
-					wizard = (IProvisionerWizard) element.createExecutableExtension(ATTR_CLASS);
-					fWizardMap.put(type, wizard);
+					locationProvider = (ITargetLocationProvider) element.createExecutableExtension(ATTR_CLASS);
+					locationProvider.setTargetDefinition(fTarget);
+					fProviderMap.put(type, locationProvider);
 				}
 			} catch (CoreException e) {
+				PDEPlugin.log(e);
 			}
 		}
-		return wizard;
+		return locationProvider;
 	}
 
 	private void readExtentions() {

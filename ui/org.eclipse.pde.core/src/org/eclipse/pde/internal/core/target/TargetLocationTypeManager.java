@@ -25,18 +25,21 @@ import org.eclipse.pde.internal.core.PDECore;
 public class TargetLocationTypeManager {
 
 	private static final String ATTR_TYPE = "type"; //$NON-NLS-1$
+	private static final String ATTR_CAN_UPDATE = "canUpdate"; //$NON-NLS-1$
 	private static final String ATTR_LOCFACTORY = "locationFactory"; //$NON-NLS-1$
 	private static final String TARGET_LOC_EXTPT = "targetLocations"; //$NON-NLS-1$
 
 	private Map fExtentionMap;
 	private Map fFactoryMap;
+	private Map fUpdateMap;
 
 	static TargetLocationTypeManager INSTANCE;
 
 	private TargetLocationTypeManager() {
 		//singleton
-		fExtentionMap = new HashMap();
-		fFactoryMap = new HashMap();
+		fExtentionMap = new HashMap(4);
+		fFactoryMap = new HashMap(4);
+		fUpdateMap = new HashMap(4);
 		readExtentions();
 	}
 
@@ -48,6 +51,15 @@ public class TargetLocationTypeManager {
 			INSTANCE = new TargetLocationTypeManager();
 		}
 		return INSTANCE;
+	}
+
+	public boolean canUpdate(String type) {
+		Boolean status = (Boolean) fUpdateMap.get(type);
+		if (status == null) {
+			return false;
+		}
+		return status.booleanValue();
+
 	}
 
 	/**
@@ -103,6 +115,10 @@ public class TargetLocationTypeManager {
 				String type = elements[j].getAttribute(ATTR_TYPE);
 				if (type != null) {
 					fExtentionMap.put(type, elements[j]);
+				}
+				String update = elements[j].getAttribute(ATTR_CAN_UPDATE);
+				if (update != null) {
+					fUpdateMap.put(type, Boolean.valueOf(update));
 				}
 			}
 		}
