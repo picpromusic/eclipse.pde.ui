@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import org.eclipse.pde.ui.IEditTargetLocationPage;
+
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.core.target.ITargetPlatformService;
 
@@ -40,7 +42,7 @@ import org.eclipse.ui.progress.UIJob;
  * @see AddBundleContainerSelectionPage
  * @see ITargetLocation
  */
-public class EditDirectoryContainerPage extends WizardPage implements IEditBundleContainerPage {
+public class EditDirectoryContainerPage extends WizardPage implements IEditTargetLocationPage {
 
 	/**
 	 * How long to wait before validating the directory
@@ -246,7 +248,7 @@ public class EditDirectoryContainerPage extends WizardPage implements IEditBundl
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.internal.ui.shared.target.IEditBundleContainerPage#storeSettings()
+	 * @see org.eclipse.pde.internal.ui.shared.target.IEditTargetLocationPage#storeSettings()
 	 */
 	public void storeSettings() {
 		String newLocation = fInstallLocation.getText().trim();
@@ -276,9 +278,9 @@ public class EditDirectoryContainerPage extends WizardPage implements IEditBundl
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.internal.ui.shared.target.IEditBundleContainerPage#getBundleContainer()
+	 * @see org.eclipse.pde.internal.ui.shared.target.IEditTargetLocationPage#getBundleContainer()
 	 */
-	public ITargetLocation getBundleContainer() {
+	public ITargetLocation getTargetLocation() {
 		return fContainer;
 	}
 

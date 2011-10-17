@@ -20,7 +20,7 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.wizards.WizardElement;
-import org.eclipse.pde.ui.ITargetLocationProvider;
+import org.eclipse.pde.ui.ILocationWizard;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.graphics.Image;
@@ -168,7 +168,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						ITargetLocation container = fPage1.getBundleContainer();
+						ITargetLocation container = fPage1.getTargetLocation();
 						if (container != null) {
 							fPage1.storeSettings();
 							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
@@ -208,7 +208,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						ITargetLocation container = fPage1.getBundleContainer();
+						ITargetLocation container = fPage1.getTargetLocation();
 						if (container != null) {
 							fPage1.storeSettings();
 							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
@@ -338,27 +338,27 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 		return new AbstractBundleContainerNode(element.getLabel(), element.getDescription(), element.getImage()) {
 			public IWizard createWizard() {
 				Wizard wizard = new Wizard() {
-					private ITargetLocationProvider locationProvider;
+					private ILocationWizard addWizard;
 
 					public void addPages() {
-						locationProvider = TargetProvisionerManager.getInstance(fTarget).getLocationProvider(type);
-						if (locationProvider == null) {
+						addWizard = LocationProviderManager.getInstance(fTarget).getAddWizard(type);
+						if (addWizard == null) {
 							MessageDialog.openError(getContainer().getShell(), Messages.Errors_CreationError, Messages.Errors_CreationError_NoWizard);
 							return;
 						}
-						locationProvider.setContainer(getContainer());
-						locationProvider.addPages();
-						IWizardPage[] pages = locationProvider.getPages();
+						addWizard.setContainer(getContainer());
+						addWizard.addPages();
+						IWizardPage[] pages = addWizard.getPages();
 						for (int i = 0; i < pages.length; i++)
 							addPage(pages[i]);
 					}
 
 					public boolean performFinish() {
-						if (locationProvider != null) {
-							if (!locationProvider.performFinish()) {
+						if (addWizard != null) {
+							if (!addWizard.performFinish()) {
 								return false;
 							}
-							ITargetLocation[] locations = locationProvider.getLocations();
+							ITargetLocation[] locations = addWizard.getLocations();
 							for (int i = 0; i < locations.length; i++) {
 								if (locations[i] == null) {
 									ErrorDialog.openError(getShell(), Messages.AddBundleContainerSelectionPage_0, Messages.AddBundleContainerSelectionPage_5, new Status(IStatus.ERROR, PDEPlugin.getPluginId(), Messages.AddDirectoryContainerPage_6));

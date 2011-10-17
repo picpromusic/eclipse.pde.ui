@@ -374,7 +374,7 @@
        <targetLocation
              canUpdate="true"
              locationFactory="org.eclipse.pde.internal.core.target.IULocationFactory"
-             type="org.eclipse.pde.core.InstallableUnit">
+             type="InstallableUnit">
        </targetLocation>
     </extension>
 </plugin>

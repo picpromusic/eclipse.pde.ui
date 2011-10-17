@@ -288,7 +288,7 @@ public class TargetDefinitionPersistenceHelper {
 
 	private static Element serializeBundleContainer(Document doc, ITargetLocation targetLocation) throws CoreException, SAXException, IOException, ParserConfigurationException {
 		Element containerElement = doc.createElement(LOCATION);
-		if (targetLocation instanceof DirectoryBundleContainer || targetLocation instanceof FeatureBundleContainer || targetLocation instanceof ProfileBundleContainer ) {
+		if (targetLocation instanceof DirectoryBundleContainer || targetLocation instanceof FeatureBundleContainer || targetLocation instanceof ProfileBundleContainer) {
 			containerElement.setAttribute(ATTR_LOCATION_PATH, targetLocation.getLocation(false));
 		}
 		containerElement.setAttribute(ATTR_LOCATION_TYPE, targetLocation.getType());

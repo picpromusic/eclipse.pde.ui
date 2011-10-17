@@ -2167,15 +2167,35 @@
       </consolePageParticipant>
    </extension>
    <extension
-         point="org.eclipse.pde.ui.targetProvisioners">
-      <provisioner
-            class="org.eclipse.pde.internal.ui.shared.target.InstallableUnitWizard"
+         point="org.eclipse.pde.ui.targetLocationProviders">
+      <locationProvider
             icon="icons/obj16/metadata_repo_obj.gif"
             id="org.eclipse.pde.ui.InstallableUnit"
-            name="%targetProvisioner.IU.name">
+            name="%targetLocationProvider.IU.name"
+            type="InstallableUnit"
+            uifactory="org.eclipse.pde.internal.ui.shared.target.IUFactory">
          <description>
-            %targetProvisioner.IU.description
+            %targetLocationProvider.IU.description
          </description>
-      </provisioner>
+      </locationProvider>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="java.lang.String"
+            class="org.eclipse.pde.internal.ui.shared.target.IUFactory">
+         <adapter
+               type="org.eclipse.jface.viewers.ILabelProvider">
+         </adapter>
+         <adapter
+               type="org.eclipse.jface.viewers.ITreeContentProvider">
+         </adapter>
+         <adapter
+               type="org.eclipse.pde.ui.ILocationWizard">
+         </adapter>
+         <adapter
+               type="org.eclipse.pde.ui.IEditTargetLocationPage">
+         </adapter>
+      </factory>
    </extension>
 </plugin>

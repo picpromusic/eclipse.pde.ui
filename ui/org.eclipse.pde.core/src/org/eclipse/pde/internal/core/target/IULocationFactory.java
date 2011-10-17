@@ -31,8 +31,6 @@ import org.w3c.dom.*;
  */
 public class IULocationFactory implements ITargetLocationFactory {
 
-	private static final String TYPE_IU = "org.eclipse.pde.core.InstallableUnit"; //$NON-NLS-1$
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.core.target.ITargetLocationFactory#getTargetLocation(java.lang.String, java.lang.String)
 	 */
@@ -47,7 +45,7 @@ public class IULocationFactory implements ITargetLocationFactory {
 			throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, e.getMessage(), e));
 		}
 
-		if (TYPE_IU.equals(type) && location != null) {
+		if (IUBundleContainer.TYPE.equals(type) && location != null) {
 			String locationType = location.getAttribute(TargetDefinitionPersistenceHelper.ATTR_LOCATION_TYPE);
 			if (!type.equals(locationType)) {
 				return null;

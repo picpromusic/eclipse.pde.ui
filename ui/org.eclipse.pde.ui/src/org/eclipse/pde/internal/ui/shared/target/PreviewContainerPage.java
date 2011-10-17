@@ -104,7 +104,7 @@ public class PreviewContainerPage extends WizardPage {
 	public void setVisible(boolean visible) {
 		super.setVisible(visible);
 		if (visible) {
-			setInput(fPage1.getBundleContainer());
+			setInput(fPage1.getTargetLocation());
 		}
 	}
 

@@ -83,6 +83,6 @@ public class TargetLocationLabelProvider extends StyledBundleLabelProvider {
 	}
 
 	private ILabelProvider getLabelProvider(ITargetLocation location) {
-		return TargetProvisionerManager.getInstance(fTarget).getLabelProvider(location.getType());
+		return LocationProviderManager.getInstance(fTarget).getLabelProvider(location.getType());
 	}
 }

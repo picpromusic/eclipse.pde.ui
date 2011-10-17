@@ -3,11 +3,11 @@
 <schema targetNamespace="org.eclipse.pde.ui" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appInfo>
-         <meta.schema plugin="org.eclipse.pde.ui" id="targetProvisioners" name="Target Provisioners"/>
+         <meta.schema plugin="org.eclipse.pde.ui" id="targetLocationProviders" name="Target Location Providers"/>
       </appInfo>
       <documentation>
          &lt;p&gt;
-This extension point is used to register new target plug-in provisioners. Each plug-in provisioner is listed when the user attempts to add plug-ins from the PDE Target Platform&apos;s Preference Page.  The selected provisioner is responsible for providing the target location which contain plug-ins the user wants to add to the Target Platform.
+This extension point is used to register new target plug-in location provider. Each plug-in location provider is listed when the user attempts to add plug-ins from the PDE Target Platform&apos;s Preference Page.  The selected location provider is responsible for providing the target location which contain plug-ins the user wants to add to the Target Platform.
 &lt;/p&gt;
       </documentation>
    </annotation>
@@ -20,7 +20,7 @@ This extension point is used to register new target plug-in provisioners. Each p
       </annotation>
       <complexType>
          <sequence>
-            <element ref="provisioner" minOccurs="1" maxOccurs="unbounded"/>
+            <element ref="locationProvider" minOccurs="1" maxOccurs="unbounded"/>
          </sequence>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -49,7 +49,7 @@ This extension point is used to register new target plug-in provisioners. Each p
       </complexType>
    </element>
 
-   <element name="provisioner">
+   <element name="locationProvider">
       <annotation>
          <appInfo>
             <meta.element labelAttribute="name" icon="icon"/>
@@ -87,13 +87,13 @@ represent the provisioner.
                </appInfo>
             </annotation>
          </attribute>
-         <attribute name="class" type="string">
+         <attribute name="uifactory" type="string">
             <annotation>
                <documentation>
-                  a class that provides a wizard for the user to add plug-ins through the provisioner.  The value of this attribute is the fully qualified name of the Java class that implements &lt;code&gt;org.eclipse.pde.ui.ITargetLocationProvider&lt;/code&gt;.
+                  The value of this attribute is the fully qualified name of the Java class that implements &lt;code&gt;org.eclipse.pde.ui.ITargetLocationFactory&lt;/code&gt;.
                </documentation>
                <appInfo>
-                  <meta.attribute kind="java" basedOn="org.eclipse.pde.ui.ITargetLocationProvider" deprecated="true"/>
+                  <meta.attribute kind="java" basedOn=":org.eclipse.pde.ui.ILocationUIFactory"/>
                </appInfo>
             </annotation>
          </attribute>
@@ -136,16 +136,17 @@ represent the provisioner.
 The following is an example of the extension point:
 &lt;pre&gt;
    &lt;extension
-         point=&quot;org.eclipse.pde.ui.targetProvisioners&quot;&gt;
-      &lt;provisioner
-            class=&quot;org.eclipse.pde.internal.ui.shared.target.InstallableUnitWizard&quot;
+         point=&quot;org.eclipse.pde.ui.targetLocationProviders&quot;&gt;
+      &lt;locationProvider
             icon=&quot;icons/obj16/metadata_repo_obj.gif&quot;
             id=&quot;org.eclipse.pde.ui.InstallableUnit&quot;
-            name=&quot;%targetProvisioner.IU.name&quot;&gt;
+            name=&quot;%targetLocationProvider.IU.name&quot;
+            type=&quot;InstallableUnit&quot;
+            uifactory=&quot;org.eclipse.pde.internal.ui.shared.target.IUFactory&quot;&gt;
          &lt;description&gt;
-            %targetProvisioner.IU.description
+            %targetLocationProvider.IU.description
          &lt;/description&gt;
-      &lt;/provisioner&gt;
+      &lt;/locationProvider&gt;
    &lt;/extension&gt;
 &lt;/pre&gt;
       </documentation>
@@ -157,7 +158,7 @@ The following is an example of the extension point:
       </appInfo>
       <documentation>
          &lt;p&gt;
-PDE supplies an update site provisioner to add plug-ins from repositories.
+PDE supplies an update site location provider to add plug-ins from repositories.
 &lt;/p&gt;
       </documentation>
    </annotation>
@@ -167,7 +168,7 @@ PDE supplies an update site provisioner to add plug-ins from repositories.
          <meta.section type="copyright"/>
       </appInfo>
       <documentation>
-         Copyright (c) 2006, 2011 IBM Corporation and others.
+         Copyright (c) 2011 IBM Corporation and others.
 &lt;br&gt;
 All rights reserved. This program and the accompanying materials are made 
 available under the terms of the Eclipse Public License v1.0 which 
@@ -181,7 +182,7 @@ accompanies this distribution, and is available at
          <meta.section type="apiInfo"/>
       </appInfo>
       <documentation>
-         Each template must provide a class that implements &lt;code&gt;org.eclipse.pde.ui.ITargetLocationProvider&lt;/code&gt; interface.
+         Each template mut provide an adaptory factory to provide labels and contents for the target location. It may optionally implement &lt;code&gt;org.eclipse.pde.ui.ILocationUIFactory&lt;/code&gt; interface if it needs to be seeded with the target definition.
       </documentation>
    </annotation>
 

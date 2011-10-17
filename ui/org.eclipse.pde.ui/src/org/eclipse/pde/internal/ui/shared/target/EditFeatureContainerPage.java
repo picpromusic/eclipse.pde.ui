@@ -49,7 +49,7 @@ public class EditFeatureContainerPage extends EditDirectoryContainerPage {
 	 * @see org.eclipse.pde.internal.ui.shared.target.AddDirectoryContainerPage#createLocationArea(org.eclipse.swt.widgets.Composite)
 	 */
 	protected void createLocationArea(Composite parent) {
-		FeatureBundleContainer container = (FeatureBundleContainer) getBundleContainer();
+		FeatureBundleContainer container = (FeatureBundleContainer) getTargetLocation();
 		Composite comp = SWTFactory.createComposite(parent, 2, 1, GridData.FILL_HORIZONTAL);
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, IHelpContextIds.LOCATION_EDIT_FEATURE_WIZARD);
 
@@ -96,7 +96,7 @@ public class EditFeatureContainerPage extends EditDirectoryContainerPage {
 	 * @see org.eclipse.pde.internal.ui.shared.target.EditDirectoryContainerPage#createContainer(org.eclipse.pde.core.target.ITargetLocation)
 	 */
 	protected ITargetLocation createContainer(ITargetLocation previous) throws CoreException {
-		return getBundleContainer();
+		return getTargetLocation();
 	}
 
 }

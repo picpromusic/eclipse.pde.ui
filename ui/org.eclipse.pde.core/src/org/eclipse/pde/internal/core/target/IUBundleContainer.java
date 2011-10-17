@@ -166,7 +166,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * @see org.eclipse.pde.internal.core.target.impl.AbstractBundleContainer#getType()
 	 */
 	public String getType() {
-		return PDECore.PLUGIN_ID + "." + TYPE; //$NON-NLS-1$
+		return TYPE;
 	}
 
 	/* (non-Javadoc)

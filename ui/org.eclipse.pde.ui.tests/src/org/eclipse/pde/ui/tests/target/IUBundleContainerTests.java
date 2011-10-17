@@ -10,12 +10,12 @@
  *******************************************************************************/
 package org.eclipse.pde.ui.tests.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.*;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import org.eclipse.core.filesystem.URIUtil;
@@ -26,9 +26,14 @@ import org.eclipse.equinox.p2.query.IQueryResult;
 import org.eclipse.equinox.p2.query.QueryUtil;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepository;
 import org.eclipse.equinox.p2.repository.metadata.IMetadataRepositoryManager;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.target.*;
 import org.eclipse.pde.internal.ui.tests.macro.MacroPlugin;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.InputSource;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Tests for the IU bundle container
@@ -319,12 +324,17 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	 */
 	protected IUBundleContainer createContainer(String[] unitIds) throws Exception {
 		URI uri = getURI("/tests/sites/site.a.b");
+		IInstallableUnit[] units = getUnits(unitIds, uri);
+		return createContainer(units, new URI[]{uri}, IUBundleContainer.INCLUDE_REQUIRED);
+	}
+
+	private IInstallableUnit[] getUnits(String[] unitIds, URI uri) throws Exception {
 		IMetadataRepository repository = getRepository(uri);
 		IInstallableUnit[] units = new IInstallableUnit[unitIds.length];
 		for (int i = 0; i < unitIds.length; i++) {
 			units[i] = getUnit(unitIds[i], repository);
 		}
-		return createContainer(units, new URI[]{uri});
+		return units;
 	}
 	
 	/**
@@ -332,11 +342,12 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 	 * 
 	 * @param units IU's
 	 * @param repositories locations of repositories
+	 * @param flags location flags
 	 * @return IU bundle container
 	 * @throws Exception
 	 */
-	protected IUBundleContainer createContainer(IInstallableUnit[] units, URI[] repositories) throws Exception {
-		return (IUBundleContainer) getTargetService().newIULocation(units, repositories, IUBundleContainer.INCLUDE_REQUIRED);
+	protected IUBundleContainer createContainer(IInstallableUnit[] units, URI[] repositories, int flags) throws Exception {
+		return (IUBundleContainer) getTargetService().newIULocation(units, repositories, flags);
 	}
 	
 	/**
@@ -462,5 +473,77 @@ public class IUBundleContainerTests extends AbstractTargetTest {
 		
 		List profiles = P2TargetUtils.cleanOrphanedTargetDefinitionProfiles();
 		assertEquals(1, profiles.size());
-	}	
+	}
+	
+	public void testSerialization1() throws Exception {
+		URI uri = getURI("/tests/sites/site.a.b");
+		String[] unitIds = new String[]{"feature.a.feature.group"};
+		IInstallableUnit[] units = getUnits(unitIds, uri);
+		IUBundleContainer location = createContainer(units, new URI[] {uri}, IUBundleContainer.INCLUDE_ALL_ENVIRONMENTS);
+		String xml = location.serialize();
+		assertIncludeAllPlatform(xml, true);
+		assertIncludeMode(xml, "slicer");
+		assertIncludeSource(xml, false);
+		deserializationTest(xml, location);
+	}
+	
+	
+	public void testSerialization2() throws Exception {
+		IUBundleContainer location = createContainer(new String[]{"bundle.a1", "bundle.a2"});
+		String xml = location.serialize();
+		assertIncludeAllPlatform(xml, false);
+		assertIncludeMode(xml, "planner");
+		assertIncludeSource(xml, false);
+		deserializationTest(xml, location);
+	}
+	
+	public void testSerialization3() throws Exception {
+		URI uri = getURI("/tests/sites/site.a.b");
+		String[] unitIds = new String[]{"feature.b.feature.group"};
+		IInstallableUnit[] units = getUnits(unitIds, uri);
+		IUBundleContainer location = createContainer(units, new URI[] {uri}, IUBundleContainer.INCLUDE_ALL_ENVIRONMENTS | IUBundleContainer.INCLUDE_SOURCE);
+		String xml = location.serialize();
+		assertIncludeAllPlatform(xml, true);
+		assertIncludeMode(xml, "slicer");
+		assertIncludeSource(xml, true);
+		deserializationTest(xml, location);
+	}
+
+	public void deserializationTest(String xml, IUBundleContainer location) {
+		try {
+ 			xml = xml.replaceAll("<\\?xml version=\"1.0\" encoding=\"UTF-8\"\\?>", "<target><locations>");
+			xml = xml + "</locations></target>";
+			DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+			parser.setErrorHandler(new DefaultHandler());
+			Document doc = parser.parse(new InputSource(new ByteArrayInputStream(xml.getBytes("UTF-8"))));
+
+			ITargetDefinition definition = getTargetService().newTarget();
+			Element root = doc.getDocumentElement();
+			TargetPersistence38Helper.initFromDoc(definition, root);
+			ITargetLocation[] locations = definition.getTargetLocations();
+			assertEquals(1, locations.length);
+			assertTrue(locations[0] instanceof IUBundleContainer);
+			assertTrue(((IUBundleContainer)locations[0]).isContentEqual(location));
+		} catch (Exception e) {
+			fail(e.getMessage() + "\nTarget:\n" + xml);
+		}
+	}
+	
+	private void assertIncludeAllPlatform(String xml, boolean expectedValue) {
+		assertToken(xml, "includeAllPlatforms=\"", String.valueOf(expectedValue));
+	}
+	
+	private void assertIncludeSource(String xml, boolean expectedValue) {
+		assertToken(xml, "includeSource=\"", String.valueOf(expectedValue));
+	}
+	
+	private void assertIncludeMode(String xml, String expectedValue) {
+		assertToken(xml, "includeMode=\"", expectedValue);
+	}
+	
+	private void assertToken(String xml, String token, String expectedValue) {
+		int start = xml.indexOf(token) + token.length();
+		String actualValue = xml.substring(start, start + String.valueOf(expectedValue).length()) ;
+		assertEquals(String.valueOf(expectedValue), actualValue);
+	}
 }

@@ -293,9 +293,9 @@ public class TargetLocationsGroup {
 			ITargetLocation oldContainer = null;
 			if (selected instanceof ITargetLocation) {
 				oldContainer = (ITargetLocation) selected;
-			} else if (selected instanceof IUWrapper) {
-				oldContainer = ((IUWrapper) selected).getParent();
-			} else if (selected instanceof TargetBundle) {
+			} else /* if (selected instanceof IUWrapper) {
+					oldContainer = ((IUWrapper) selected).getParent();
+					} else if (selected instanceof TargetBundle)*/{
 				TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
 				if (treeSelection.length > 0) {
 					Object parent = treeSelection[0].getParentItem().getData();
@@ -440,7 +440,19 @@ public class TargetLocationsGroup {
 
 	private void updateButtons() {
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-		fEditButton.setEnabled(!selection.isEmpty() && (selection.getFirstElement() instanceof ITargetLocation || selection.getFirstElement() instanceof IUWrapper));
+//		fEditButton.setEnabled(!selection.isEmpty());
+		if (!selection.isEmpty()) {
+			if (selection.getFirstElement() instanceof ITargetLocation) {
+				fEditButton.setEnabled(true);
+			} else {
+				fEditButton.setEnabled(false);
+				TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
+				Object parent = treeSelection[0].getParentItem().getData();
+				if (parent instanceof ITargetLocation) {
+					fEditButton.setEnabled(true);
+				}
+			}
+		}
 		// If any container is selected, allow the remove (the remove ignores non-container entries)
 		boolean removeAllowed = false;
 		boolean updateAllowed = false;
@@ -481,8 +493,6 @@ public class TargetLocationsGroup {
 	 */
 	class TargetLocationContentProvider implements ITreeContentProvider {
 
-//		Map fParentMap = new HashMap();
-
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof ITargetDefinition) {
 				ITargetLocation[] containers = ((ITargetDefinition) parentElement).getTargetLocations();
@@ -505,13 +515,12 @@ public class TargetLocationsGroup {
 				}
 			} else if (parentElement instanceof ITargetLocation) {
 				ITargetLocation location = (ITargetLocation) parentElement;
-				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance(fTarget).getContentProvider(location.getType());
+				ITreeContentProvider contentProvider = LocationProviderManager.getInstance(fTarget).getContentProvider(location.getType());
 				if (contentProvider != null) {
 					Object[] children = contentProvider.getChildren(parentElement);
 					TargetLocationElement[] result = new TargetLocationElement[children.length];
 					if (children != null && children.length > 0) {
 						for (int i = 0; i < children.length; i++) {
-//							fParentMap.put(result[i], parentElement);
 							result[i] = new TargetLocationElement(children[i], location);
 						}
 						return result;
@@ -524,7 +533,6 @@ public class TargetLocationsGroup {
 		}
 
 		public Object getParent(Object element) {
-//			return fParentMap.get(element);
 			if (element instanceof TargetLocationElement) {
 				return ((TargetLocationElement) element).getParent();
 			}
@@ -534,7 +542,7 @@ public class TargetLocationsGroup {
 		public boolean hasChildren(Object element) {
 			if (!(element instanceof AbstractBundleContainer) && (element instanceof ITargetLocation)) {
 				ITargetLocation location = (ITargetLocation) element;
-				ITreeContentProvider contentProvider = TargetProvisionerManager.getInstance(fTarget).getContentProvider(location.getType());
+				ITreeContentProvider contentProvider = LocationProviderManager.getInstance(fTarget).getContentProvider(location.getType());
 				if (contentProvider != null) {
 					return contentProvider.hasChildren(element);
 				}
