@@ -10,14 +10,24 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.platform;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.osgi.service.resolver.State;
+import org.eclipse.pde.internal.core.target.provisional.ITargetDefinition;
+
 /**
  * Central location for all bundles, features and models required to develop, build 
  * and launch in PDE.
  * 
- * @noimplement This interface is not intended to be implemented by clients.
- * @noextend This interface is not intended to be extended by clients.
- * @since 3.8
  */
 public interface IDevelopmentPlatform {
+
+	public void resolve(IProgressMonitor monitor) throws CoreException;
+
+	public ITargetDefinition getTargetDefinition();
+
+	public State getState();
+
+	public IBundle findBundle(String name, String version);
 
 }
