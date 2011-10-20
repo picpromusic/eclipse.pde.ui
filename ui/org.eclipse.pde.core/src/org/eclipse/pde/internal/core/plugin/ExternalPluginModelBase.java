@@ -57,6 +57,9 @@ public abstract class ExternalPluginModelBase extends AbstractPluginModelBase {
 		return false;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.core.IModel#load()
+	 */
 	public void load() {
 	}
 

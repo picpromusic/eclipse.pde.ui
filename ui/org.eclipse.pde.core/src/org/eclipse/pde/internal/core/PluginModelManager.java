@@ -11,6 +11,8 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core;
 
+import org.eclipse.pde.internal.core.platform.DevelopmentPlatform;
+
 import java.util.*;
 import java.util.Map.Entry;
 import org.eclipse.core.resources.IProject;
@@ -502,6 +504,15 @@ public class PluginModelManager implements IModelProviderListener {
 	private synchronized void initializeTable() {
 		if (fEntries != null)
 			return;
+
+		// XXX Added to test the new functionality
+		DevelopmentPlatform platform = new DevelopmentPlatform();
+		try {
+			platform.resolve(new NullProgressMonitor());
+		} catch (CoreException e) {
+			System.err.println(e.getMessage());
+			System.err.println(e.getStackTrace());
+		}
 
 		// Cannot assign to fEntries here - will create a race condition with isInitialized()
 		Map entries = Collections.synchronizedMap(new TreeMap());
