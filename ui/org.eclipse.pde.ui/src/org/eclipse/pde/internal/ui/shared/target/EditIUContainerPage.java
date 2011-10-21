@@ -11,10 +11,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.ui.IEditTargetLocationPage;
-
-import org.eclipse.pde.core.target.*;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import org.eclipse.core.runtime.*;
@@ -32,6 +28,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.SameShellProvider;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.target.IUBundleContainer;
 import org.eclipse.pde.internal.core.target.P2TargetUtils;
@@ -50,7 +47,7 @@ import org.eclipse.ui.PlatformUI;
  * @see EditBundleContainerWizard
  * @see AddBundleContainerWizard
  */
-public class EditIUContainerPage extends WizardPage implements IEditTargetLocationPage {
+public class EditIUContainerPage extends WizardPage implements IEditBundleContainerPage {
 
 	// Status for any errors on the page
 	private static final IStatus BAD_IU_SELECTION = new Status(IStatus.ERROR, PDEPlugin.getPluginId(), Messages.EditIUContainerPage_0);
@@ -128,7 +125,7 @@ public class EditIUContainerPage extends WizardPage implements IEditTargetLocati
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.internal.ui.shared.target.IEditTargetLocationPage#getBundleContainer()
 	 */
-	public ITargetLocation getTargetLocation() {
+	public ITargetLocation getBundleContainer() {
 		ITargetPlatformService service = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
 		if (service == null) {
 			PDEPlugin.log(new Status(IStatus.ERROR, PDEPlugin.getPluginId(), Messages.EditIUContainerPage_9));

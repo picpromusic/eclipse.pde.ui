@@ -10,78 +10,107 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import java.util.HashSet;
+import org.eclipse.core.runtime.*;
 import org.eclipse.jface.viewers.*;
+import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.pde.core.target.ITargetDefinition;
+import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.core.target.IUBundleContainer;
-import org.eclipse.pde.ui.*;
-import org.eclipse.swt.graphics.Image;
+import org.eclipse.pde.internal.ui.shared.target.IUContentProvider.IUWrapper;
+import org.eclipse.pde.ui.target.ITargetLocationEditor;
+import org.eclipse.pde.ui.target.ITargetLocationUpdater;
 
 /**
- * Adaptor factory for providing label and content providers and Add/Edit Wizards for the IU Target Location type
+ * Adapter factory for providing all necessary UI components for the {@link IUBundleContainer}
  *
  */
-public class IUFactory implements ILocationUIFactory {
+public class IUFactory implements IAdapterFactory, ITargetLocationEditor, ITargetLocationUpdater {
 
-	ITargetDefinition fTarget;
+	private ILabelProvider fLabelProvider;
+	private ITreeContentProvider fContentProvider;
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdapterFactory#getAdapterList()
+	 */
+	public Class[] getAdapterList() {
+		return new Class[] {ILabelProvider.class, IContentProvider.class, ITargetLocationEditor.class, ITargetLocationUpdater.class};
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.core.runtime.IAdapterFactory#getAdapter(java.lang.Object, java.lang.Class)
+	 */
 	public Object getAdapter(Object adaptableObject, Class adapterType) {
-		if (adaptableObject instanceof String) {
-			if (IUBundleContainer.TYPE.equals(adaptableObject)) {
-				if (adapterType == ILabelProvider.class) {
-					return new IULabelProvider();
-				} else if (adapterType == ITreeContentProvider.class) {
-					if (fTarget != null) {
-						return new IUContentProvider(fTarget);
-					}
-				} else if (adapterType == ILocationWizard.class) {
-					return new InstallableUnitWizard(fTarget);
-				}
+		if (adaptableObject instanceof IUBundleContainer) {
+			if (adapterType == ILabelProvider.class) {
+				return getLabelProvider();
+			} else if (adapterType == IContentProvider.class) {
+				return getContentProvider();
+			} else if (adapterType == ITargetLocationEditor.class) {
+				return this;
+			} else if (adapterType == ITargetLocationUpdater.class) {
+				return this;
 			}
-		} else if (adaptableObject instanceof IUBundleContainer) {
-			if (adapterType == IEditTargetLocationPage.class) {
-				return new EditIUContainerPage((IUBundleContainer) adaptableObject, fTarget);
+		} else if (adaptableObject instanceof IUWrapper) {
+			if (adapterType == ILabelProvider.class) {
+				return getLabelProvider();
+			} else if (adapterType == IContentProvider.class) {
+				return getContentProvider();
 			}
 		}
 		return null;
 	}
 
-	public Class[] getAdapterList() {
-		return new Class[] {ILabelProvider.class, ITreeContentProvider.class, ILocationWizard.class, IEditTargetLocationPage.class};
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.ui.target.ITargetLocationEditor#canEdit(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.pde.core.target.ITargetLocation)
+	 */
+	public boolean canEdit(ITargetDefinition target, ITargetLocation targetLocation) {
+		return targetLocation instanceof IUBundleContainer;
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.ui.ILocationUIFactory#setTargetDefinition(org.eclipse.pde.core.target.ITargetDefinition)
+	 * @see org.eclipse.pde.ui.target.ITargetLocationEditor#getEditWizard(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.pde.core.target.ITargetLocation)
 	 */
-	public void setTargetDefinition(ITargetDefinition target) {
-		fTarget = target;
+	public IWizard getEditWizard(ITargetDefinition target, ITargetLocation targetLocation) {
+		return new EditBundleContainerWizard(target, targetLocation);
 	}
 
-	/**
-	 * Label Provider for the  {@link IUBundleContainer} target location
-	 *
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.ui.target.ITargetLocationUpdater#canUpdate(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.pde.core.target.ITargetLocation)
 	 */
-	class IULabelProvider extends StyledCellLabelProvider implements ILabelProvider {
+	public boolean canUpdate(ITargetDefinition target, ITargetLocation targetLocation) {
+		return targetLocation instanceof IUBundleContainer;
+	}
 
-		StyledBundleLabelProvider provider;
-
-		IULabelProvider() {
-			provider = new StyledBundleLabelProvider(true, false);
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.ui.target.ITargetLocationUpdater#update(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.pde.core.target.ITargetLocation, org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	public IStatus update(ITargetDefinition target, ITargetLocation targetLocation, IProgressMonitor monitor) {
+		// This method has to run synchronously, so we do the update ourselves instead of using UpdateTargetJob
+		if (targetLocation instanceof IUBundleContainer) {
+			try {
+				int result = ((IUBundleContainer) targetLocation).update(new HashSet(0), monitor);
+				// TODO Have the target update correctly based on DIRTY and UPDATE bit flags
+				return Status.OK_STATUS;
+			} catch (CoreException e) {
+				return e.getStatus();
+			}
 		}
+		return Status.CANCEL_STATUS;
+	}
 
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ILabelProvider#getImage(java.lang.Object)
-		 */
-		public Image getImage(Object element) {
-			return provider.getImage(element);
+	private ILabelProvider getLabelProvider() {
+		if (fLabelProvider == null) {
+			fLabelProvider = new StyledBundleLabelProvider(true, false);
 		}
+		return fLabelProvider;
+	}
 
-		/* (non-Javadoc)
-		 * @see org.eclipse.jface.viewers.ILabelProvider#getText(java.lang.Object)
-		 */
-		public String getText(Object element) {
-			return provider.getText(element);
+	private ITreeContentProvider getContentProvider() {
+		if (fContentProvider == null) {
+			fContentProvider = new IUContentProvider();
 		}
-
+		return fContentProvider;
 	}
 
 }

@@ -15,6 +15,7 @@ import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -25,12 +26,14 @@ import org.eclipse.pde.internal.ui.editor.FormLayoutFactory;
 import org.eclipse.pde.internal.ui.editor.targetdefinition.TargetEditor;
 import org.eclipse.pde.internal.ui.shared.target.IUContentProvider.IUWrapper;
 import org.eclipse.pde.internal.ui.wizards.target.TargetDefinitionContentPage;
+import org.eclipse.pde.ui.target.ITargetLocationUpdater;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.ui.forms.widgets.FormToolkit;
+import org.eclipse.ui.progress.UIJob;
 
 /**
  * UI part that can be added to a dialog or to a form editor.  Contains a table displaying
@@ -187,7 +190,7 @@ public class TargetLocationsGroup {
 	private void initializeTreeViewer(Tree tree) {
 		fTreeViewer = new TreeViewer(tree);
 		fTreeViewer.setContentProvider(new TargetLocationContentProvider());
-		fTreeViewer.setLabelProvider(new TargetLocationLabelProvider(true, false, fTarget));
+		fTreeViewer.setLabelProvider(new TargetLocationLabelProvider(true, false));
 		fTreeViewer.setComparator(new ViewerComparator() {
 			public int compare(Viewer viewer, Object e1, Object e2) {
 				// Status at the end of the list
@@ -293,9 +296,7 @@ public class TargetLocationsGroup {
 			ITargetLocation oldContainer = null;
 			if (selected instanceof ITargetLocation) {
 				oldContainer = (ITargetLocation) selected;
-			} else /* if (selected instanceof IUWrapper) {
-					oldContainer = ((IUWrapper) selected).getParent();
-					} else if (selected instanceof TargetBundle)*/{
+			} else {
 				TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
 				if (treeSelection.length > 0) {
 					Object parent = treeSelection[0].getParentItem().getData();
@@ -334,6 +335,9 @@ public class TargetLocationsGroup {
 	}
 
 	private void handleRemove() {
+		// TODO Contains custom code to remove individual IUWrappers
+		// TODO Contains custom code to force re-resolve if IUBundleContainer removed
+
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
 		ITargetLocation[] containers = fTarget.getTargetLocations();
 		if (!selection.isEmpty() && containers != null && containers.length > 0) {
@@ -383,98 +387,110 @@ public class TargetLocationsGroup {
 	}
 
 	private void handleUpdate() {
-		// go over the selection and make a map from container to set of ius to update.
-		// if the set is empty then the whole container is to be updated.
+		// TODO Only IUWrapper children are added to the map for special update processing
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-		ITreeContentProvider contentProvider = (ITreeContentProvider) fTreeViewer.getContentProvider();
 		Map toUpdate = new HashMap();
 		for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
 			Object currentSelection = iterator.next();
 			if (currentSelection instanceof ITargetLocation)
 				toUpdate.put(currentSelection, new HashSet(0));
-			else {
-				Object parent = contentProvider.getParent(currentSelection);
-				Set children = (Set) toUpdate.get(parent);
-				if (children == null) {
-					children = new HashSet(0);
-					toUpdate.put(parent, children);
-				}
-				children.add(currentSelection);
+			else if (currentSelection instanceof IUWrapper) {
+				IUWrapper wrapper = (IUWrapper) currentSelection;
+				Set iuSet = (Set) toUpdate.get(wrapper.getParent());
+				if (iuSet == null) {
+					iuSet = new HashSet();
+					iuSet.add(wrapper.getIU().getId());
+					toUpdate.put(wrapper.getParent(), iuSet);
+				} else if (!iuSet.isEmpty())
+					iuSet.add(wrapper.getIU().getId());
 			}
-			/*			else if (currentSelection instanceof IUWrapper) {
-							IUWrapper wrapper = (IUWrapper) currentSelection;
-							Set iuSet = (Set) toUpdate.get(wrapper.getParent());
-							if (iuSet == null) {
-								iuSet = new HashSet();
-								iuSet.add(wrapper.getIU().getId());
-								toUpdate.put(wrapper.getParent(), iuSet);
-							} else if (!iuSet.isEmpty())
-								iuSet.add(wrapper.getIU().getId());
-						}*/
 		}
 		if (toUpdate.isEmpty())
 			return;
 
 		JobChangeAdapter listener = new JobChangeAdapter() {
 			public void done(final IJobChangeEvent event) {
-				Display.getDefault().asyncExec(new Runnable() {
-					public void run() {
+				UIJob job = new UIJob(Messages.UpdateTargetJob_UpdateJobName) {
+					public IStatus runInUIThread(IProgressMonitor monitor) {
 						// XXX what if everything is disposed by the time we get back?
-						UpdateTargetJob job = (UpdateTargetJob) event.getJob();
-						contentsChanged(job.isUpdated());
-						fTreeViewer.refresh(true);
-						try {
-							ITargetHandle currentTarget = TargetPlatformService.getDefault().getWorkspaceTargetHandle();
-							if (job.isUpdated() && fTarget.getHandle().equals(currentTarget))
-								LoadTargetDefinitionJob.load(fTarget);
-						} catch (CoreException e) {
-							// do nothing if we could not see the current target.
+						IStatus result = event.getJob().getResult();
+						if (!result.isOK()) {
+							//TODO Put up error dialog
+							ErrorDialog.openError(fTreeViewer.getTree().getShell(), Messages.TargetLocationsGroup_TargetUpdateErrorDialog, result.getMessage(), result);
+						} else if (result.getCode() != ITargetLocationUpdater.STATUS_CODE_NO_CHANGE) {
+							// Update was successful and changed the target
+							contentsChanged(true);
+							fTreeViewer.refresh(true);
+							// If the target is the current platform, run a load job for the user
+							try {
+								ITargetHandle currentTarget = TargetPlatformService.getDefault().getWorkspaceTargetHandle();
+								if (fTarget.getHandle().equals(currentTarget))
+									LoadTargetDefinitionJob.load(fTarget);
+							} catch (CoreException e) {
+								// do nothing if we could not see the current target.
+							}
+							updateButtons();
 						}
-						updateButtons();
+						return Status.OK_STATUS;
 					}
-				});
+				};
 			}
 		};
-		UpdateTargetJob.update(toUpdate, listener);
+		UpdateTargetJob.update(fTarget, toUpdate, listener);
 	}
 
 	private void updateButtons() {
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-//		fEditButton.setEnabled(!selection.isEmpty());
-		if (!selection.isEmpty()) {
-			if (selection.getFirstElement() instanceof ITargetLocation) {
-				fEditButton.setEnabled(true);
-			} else {
-				fEditButton.setEnabled(false);
-				TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
-				Object parent = treeSelection[0].getParentItem().getData();
-				if (parent instanceof ITargetLocation) {
-					fEditButton.setEnabled(true);
-				}
-			}
+		fEditButton.setEnabled(!selection.isEmpty() && (selection.getFirstElement() instanceof ITargetLocation));
+		boolean removeAllowed = true;
+		boolean updateAllowed = true;
+
+		ITargetLocation location = null;
+		TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
+		if (treeSelection.length == 0) {
+			updateAllowed = false;
+			removeAllowed = false;
 		}
-		// If any container is selected, allow the remove (the remove ignores non-container entries)
-		boolean removeAllowed = false;
-		boolean updateAllowed = false;
-		ITreeContentProvider contentProvider = (ITreeContentProvider) fTreeViewer.getContentProvider();
-		Iterator iter = selection.iterator();
-		while (iter.hasNext()) {
-			if (removeAllowed && updateAllowed) {
+		for (int i = 0; i < treeSelection.length; i++) {
+			TreeItem rootItem = getRoot(treeSelection[i]);
+			if (location == null) {
+				location = (ITargetLocation) rootItem.getData();
+			} else if (rootItem.getData() != location) { // don't enable the buttons if children from different parents locations are selected
+				updateAllowed = false;
+				removeAllowed = false;
 				break;
 			}
-			Object current = iter.next();
-			if (current instanceof ITargetLocation) {
-				removeAllowed = true;
-				updateAllowed = TargetLocationTypeManager.getInstance().canUpdate(((ITargetLocation) current).getType());
-			} else {
-				Object parent = contentProvider.getParent(contentProvider);
-				if (parent != null && parent instanceof ITargetLocation) {
-					updateAllowed = TargetLocationTypeManager.getInstance().canUpdate(((ITargetLocation) parent).getType());
+			Object data = treeSelection[i].getData();
+			if (!(data instanceof ITargetLocation)) {
+				if (data instanceof TargetLocationElement) {
+					data = ((TargetLocationElement) data).getElement();
+				}
+				ITargetRemover updater = LocationProviderManager.getInstance(fTarget).getUpdater(data);
+				if (updater != null) {
+					updateAllowed = updateAllowed && updater.canUpdate();
+					removeAllowed = removeAllowed && updater.canRemove();
+				} else {
+					updateAllowed = false;
+					removeAllowed = false;
+					break;
 				}
 			}
 		}
+
 		fRemoveButton.setEnabled(removeAllowed);
 		fUpdateButton.setEnabled(updateAllowed);
+	}
+
+	/**
+	 * Get the root item in the tree to which the given item belongs too
+	 */
+	private TreeItem getRoot(TreeItem item) {
+		if (item != null) {
+			while (item.getParentItem() != null) {
+				item = item.getParentItem();
+			}
+		}
+		return item;
 	}
 
 	/**
@@ -497,26 +513,29 @@ public class TargetLocationsGroup {
 			if (parentElement instanceof ITargetDefinition) {
 				ITargetLocation[] containers = ((ITargetDefinition) parentElement).getTargetLocations();
 				return containers != null ? containers : new Object[0];
-			} else if (parentElement instanceof AbstractBundleContainer) {
-				AbstractBundleContainer location = (AbstractBundleContainer) parentElement;
-				if (location.isResolved()) {
-					IStatus status = location.getStatus();
-					if (!status.isOK() && !status.isMultiStatus()) {
-						return new Object[] {status};
-					}
-					if (fShowContentButton.getSelection()) {
-						return location.getBundles();
-					} else if (!status.isOK()) {
-						// Show multi-status children so user can easily see problems
-						if (status.isMultiStatus()) {
-							return status.getChildren();
-						}
-					}
-				}
-			} else if (parentElement instanceof ITargetLocation) {
+			}
+
+			if (parentElement instanceof ITargetLocation) {
 				ITargetLocation location = (ITargetLocation) parentElement;
 				ITreeContentProvider contentProvider = LocationProviderManager.getInstance(fTarget).getContentProvider(location.getType());
-				if (contentProvider != null) {
+
+				if (contentProvider == null && parentElement instanceof AbstractBundleContainer) {
+					AbstractBundleContainer absLocation = (AbstractBundleContainer) parentElement;
+					if (absLocation.isResolved()) {
+						IStatus status = absLocation.getStatus();
+						if (!status.isOK() && !status.isMultiStatus()) {
+							return new Object[] {status};
+						}
+						if (fShowContentButton.getSelection()) {
+							return absLocation.getBundles();
+						} else if (!status.isOK()) {
+							// Show multi-status children so user can easily see problems
+							if (status.isMultiStatus()) {
+								return status.getChildren();
+							}
+						}
+					}
+				} else {
 					Object[] children = contentProvider.getChildren(parentElement);
 					TargetLocationElement[] result = new TargetLocationElement[children.length];
 					if (children != null && children.length > 0) {
@@ -584,19 +603,5 @@ public class TargetLocationsGroup {
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 		}
 
-	}
-
-	class TargetLocationElement {
-		Object element;
-		ITargetLocation location;
-
-		TargetLocationElement(Object element, ITargetLocation location) {
-			this.element = element;
-			this.location = location;
-		}
-
-		public ITargetLocation getParent() {
-			return location;
-		}
 	}
 }

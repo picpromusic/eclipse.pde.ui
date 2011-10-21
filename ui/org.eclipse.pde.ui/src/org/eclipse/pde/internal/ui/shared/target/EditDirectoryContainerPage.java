@@ -10,11 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.ui.IEditTargetLocationPage;
-
-import org.eclipse.pde.core.target.ITargetLocation;
-import org.eclipse.pde.core.target.ITargetPlatformService;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,6 +20,8 @@ import org.eclipse.debug.ui.StringVariableSelectionDialog;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.wizard.WizardPage;
+import org.eclipse.pde.core.target.ITargetLocation;
+import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.target.AbstractBundleContainer;
 import org.eclipse.pde.internal.ui.*;
@@ -42,7 +39,7 @@ import org.eclipse.ui.progress.UIJob;
  * @see AddBundleContainerSelectionPage
  * @see ITargetLocation
  */
-public class EditDirectoryContainerPage extends WizardPage implements IEditTargetLocationPage {
+public class EditDirectoryContainerPage extends WizardPage implements IEditBundleContainerPage {
 
 	/**
 	 * How long to wait before validating the directory
@@ -280,7 +277,7 @@ public class EditDirectoryContainerPage extends WizardPage implements IEditTarge
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.internal.ui.shared.target.IEditTargetLocationPage#getBundleContainer()
 	 */
-	public ITargetLocation getTargetLocation() {
+	public ITargetLocation getBundleContainer() {
 		return fContainer;
 	}
 

@@ -26,12 +26,6 @@ import org.eclipse.pde.internal.ui.elements.DefaultTableProvider;
  */
 public class IUContentProvider extends DefaultTableProvider implements ITreeContentProvider {
 
-	private ITargetDefinition fTarget;
-
-	public IUContentProvider(ITargetDefinition target) {
-		fTarget = target;
-	}
-
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.IStructuredContentProvider#getElements(java.lang.Object)
 	 */
@@ -48,14 +42,15 @@ public class IUContentProvider extends DefaultTableProvider implements ITreeCont
 			try {
 				// if this is a bundle container then we must be sure that all bundle containers are
 				// happy since they all share the same profile.
-				if (!P2TargetUtils.isResolved(fTarget)) {
+				ITargetDefinition target = location.getTarget();
+				if (target == null || !P2TargetUtils.isResolved(target)) {
 					return new Object[0];
 				}
 				IInstallableUnit[] units = location.getInstallableUnits();
 				// Wrap the units so that they remember their parent container
 				List wrappedUnits = new ArrayList(units.length);
 				for (int i = 0; i < units.length; i++) {
-					wrappedUnits.add(new IUWrapper(units[i], (IUBundleContainer) parentElement));
+					wrappedUnits.add(new IUWrapper(units[i], location));
 				}
 				return wrappedUnits.toArray();
 			} catch (CoreException e) {
@@ -86,7 +81,7 @@ public class IUContentProvider extends DefaultTableProvider implements ITreeCont
 	 * Wraps an installable unit so that it knows what bundle container parent it belongs to
 	 * in the tree.
 	 */
-	class IUWrapper {
+	public class IUWrapper {
 		private IInstallableUnit fIU;
 		private IUBundleContainer fParent;
 

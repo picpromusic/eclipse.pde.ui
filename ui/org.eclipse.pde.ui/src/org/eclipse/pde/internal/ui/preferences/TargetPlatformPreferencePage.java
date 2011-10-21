@@ -341,7 +341,7 @@ public class TargetPlatformPreferencePage extends PreferencePage implements IWor
 		Composite detailsComposite = SWTFactory.createComposite(comp, 1, 1, GridData.FILL_HORIZONTAL, 0, 0);
 		SWTFactory.createLabel(detailsComposite, PDEUIMessages.TargetPlatformPreferencePage2_25, 1);
 		fDetails = new TableViewer(detailsComposite);
-		fDetails.setLabelProvider(new TargetLocationLabelProvider(true, true, fActiveTarget));
+		fDetails.setLabelProvider(new TargetLocationLabelProvider(true, true));
 		fDetails.setContentProvider(new ArrayContentProvider());
 		gd = new GridData(GridData.FILL_HORIZONTAL);
 		gd.heightHint = 50;

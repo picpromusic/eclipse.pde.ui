@@ -104,6 +104,12 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 */
 	private P2TargetUtils fSynchronizer;
 
+	/**
+	 * The target definition that this bundle container was last resolved in
+	 * or <code>null</code> if not resolved.
+	 */
+	private ITargetDefinition fTarget;
+
 	private static final boolean DEBUG_PROFILE;
 
 	static {
@@ -173,8 +179,19 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * @see org.eclipse.pde.internal.core.target.AbstractBundleContainer#resolveFeatures(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected TargetFeature[] resolveFeatures(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
+		fTarget = definition;
 		fSynchronizer.synchronize(definition, monitor);
 		return fFeatures;
+	}
+
+	/**
+	 * Returns the target definition that was used to resolve this bundle container or <code>null</code>
+	 * if this container is not resolved.
+	 * 
+	 * @return target definition or <code>null</code>
+	 */
+	public ITargetDefinition getTarget() {
+		return isResolved() ? fTarget : null;
 	}
 
 	/**
@@ -229,6 +246,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * @see org.eclipse.pde.internal.core.target.impl.AbstractBundleContainer#resolveBundles(org.eclipse.pde.core.target.ITargetDefinition, org.eclipse.core.runtime.IProgressMonitor)
 	 */
 	protected TargetBundle[] resolveBundles(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
+		fTarget = definition;
 		fSynchronizer.synchronize(definition, monitor);
 		return fBundles;
 	}
@@ -316,13 +334,13 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 * 
 	 * @param toUpdate the set of IU ids in this container to consider updating.  If empty
 	 * then update everything
-	 * @return true if UPDATED. false if DIRTY. 
+	 * @param monitor progress monitor or <code>null</code>
+	 * @return whether this container was changed as part of this update and must be resolved 
 	 * @exception CoreException if unable to retrieve IU's
 	 */
-	public synchronized boolean update(Set toUpdate, IProgressMonitor monitor) throws CoreException {
+	public synchronized boolean update(Set/*<type>*/toUpdate, IProgressMonitor monitor) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor, 100);
 		IQueryable source = P2TargetUtils.getQueryableMetadata(fRepos, progress.newChild(30));
-		boolean dirty = false;
 		boolean updated = false;
 		SubMonitor loopProgress = progress.newChild(70).setWorkRemaining(fIds.length);
 		for (int i = 0; i < fIds.length; i++) {
@@ -337,19 +355,18 @@ public class IUBundleContainer extends AbstractBundleContainer {
 			IInstallableUnit iu = (IInstallableUnit) it.next();
 			// if the version is different from the spec (up or down), record the change.
 			if (!iu.getVersion().equals(fVersions[i])) {
-				updated = true; //UpdateTargetJob.UPDATED;
+				updated = true;
 				// if the spec was not specific (e.g., 0.0.0) the target def itself has changed.
 				if (!fVersions[i].equals(Version.emptyVersion)) {
 					fVersions[i] = iu.getVersion();
-					dirty = true; //UpdateTargetJob.DIRTY;
 				}
 			}
 		}
-		if (updated) {
+		if (!updated) {
 			// Things have changed so mark the container as unresolved
 			clearResolutionStatus();
 		}
-		return dirty || updated;
+		return updated;
 	}
 
 	protected void clearResolutionStatus() {

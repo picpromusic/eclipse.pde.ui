@@ -126,6 +126,10 @@ public class Messages extends NLS {
 	public static String TargetContentsGroup_PluginMode;
 	public static String TargetContentsGroup_resolveCancelled;
 	public static String TargetLocationsGroup_1;
+	public static String TargetLocationsGroup_TargetUpdateErrorDialog;
+	public static String UpdateTargetJob_UpdateJobName;
+	public static String UpdateTargetJob_UpdatingContainer;
+	public static String UpdateTargetJob_UpdatingTarget;
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);

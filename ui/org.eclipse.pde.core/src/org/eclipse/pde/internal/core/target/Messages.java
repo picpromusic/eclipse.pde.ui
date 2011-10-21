@@ -81,9 +81,6 @@ public class Messages extends NLS {
 	public static String TargetPlatformService_4;
 	public static String TargetPlatformService_5;
 	public static String TargetPlatformService_7;
-	public static String UpdateTargetJob_UpdateJobName;
-	public static String UpdateTargetJob_UpdatingContainer;
-	public static String UpdateTargetJob_UpdatingTarget;
 	public static String WorkspaceFileTargetHandle_0;
 	static {
 		// initialize resource bundle

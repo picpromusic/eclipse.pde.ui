@@ -16,7 +16,6 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.core.target.*;
 import org.eclipse.pde.internal.ui.PDEPlugin;
-import org.eclipse.pde.ui.IEditTargetLocationPage;
 
 /**
  * Wizard that opens an appropriate page for editing a specific type of bundle container
@@ -26,7 +25,7 @@ public class EditBundleContainerWizard extends Wizard {
 
 	private ITargetDefinition fTarget;
 	private ITargetLocation fContainer;
-	private IEditTargetLocationPage fPage;
+	private IEditBundleContainerPage fPage;
 
 	public EditBundleContainerWizard(ITargetDefinition target, ITargetLocation container) {
 		fTarget = target;
@@ -49,8 +48,8 @@ public class EditBundleContainerWizard extends Wizard {
 			fPage = new EditProfileContainerPage(fContainer);
 		} else if (fContainer instanceof FeatureBundleContainer) {
 			fPage = new EditFeatureContainerPage(fContainer);
-		} else {
-			fPage = LocationProviderManager.getInstance(fTarget).getEditWizardPage(fContainer);
+		} else if (fContainer instanceof IUBundleContainer) {
+			fPage = new EditIUContainerPage((IUBundleContainer) fContainer, fTarget);
 		}
 		if (fPage != null) {
 			addPage(fPage);
@@ -63,7 +62,7 @@ public class EditBundleContainerWizard extends Wizard {
 	public boolean performFinish() {
 		if (fPage != null) {
 			fPage.storeSettings();
-			fContainer = fPage.getTargetLocation();
+			fContainer = fPage.getBundleContainer();
 			return true;
 		}
 		return false;

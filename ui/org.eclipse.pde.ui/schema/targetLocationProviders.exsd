@@ -87,16 +87,6 @@ represent the provisioner.
                </appInfo>
             </annotation>
          </attribute>
-         <attribute name="uifactory" type="string">
-            <annotation>
-               <documentation>
-                  The value of this attribute is the fully qualified name of the Java class that implements &lt;code&gt;org.eclipse.pde.ui.ITargetLocationFactory&lt;/code&gt;.
-               </documentation>
-               <appInfo>
-                  <meta.attribute kind="java" basedOn=":org.eclipse.pde.ui.ILocationUIFactory"/>
-               </appInfo>
-            </annotation>
-         </attribute>
          <attribute name="type" type="string" use="required">
             <annotation>
                <documentation>
@@ -182,7 +172,7 @@ accompanies this distribution, and is available at
          <meta.section type="apiInfo"/>
       </appInfo>
       <documentation>
-         Each template mut provide an adaptory factory to provide labels and contents for the target location. It may optionally implement &lt;code&gt;org.eclipse.pde.ui.ILocationUIFactory&lt;/code&gt; interface if it needs to be seeded with the target definition.
+         Each template mut provide an adapter factory to provide labels and contents for the target location. It may optionally implement &lt;code&gt;org.eclipse.pde.ui.ILocationUIFactory&lt;/code&gt; interface if it needs to be seeded with the target definition.
       </documentation>
    </annotation>
 

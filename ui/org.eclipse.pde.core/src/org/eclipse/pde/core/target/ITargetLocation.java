@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.core.target;
 
-import java.util.Set;
 import org.eclipse.core.runtime.*;
 
 /**
@@ -61,20 +60,6 @@ public interface ITargetLocation extends IAdaptable {
 	 * @return whether this location has resolved all of its contents
 	 */
 	public boolean isResolved();
-
-	/**
-	 * Notifies that the target location needs to be updated. The implementation is optional.
-	 *  
-	 * @param toUpdate target locations to be updated
-	 * @param monitor monitor progress monitor or <code>null</code>
-	 * @return Return <code>true</code> if the effective set of bundles and features indicated by this
-	 * container has changed. 
-	 * <code>false</code> if the actual definition of this
-	 * container has changed. This indicates that the target definition containing an updated container
-	 * should be saved.
-	 * @throws CoreException
-	 */
-	public boolean update(Set toUpdate, IProgressMonitor monitor) throws CoreException;
 
 	/**
 	 * Returns the status of the last bundle resolution or <code>null</code> if 
