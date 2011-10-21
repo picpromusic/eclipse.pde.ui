@@ -2182,39 +2182,19 @@
    <extension
          point="org.eclipse.core.runtime.adapters">
       <factory
-            adaptableType="java.lang.String"
-            class="org.eclipse.pde.internal.ui.shared.target.IUFactory">
-         <adapter
-               type="org.eclipse.jface.viewers.ILabelProvider">
-         </adapter>
-         <adapter
-               type="org.eclipse.jface.viewers.ITreeContentProvider">
-         </adapter>
-         <adapter
-               type="org.eclipse.pde.ui.target.ILocationWizard">
-         </adapter>
-      </factory>
-      <factory
             adaptableType="org.eclipse.pde.core.target.ITargetLocation"
             class="org.eclipse.pde.internal.ui.shared.target.IUFactory">
          <adapter
-               type="org.eclipse.pde.ui.target.IEditTargetLocationPage">
-         </adapter>
-         <adapter
-               type="org.eclipse.pde.ui.target.ITargetRemover">
-         </adapter>
-      </factory>
-      <factory
-            adaptableType="org.eclipse.pde.internal.ui.shared.target.IUContentProvider$IUWrapper"
-            class="org.eclipse.pde.internal.ui.shared.target.IUFactory">
-         <adapter
                type="org.eclipse.jface.viewers.ILabelProvider">
          </adapter>
          <adapter
                type="org.eclipse.jface.viewers.ITreeContentProvider">
          </adapter>
          <adapter
-               type="org.eclipse.pde.ui.target.ITargetRemover">
+               type="org.eclipse.pde.ui.target.ITargetLocationEditor">
+         </adapter>
+         <adapter
+               type="org.eclipse.pde.ui.target.ITargetLocationUpdater">
          </adapter>
       </factory>
    </extension>

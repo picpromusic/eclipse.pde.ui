@@ -75,7 +75,7 @@ public class UpdateTargetJob extends Job {
 	 */
 	protected IStatus run(IProgressMonitor monitor) {
 		SubMonitor progress = SubMonitor.convert(monitor, Messages.UpdateTargetJob_UpdatingTarget, toUpdate.size() * 100);
-		MultiStatus errors = new MultiStatus(PDECore.PLUGIN_ID, 0, "The target definition did not update successfully", null);
+		MultiStatus errors = new MultiStatus(PDECore.PLUGIN_ID, 0, Messages.UpdateTargetJob_TargetUpdateFailedStatus, null);
 		boolean noChange = true;
 		for (Iterator iterator = toUpdate.entrySet().iterator(); iterator.hasNext();) {
 			Map.Entry entry = (Map.Entry) iterator.next();
@@ -88,7 +88,7 @@ public class UpdateTargetJob extends Job {
 			} catch (CoreException e1) {
 				// Ignore as this is just for the subtask
 			}
-			progress.subTask(NLS.bind(Messages.UpdateTargetJob_UpdatingContainer, location));
+			progress.subTask(NLS.bind(Messages.UpdateTargetJob_UpdatingContainer, path));
 
 			// TODO Custom code for IUBundleContainers with children selected
 			if (location instanceof IUBundleContainer && !children.isEmpty()) {
@@ -103,12 +103,14 @@ public class UpdateTargetJob extends Job {
 			} else {
 				ITargetLocationUpdater provider = (ITargetLocationUpdater) Platform.getAdapterManager().getAdapter(location, ITargetLocationUpdater.class);
 				if (provider != null) {
-					IStatus result = provider.update(fTarget, location, progress.newChild(100));
-					if (result.isOK() && result.getCode() != ITargetLocationUpdater.STATUS_CODE_NO_CHANGE) {
-						noChange = false;
-					} else if (!result.isOK()) {
-						noChange = false;
-						errors.add(result);
+					if (provider.canUpdate(fTarget, location)) {
+						IStatus result = provider.update(fTarget, location, progress.newChild(100));
+						if (result.isOK() && result.getCode() != ITargetLocationUpdater.STATUS_CODE_NO_CHANGE) {
+							noChange = false;
+						} else if (!result.isOK()) {
+							noChange = false;
+							errors.add(result);
+						}
 					}
 				} else {
 					// If the button enablement is correct, this should not get hit
@@ -118,7 +120,7 @@ public class UpdateTargetJob extends Job {
 		}
 		progress.done();
 		if (noChange) {
-			return new Status(IStatus.OK, PDECore.PLUGIN_ID, ITargetLocationUpdater.STATUS_CODE_NO_CHANGE, "Target definition update completed successfully", null);
+			return new Status(IStatus.OK, PDECore.PLUGIN_ID, ITargetLocationUpdater.STATUS_CODE_NO_CHANGE, Messages.UpdateTargetJob_TargetUpdateSuccessStatus, null);
 		} else if (!errors.isOK()) {
 			return errors;
 		} else {

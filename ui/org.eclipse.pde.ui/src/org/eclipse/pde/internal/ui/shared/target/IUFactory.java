@@ -16,6 +16,7 @@ import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
+import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.core.target.IUBundleContainer;
 import org.eclipse.pde.internal.ui.shared.target.IUContentProvider.IUWrapper;
 import org.eclipse.pde.ui.target.ITargetLocationEditor;
@@ -34,7 +35,7 @@ public class IUFactory implements IAdapterFactory, ITargetLocationEditor, ITarge
 	 * @see org.eclipse.core.runtime.IAdapterFactory#getAdapterList()
 	 */
 	public Class[] getAdapterList() {
-		return new Class[] {ILabelProvider.class, IContentProvider.class, ITargetLocationEditor.class, ITargetLocationUpdater.class};
+		return new Class[] {ILabelProvider.class, ITreeContentProvider.class, ITargetLocationEditor.class, ITargetLocationUpdater.class};
 	}
 
 	/* (non-Javadoc)
@@ -44,7 +45,7 @@ public class IUFactory implements IAdapterFactory, ITargetLocationEditor, ITarge
 		if (adaptableObject instanceof IUBundleContainer) {
 			if (adapterType == ILabelProvider.class) {
 				return getLabelProvider();
-			} else if (adapterType == IContentProvider.class) {
+			} else if (adapterType == ITreeContentProvider.class) {
 				return getContentProvider();
 			} else if (adapterType == ITargetLocationEditor.class) {
 				return this;
@@ -89,9 +90,11 @@ public class IUFactory implements IAdapterFactory, ITargetLocationEditor, ITarge
 		// This method has to run synchronously, so we do the update ourselves instead of using UpdateTargetJob
 		if (targetLocation instanceof IUBundleContainer) {
 			try {
-				int result = ((IUBundleContainer) targetLocation).update(new HashSet(0), monitor);
-				// TODO Have the target update correctly based on DIRTY and UPDATE bit flags
-				return Status.OK_STATUS;
+				boolean result = ((IUBundleContainer) targetLocation).update(new HashSet(0), monitor);
+				if (result) {
+					return Status.OK_STATUS;
+				}
+				return new Status(IStatus.OK, PDECore.PLUGIN_ID, ITargetLocationUpdater.STATUS_CODE_NO_CHANGE, "", null); //$NON-NLS-1$
 			} catch (CoreException e) {
 				return e.getStatus();
 			}

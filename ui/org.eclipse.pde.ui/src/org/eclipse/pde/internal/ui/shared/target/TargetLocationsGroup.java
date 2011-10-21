@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.window.Window;
+import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.target.*;
@@ -26,6 +27,7 @@ import org.eclipse.pde.internal.ui.editor.FormLayoutFactory;
 import org.eclipse.pde.internal.ui.editor.targetdefinition.TargetEditor;
 import org.eclipse.pde.internal.ui.shared.target.IUContentProvider.IUWrapper;
 import org.eclipse.pde.internal.ui.wizards.target.TargetDefinitionContentPage;
+import org.eclipse.pde.ui.target.ITargetLocationEditor;
 import org.eclipse.pde.ui.target.ITargetLocationUpdater;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.*;
@@ -291,44 +293,55 @@ public class TargetLocationsGroup {
 
 	private void handleEdit() {
 		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-		if (!selection.isEmpty()) {
-			Object selected = selection.getFirstElement();
-			ITargetLocation oldContainer = null;
-			if (selected instanceof ITargetLocation) {
-				oldContainer = (ITargetLocation) selected;
-			} else {
-				TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
-				if (treeSelection.length > 0) {
-					Object parent = treeSelection[0].getParentItem().getData();
-					if (parent instanceof ITargetLocation) {
-						oldContainer = (ITargetLocation) parent;
-					}
-				}
-			}
-			if (oldContainer != null) {
-				Shell parent = fTreeViewer.getTree().getShell();
-				EditBundleContainerWizard wizard = new EditBundleContainerWizard(fTarget, oldContainer);
-				WizardDialog dialog = new WizardDialog(parent, wizard);
-				if (dialog.open() == Window.OK) {
-					// Replace the old container with the new one
-					ITargetLocation newContainer = wizard.getBundleContainer();
-					if (newContainer != null) {
-						ITargetLocation[] containers = fTarget.getTargetLocations();
-						java.util.List newContainers = new ArrayList(containers.length);
-						for (int i = 0; i < containers.length; i++) {
-							if (!containers[i].equals(oldContainer)) {
-								newContainers.add(containers[i]);
+		for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
+			Object currentSelection = iterator.next();
+			if (currentSelection instanceof ITargetLocation) {
+				ITargetLocation location = (ITargetLocation) currentSelection;
+				ITargetLocationEditor editor = (ITargetLocationEditor) Platform.getAdapterManager().getAdapter(location, ITargetLocationEditor.class);
+				if (editor != null) {
+					if (editor.canEdit(fTarget, location)) {
+						IWizard editWizard = editor.getEditWizard(fTarget, location);
+						if (editWizard != null) {
+							Shell parent = fTreeViewer.getTree().getShell();
+							WizardDialog wizard = new WizardDialog(parent, editWizard);
+							if (wizard.open() == Window.OK) {
+								// Update the table
+								// TODO Do we need to force a resolve for IUBundleContainers?
+								contentsChanged(false);
+								fTreeViewer.refresh();
+								updateButtons();
+								// TODO We can't restore selection if they replace the location
+								fTreeViewer.setSelection(new StructuredSelection(location), true);
 							}
 						}
-						newContainers.add(newContainer);
-						fTarget.setTargetLocations((ITargetLocation[]) newContainers.toArray(new ITargetLocation[newContainers.size()]));
-
-						// Update the table
+					}
+				} else if (location instanceof AbstractBundleContainer) {
+					// TODO Custom code for locations that don't use adapaters yet
+					Shell parent = fTreeViewer.getTree().getShell();
+					EditBundleContainerWizard wizard = new EditBundleContainerWizard(fTarget, location);
+					WizardDialog dialog = new WizardDialog(parent, wizard);
+					if (dialog.open() == Window.OK) {
 						contentsChanged(false);
 						fTreeViewer.refresh();
 						updateButtons();
-						fTreeViewer.setSelection(new StructuredSelection(newContainer), true);
+						// TODO We can't restore selection if they replace the location
+						fTreeViewer.setSelection(new StructuredSelection(location), true);
 					}
+				}
+			} else if (currentSelection instanceof IUWrapper) {
+				// TODO Custom code to allow editing of individual IUs
+				IUWrapper wrapper = (IUWrapper) currentSelection;
+				Shell parent = fTreeViewer.getTree().getShell();
+				EditBundleContainerWizard editWizard = new EditBundleContainerWizard(fTarget, wrapper.getParent());
+				WizardDialog wizard = new WizardDialog(parent, editWizard);
+				if (wizard.open() == Window.OK) {
+					// Update the table
+					// TODO Do we need to force a resolve for IUBundleContainers?
+					contentsChanged(false);
+					fTreeViewer.refresh();
+					updateButtons();
+					// TODO We can't restore selection if they replace the location
+					fTreeViewer.setSelection(new StructuredSelection(wrapper.getParent()), true);
 				}
 			}
 		}
@@ -434,63 +447,76 @@ public class TargetLocationsGroup {
 						return Status.OK_STATUS;
 					}
 				};
+				job.schedule();
 			}
 		};
 		UpdateTargetJob.update(fTarget, toUpdate, listener);
 	}
 
 	private void updateButtons() {
-		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
-		fEditButton.setEnabled(!selection.isEmpty() && (selection.getFirstElement() instanceof ITargetLocation));
-		boolean removeAllowed = true;
-		boolean updateAllowed = true;
 
-		ITargetLocation location = null;
-		TreeItem[] treeSelection = fTreeViewer.getTree().getSelection();
-		if (treeSelection.length == 0) {
-			updateAllowed = false;
-			removeAllowed = false;
+		IStructuredSelection selection = (IStructuredSelection) fTreeViewer.getSelection();
+		if (selection.isEmpty()) {
+			fRemoveButton.setEnabled(false);
+			fUpdateButton.setEnabled(false);
+			fEditButton.setEnabled(false);
 		}
-		for (int i = 0; i < treeSelection.length; i++) {
-			TreeItem rootItem = getRoot(treeSelection[i]);
-			if (location == null) {
-				location = (ITargetLocation) rootItem.getData();
-			} else if (rootItem.getData() != location) { // don't enable the buttons if children from different parents locations are selected
-				updateAllowed = false;
-				removeAllowed = false;
+
+		boolean canRemove = false;
+		boolean canEdit = false;
+		boolean canUpdate = false;
+		for (Iterator iterator = selection.iterator(); iterator.hasNext();) {
+
+			Object currentSelection = iterator.next();
+			if (currentSelection instanceof ITargetLocation) {
+				canRemove = true;
+				if (!canEdit) {
+					ITargetLocation location = (ITargetLocation) currentSelection;
+					ITargetLocationEditor editor = (ITargetLocationEditor) Platform.getAdapterManager().getAdapter(location, ITargetLocationEditor.class);
+					if (editor != null) {
+						canEdit = editor.canEdit(fTarget, location);
+					}
+					if (location instanceof AbstractBundleContainer) {
+						// TODO Custom code for locations that don't use adapters yet
+						canEdit = true;
+					}
+				}
+				if (!canUpdate) {
+					ITargetLocation location = (ITargetLocation) currentSelection;
+					ITargetLocationUpdater updater = (ITargetLocationUpdater) Platform.getAdapterManager().getAdapter(location, ITargetLocationUpdater.class);
+					if (updater != null) {
+						canUpdate = updater.canUpdate(fTarget, location);
+					}
+				}
+
+			} else if (currentSelection instanceof IUWrapper) {
+				// TODO Custom code to support editing/updating/removal of individual IUs
+				canRemove = true;
+				canEdit = true;
+				canUpdate = true;
+			}
+			if (canRemove && canEdit && canUpdate) {
 				break;
 			}
-			Object data = treeSelection[i].getData();
-			if (!(data instanceof ITargetLocation)) {
-				if (data instanceof TargetLocationElement) {
-					data = ((TargetLocationElement) data).getElement();
-				}
-				ITargetRemover updater = LocationProviderManager.getInstance(fTarget).getUpdater(data);
-				if (updater != null) {
-					updateAllowed = updateAllowed && updater.canUpdate();
-					removeAllowed = removeAllowed && updater.canRemove();
-				} else {
-					updateAllowed = false;
-					removeAllowed = false;
-					break;
-				}
-			}
-		}
 
-		fRemoveButton.setEnabled(removeAllowed);
-		fUpdateButton.setEnabled(updateAllowed);
-	}
-
-	/**
-	 * Get the root item in the tree to which the given item belongs too
-	 */
-	private TreeItem getRoot(TreeItem item) {
-		if (item != null) {
-			while (item.getParentItem() != null) {
-				item = item.getParentItem();
-			}
 		}
-		return item;
+		fRemoveButton.setEnabled(canRemove);
+		fEditButton.setEnabled(canEdit);
+		fUpdateButton.setEnabled(canUpdate);
+
+		// TODO Some code to find the parent location of items in the tree
+		// For each selected item, find it's parent location and add it to the set
+//		for (int i = 0; i < treeSelection.length; i++) {
+//			TreeItem current = treeSelection[i];
+//			while (current != null){
+//				if (current instanceof ITargetLocation){
+//					selectedLocations.add(current);
+//					break;
+//				}
+//				current = current.getParentItem();
+//			}
+//		}
+
 	}
 
 	/**
@@ -509,67 +535,66 @@ public class TargetLocationsGroup {
 	 */
 	class TargetLocationContentProvider implements ITreeContentProvider {
 
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
+		 */
 		public Object[] getChildren(Object parentElement) {
 			if (parentElement instanceof ITargetDefinition) {
 				ITargetLocation[] containers = ((ITargetDefinition) parentElement).getTargetLocations();
 				return containers != null ? containers : new Object[0];
-			}
-
-			if (parentElement instanceof ITargetLocation) {
+			} else if (parentElement instanceof ITargetLocation) {
 				ITargetLocation location = (ITargetLocation) parentElement;
-				ITreeContentProvider contentProvider = LocationProviderManager.getInstance(fTarget).getContentProvider(location.getType());
-
-				if (contentProvider == null && parentElement instanceof AbstractBundleContainer) {
-					AbstractBundleContainer absLocation = (AbstractBundleContainer) parentElement;
-					if (absLocation.isResolved()) {
-						IStatus status = absLocation.getStatus();
-						if (!status.isOK() && !status.isMultiStatus()) {
-							return new Object[] {status};
-						}
-						if (fShowContentButton.getSelection()) {
-							return absLocation.getBundles();
-						} else if (!status.isOK()) {
-							// Show multi-status children so user can easily see problems
-							if (status.isMultiStatus()) {
-								return status.getChildren();
-							}
-						}
+				if (location.isResolved()) {
+					IStatus status = location.getStatus();
+					if (!status.isOK() && !status.isMultiStatus()) {
+						return new Object[] {status};
 					}
-				} else {
-					Object[] children = contentProvider.getChildren(parentElement);
-					TargetLocationElement[] result = new TargetLocationElement[children.length];
-					if (children != null && children.length > 0) {
-						for (int i = 0; i < children.length; i++) {
-							result[i] = new TargetLocationElement(children[i], location);
+					if (fShowContentButton.getSelection()) {
+						return location.getBundles();
+					} else if (!status.isOK()) {
+						// Show multi-status children so user can easily see problems
+						if (status.isMultiStatus()) {
+							return status.getChildren();
 						}
-						return result;
+					} else {
+						ITreeContentProvider provider = (ITreeContentProvider) Platform.getAdapterManager().getAdapter(parentElement, ITreeContentProvider.class);
+						if (provider != null) {
+							return provider.getChildren(parentElement);
+						}
 					}
 				}
 			} else if (parentElement instanceof MultiStatus) {
 				return ((MultiStatus) parentElement).getChildren();
+			} else {
+				ITreeContentProvider provider = (ITreeContentProvider) Platform.getAdapterManager().getAdapter(parentElement, ITreeContentProvider.class);
+				if (provider != null) {
+					return provider.getChildren(parentElement);
+				}
 			}
 			return new Object[0];
 		}
 
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITreeContentProvider#getParent(java.lang.Object)
+		 */
 		public Object getParent(Object element) {
-			if (element instanceof TargetLocationElement) {
-				return ((TargetLocationElement) element).getParent();
+			if (element instanceof IUWrapper) {
+				return ((IUWrapper) element).getParent();
 			}
 			return null;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITreeContentProvider#hasChildren(java.lang.Object)
+		 */
 		public boolean hasChildren(Object element) {
-			if (!(element instanceof AbstractBundleContainer) && (element instanceof ITargetLocation)) {
-				ITargetLocation location = (ITargetLocation) element;
-				ITreeContentProvider contentProvider = LocationProviderManager.getInstance(fTarget).getContentProvider(location.getType());
-				if (contentProvider != null) {
-					return contentProvider.hasChildren(element);
-				}
-			}
 			// Since we are already resolved we can't be more efficient
 			return getChildren(element).length > 0;
 		}
 
+		/* (non-Javadoc)
+		 * @see org.eclipse.jface.viewers.ITreeContentProvider#getElements(java.lang.Object)
+		 */
 		public Object[] getElements(Object inputElement) {
 			if (inputElement instanceof ITargetDefinition) {
 				boolean hasContainerStatus = false;

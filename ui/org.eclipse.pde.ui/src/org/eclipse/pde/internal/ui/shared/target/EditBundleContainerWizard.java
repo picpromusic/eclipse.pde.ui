@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.pde.core.target.ITargetDefinition;
@@ -62,17 +64,24 @@ public class EditBundleContainerWizard extends Wizard {
 	public boolean performFinish() {
 		if (fPage != null) {
 			fPage.storeSettings();
-			fContainer = fPage.getBundleContainer();
+
+			// Add the new container or replace the old one
+			ITargetLocation newContainer = fPage.getBundleContainer();
+			if (newContainer != null) {
+				ITargetLocation[] containers = fTarget.getTargetLocations();
+				List newContainers = new ArrayList(containers.length);
+				for (int i = 0; i < containers.length; i++) {
+					if (!containers[i].equals(fContainer)) {
+						newContainers.add(containers[i]);
+					}
+				}
+				newContainers.add(newContainer);
+				fTarget.setTargetLocations((ITargetLocation[]) newContainers.toArray(new ITargetLocation[newContainers.size()]));
+			}
+
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * @return the edited bundle container (may not be the same container as provided in the contructor)
-	 */
-	public ITargetLocation getBundleContainer() {
-		return fContainer;
 	}
 
 }

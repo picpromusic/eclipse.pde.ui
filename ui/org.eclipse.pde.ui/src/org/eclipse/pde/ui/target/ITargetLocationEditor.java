@@ -22,6 +22,9 @@ import org.eclipse.pde.core.target.ITargetLocation;
  * @since 3.7
  */
 public interface ITargetLocationEditor {
+	// TODO No way to restore selection after
+	// TODO We always perform a normal resolve after, forcing re-resolve ( no way to know result)
+	// TODO No way to consider the current selection
 
 	public boolean canEdit(ITargetDefinition target, ITargetLocation targetLocation);
 

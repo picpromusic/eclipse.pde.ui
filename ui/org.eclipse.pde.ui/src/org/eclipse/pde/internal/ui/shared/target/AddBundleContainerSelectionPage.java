@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.ui.target.ILocationWizard;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.*;
@@ -22,6 +20,7 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.wizards.WizardElement;
+import org.eclipse.pde.ui.target.ILocationWizard;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.graphics.Image;
@@ -169,7 +168,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						ITargetLocation container = fPage1.getTargetLocation();
+						ITargetLocation container = fPage1.getBundleContainer();
 						if (container != null) {
 							fPage1.storeSettings();
 							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
@@ -209,7 +208,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 					}
 
 					public boolean performFinish() {
-						ITargetLocation container = fPage1.getTargetLocation();
+						ITargetLocation container = fPage1.getBundleContainer();
 						if (container != null) {
 							fPage1.storeSettings();
 							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
