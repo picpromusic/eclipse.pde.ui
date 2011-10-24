@@ -10,21 +10,29 @@
  *******************************************************************************/
 package org.eclipse.pde.ui.target;
 
-import org.eclipse.pde.ui.IBasePluginWizard;
-
+import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 
 /**
  * This interface represents a wizard which will be used to add plug-ins to 
- * the Target Platform.  Typically, it maps to one wizard page, but more
- * complex sections may span several pages. Also note that in the very simple
- * cases it may not contribute any wizard pages.
+ * the Target Platform.  Implementors must have a default constructor (zero
+ * arguments) for the class to be created from the extension.
  * 
  * @noextend This interface is not intended to be extended by clients.
  * @since 3.7
  */
 
-public interface ILocationWizard extends IBasePluginWizard {
+public interface ITargetLocationWizard extends IWizard {
+
+	/**
+	 * After this wizard is created, this method will be called, providing this wizard with information
+	 * from the target definition the new location(s) will be added to.  It is not recommended that 
+	 * implementors modify the target as UI behaviour is not API (it may change between releases).
+	 * 
+	 * @param target the target definition this location is being added to
+	 */
+	public void setTarget(ITargetDefinition target);
 
 	/**
 	 * Returns an array of target locations which contain plug-ins to be added to

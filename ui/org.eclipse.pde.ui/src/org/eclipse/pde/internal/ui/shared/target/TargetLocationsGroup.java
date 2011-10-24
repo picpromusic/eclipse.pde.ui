@@ -314,6 +314,7 @@ public class TargetLocationsGroup {
 								fTreeViewer.setSelection(new StructuredSelection(location), true);
 							}
 						}
+						break; //Only open for one selected item
 					}
 				} else if (location instanceof AbstractBundleContainer) {
 					// TODO Custom code for locations that don't use adapaters yet
@@ -327,6 +328,7 @@ public class TargetLocationsGroup {
 						// TODO We can't restore selection if they replace the location
 						fTreeViewer.setSelection(new StructuredSelection(location), true);
 					}
+					break; //Only open for one selected item
 				}
 			} else if (currentSelection instanceof IUWrapper) {
 				// TODO Custom code to allow editing of individual IUs
@@ -343,6 +345,7 @@ public class TargetLocationsGroup {
 					// TODO We can't restore selection if they replace the location
 					fTreeViewer.setSelection(new StructuredSelection(wrapper.getParent()), true);
 				}
+				break; //Only open for one selected item
 			}
 		}
 	}

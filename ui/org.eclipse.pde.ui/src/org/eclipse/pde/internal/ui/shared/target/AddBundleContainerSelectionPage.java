@@ -10,17 +10,19 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jface.dialogs.*;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.*;
-import org.eclipse.pde.core.target.ITargetDefinition;
-import org.eclipse.pde.core.target.ITargetLocation;
+import org.eclipse.pde.core.target.*;
+import org.eclipse.pde.internal.core.PDECore;
 import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.wizards.WizardElement;
-import org.eclipse.pde.ui.target.ILocationWizard;
+import org.eclipse.pde.ui.IProvisionerWizard;
+import org.eclipse.pde.ui.target.ITargetLocationWizard;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.graphics.Image;
@@ -42,7 +44,12 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 	/**
 	 * Extension point that provides target provisioner wizard
 	 */
-	private static final String TARGETLOCATION_PROVIDER_POINT = "targetLocationProviders"; //$NON-NLS-1$
+	private static final String TARGET_LOCATION_PROVISIONER_POINT = "targetLocationProvisioners"; //$NON-NLS-1$
+
+	/**
+	 * Deprecated extension point providing target provisioner wizards
+	 */
+	private static final String TARGET_PROVISIONER_POINT = "targetProvisioners"; //$NON-NLS-1$
 
 	/**
 	 * Section in the dialog settings for this wizard and the wizards created with selection
@@ -50,6 +57,7 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 	 */
 	static final String SETTINGS_SECTION = "editBundleContainerWizard"; //$NON-NLS-1$
 
+	private static ITargetPlatformService fTargetService;
 	private Text fDescription;
 	private ITargetDefinition fTarget;
 
@@ -59,6 +67,21 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 		setMessage(Messages.AddBundleContainerSelectionPage_2);
 		PDEPlugin.getDefault().getLabelProvider().connect(this);
 		fTarget = target;
+	}
+
+	/**
+	 * Gets the target platform service provided by PDE Core
+	 * @return the target platform service
+	 * @throws CoreException if unable to acquire the service
+	 */
+	private static ITargetPlatformService getTargetPlatformService() throws CoreException {
+		if (fTargetService == null) {
+			fTargetService = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
+			if (fTargetService == null) {
+				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, Messages.AddDirectoryContainerPage_9));
+			}
+		}
+		return fTargetService;
 	}
 
 	/* (non-Javadoc)
@@ -139,7 +162,8 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 	private void initViewerContents(TableViewer wizardSelectionViewer) {
 		List choices = new ArrayList();
 		choices.addAll(getStandardChoices());
-		choices.addAll(getLocationExtensionChoices());
+		choices.addAll(getTargetLocationProvisionerChoices()); // Extension point contributions
+		choices.addAll(getTargetProvisionerChoices()); // Deprecated extension point contributions
 		wizardSelectionViewer.setInput(choices.toArray(new IWizardNode[choices.size()]));
 	}
 
@@ -275,10 +299,10 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 	 * The extension point was deprecated in 3.5 but we need to retain some compatibility.
 	 * @return list of wizard nodes
 	 */
-	private List getLocationExtensionChoices() {
+	private List getTargetLocationProvisionerChoices() {
 		List list = new ArrayList();
 		IExtensionRegistry registry = Platform.getExtensionRegistry();
-		IExtensionPoint point = registry.getExtensionPoint(PDEPlugin.getPluginId(), TARGETLOCATION_PROVIDER_POINT);
+		IExtensionPoint point = registry.getExtensionPoint(PDEPlugin.getPluginId(), TARGET_LOCATION_PROVISIONER_POINT);
 		if (point == null)
 			return list;
 		IExtension[] extensions = point.getExtensions();
@@ -299,7 +323,44 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 						}
 					};
 					if (!WorkbenchActivityHelper.filterItem(pc)) {
-						list.add(createExtensionNode(element, elements[j].getAttribute("type")));
+						list.add(createTargetLocationProvisionerNode(element));
+					}
+				}
+			}
+		}
+		return list;
+	}
+
+	/**
+	 * Returns a list of choices created from the ITargetProvisioner extension
+	 * The extension point was deprecated in 3.5 but we need to retain some compatibility.
+	 * @return list of wizard nodes
+	 */
+	private List getTargetProvisionerChoices() {
+		List list = new ArrayList();
+		IExtensionRegistry registry = Platform.getExtensionRegistry();
+		IExtensionPoint point = registry.getExtensionPoint(PDEPlugin.getPluginId(), TARGET_PROVISIONER_POINT);
+		if (point == null)
+			return list;
+		IExtension[] extensions = point.getExtensions();
+		for (int i = 0; i < extensions.length; i++) {
+			IConfigurationElement[] elements = extensions[i].getConfigurationElements();
+			for (int j = 0; j < elements.length; j++) {
+				WizardElement element = createWizardElement(elements[j]);
+				if (element != null) {
+					final String pluginId = element.getPluginId();
+					final String contributionId = element.getID();
+					IPluginContribution pc = new IPluginContribution() {
+						public String getLocalId() {
+							return contributionId;
+						}
+
+						public String getPluginId() {
+							return pluginId;
+						}
+					};
+					if (!WorkbenchActivityHelper.filterItem(pc)) {
+						list.add(createDeprecatedExtensionNode(element));
 					}
 				}
 			}
@@ -334,45 +395,107 @@ public class AddBundleContainerSelectionPage extends WizardSelectionPage {
 	 * @param element wizard element representing the extension
 	 * @return wizard node
 	 */
-	private AbstractBundleContainerNode createExtensionNode(final WizardElement element, final String type) {
+	private AbstractBundleContainerNode createTargetLocationProvisionerNode(final WizardElement element) {
 		return new AbstractBundleContainerNode(element.getLabel(), element.getDescription(), element.getImage()) {
 			public IWizard createWizard() {
 				Wizard wizard = new Wizard() {
-					private ILocationWizard addWizard;
+					private ITargetLocationWizard fWizard;
 
 					public void addPages() {
-						addWizard = LocationProviderManager.getInstance(fTarget).getAddWizard(type);
-						if (addWizard == null) {
+						try {
+							fWizard = (ITargetLocationWizard) element.createExecutableExtension();
+						} catch (CoreException e) {
+							PDEPlugin.log(e);
 							MessageDialog.openError(getContainer().getShell(), Messages.Errors_CreationError, Messages.Errors_CreationError_NoWizard);
-							return;
 						}
-						addWizard.setContainer(getContainer());
-						addWizard.addPages();
-						IWizardPage[] pages = addWizard.getPages();
+						fWizard.setTarget(fTarget);
+						fWizard.setContainer(getContainer());
+						fWizard.addPages();
+						IWizardPage[] pages = fWizard.getPages();
 						for (int i = 0; i < pages.length; i++)
 							addPage(pages[i]);
 					}
 
 					public boolean performFinish() {
-						if (addWizard != null) {
-							if (!addWizard.performFinish()) {
+						if (fWizard != null) {
+							if (!fWizard.performFinish()) {
 								return false;
 							}
-							ITargetLocation[] locations = addWizard.getLocations();
-							for (int i = 0; i < locations.length; i++) {
-								if (locations[i] == null) {
+							ITargetLocation[] locations = fWizard.getLocations();
+							if (locations != null) {
+								ITargetLocation[] oldContainers = fTarget.getTargetLocations();
+								if (oldContainers == null) {
+									fTarget.setTargetLocations(locations);
+								} else {
+									ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + locations.length];
+									System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
+									System.arraycopy(locations, 0, newContainers, oldContainers.length, locations.length);
+									fTarget.setTargetLocations(newContainers);
+								}
+							}
+						}
+						return true;
+					}
+				};
+				wizard.setContainer(getContainer());
+				wizard.setWindowTitle(Messages.AddBundleContainerSelectionPage_1);
+				return wizard;
+			}
+		};
+	}
+
+	/**
+	 * Creates a wizard node that will get the pages from the contributed wizard and create a directory bundle container from the result
+	 * @param element wizard element representing the extension
+	 * @return wizard node
+	 */
+	private AbstractBundleContainerNode createDeprecatedExtensionNode(final WizardElement element) {
+		return new AbstractBundleContainerNode(element.getLabel(), element.getDescription(), element.getImage()) {
+			public IWizard createWizard() {
+				Wizard wizard = new Wizard() {
+					private IProvisionerWizard fWizard;
+
+					public void addPages() {
+						try {
+							fWizard = (IProvisionerWizard) element.createExecutableExtension();
+						} catch (CoreException e) {
+							PDEPlugin.log(e);
+							MessageDialog.openError(getContainer().getShell(), Messages.Errors_CreationError, Messages.Errors_CreationError_NoWizard);
+						}
+						fWizard.setContainer(getContainer());
+						fWizard.addPages();
+						IWizardPage[] pages = fWizard.getPages();
+						for (int i = 0; i < pages.length; i++)
+							addPage(pages[i]);
+					}
+
+					public boolean performFinish() {
+						if (fWizard != null) {
+							if (!fWizard.performFinish()) {
+								return false;
+							}
+							File[] dirs = fWizard.getLocations();
+							for (int i = 0; i < dirs.length; i++) {
+								if (dirs[i] == null || !dirs[i].isDirectory()) {
 									ErrorDialog.openError(getShell(), Messages.AddBundleContainerSelectionPage_0, Messages.AddBundleContainerSelectionPage_5, new Status(IStatus.ERROR, PDEPlugin.getPluginId(), Messages.AddDirectoryContainerPage_6));
 									return false;
 								}
-							}
-							ITargetLocation[] oldContainers = fTarget.getTargetLocations();
-							if (oldContainers == null || oldContainers.length == 0) {
-								fTarget.setTargetLocations(locations);
-							} else {
-								ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + locations.length];
-								System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
-								System.arraycopy(locations, 0, newContainers, oldContainers.length, locations.length);
-								fTarget.setTargetLocations(newContainers);
+								try {
+									// First try the specified dir, then try the plugins dir
+									ITargetLocation container = getTargetPlatformService().newDirectoryLocation(dirs[i].getPath());
+									ITargetLocation[] oldContainers = fTarget.getTargetLocations();
+									if (oldContainers == null) {
+										fTarget.setTargetLocations(new ITargetLocation[] {container});
+									} else {
+										ITargetLocation[] newContainers = new ITargetLocation[oldContainers.length + 1];
+										System.arraycopy(oldContainers, 0, newContainers, 0, oldContainers.length);
+										newContainers[oldContainers.length] = container;
+										fTarget.setTargetLocations(newContainers);
+									}
+								} catch (CoreException ex) {
+									ErrorDialog.openError(getShell(), Messages.AddBundleContainerSelectionPage_0, Messages.AddBundleContainerSelectionPage_5, ex.getStatus());
+									return false;
+								}
 							}
 						}
 						return true;

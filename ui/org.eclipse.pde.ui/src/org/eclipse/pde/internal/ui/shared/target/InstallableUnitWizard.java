@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.ui.shared.target;
 
-import org.eclipse.pde.ui.target.ILocationWizard;
-
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 import org.eclipse.pde.internal.ui.PDEPlugin;
+import org.eclipse.pde.ui.target.ITargetLocationWizard;
 
 /**
  * Wizard for selecting Installable Units. 
@@ -25,7 +24,7 @@ import org.eclipse.pde.internal.ui.PDEPlugin;
  * org.eclipse.pde.ui.targetProvisioner 
  *
  */
-public class InstallableUnitWizard extends Wizard implements ILocationWizard {
+public class InstallableUnitWizard extends Wizard implements ITargetLocationWizard {
 
 	private ITargetDefinition fTarget;
 
@@ -37,8 +36,14 @@ public class InstallableUnitWizard extends Wizard implements ILocationWizard {
 	 */
 	static final String SETTINGS_SECTION = "editBundleContainerWizard"; //$NON-NLS-1$
 
-	public InstallableUnitWizard(ITargetDefinition target) {
+	public InstallableUnitWizard() {
 		setWindowTitle(Messages.AddBundleContainerSelectionPage_1);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.ui.target.ITargetLocationWizard#setTarget(org.eclipse.pde.core.target.ITargetDefinition)
+	 */
+	public void setTarget(ITargetDefinition target) {
 		fTarget = target;
 	}
 
@@ -58,7 +63,7 @@ public class InstallableUnitWizard extends Wizard implements ILocationWizard {
 	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
 	 */
 	public boolean performFinish() {
-		fLocation = ((EditIUContainerPage) getPages()[0]).getTargetLocation();
+		fLocation = ((EditIUContainerPage) getPages()[0]).getBundleContainer();
 		return true;
 	}
 
