@@ -15,18 +15,20 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 
 /**
- * This interface represents a wizard which will be used to add plug-ins to 
- * the Target Platform.  Implementors must have a default constructor (zero
+ * This interface represents a wizard which will be used to add target locations
+ * to a target definition.  The wizard will be available from the Add... button
+ * on the locations tab in the target wizard or editor.  Implementors must contribute
+ * their wizards through the <code>org.eclipse.pde.ui.targetLocationProvisioners</code>
+ * extension point.  Implementing classes must have a default constructor (zero
  * arguments) for the class to be created from the extension.
  * 
  * @noextend This interface is not intended to be extended by clients.
  * @since 3.7
  */
-
 public interface ITargetLocationWizard extends IWizard {
 
 	/**
-	 * After this wizard is created, this method will be called, providing this wizard with information
+	 * After the wizard is created this method will be called, providing this wizard with information
 	 * from the target definition the new location(s) will be added to.  It is not recommended that 
 	 * implementors modify the target as UI behaviour is not API (it may change between releases).
 	 * 
@@ -35,10 +37,10 @@ public interface ITargetLocationWizard extends IWizard {
 	public void setTarget(ITargetDefinition target);
 
 	/**
-	 * Returns an array of target locations which contain plug-ins to be added to
-	 * the Target Platform.
+	 * Returns an array of target locations to be added to the target definition. Will be
+	 * called after the wizard is closed.
 	 * 
-	 * @return an array that represent the locations that will provide new plug-ins.
+	 * @return an array of target locations to add to the target definition
 	 */
 	public ITargetLocation[] getLocations();
 

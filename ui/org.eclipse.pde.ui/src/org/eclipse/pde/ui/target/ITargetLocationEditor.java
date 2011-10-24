@@ -15,19 +15,33 @@ import org.eclipse.pde.core.target.ITargetDefinition;
 import org.eclipse.pde.core.target.ITargetLocation;
 
 /**
- * Target contents that implement or adapt to this interface can be Target contents such as {@link ITargetLocation} implementations The Target Locations and their children can adapt to this interface to convey if they 
- * support removal and updation
+ * Contributed target locations that want to support editing in the target wizard and editor must adapt
+ * their {@link ITargetLocation} to this interface. 
  * 
  * @noextend This interface is not intended to be extended by clients.
  * @since 3.7
  */
 public interface ITargetLocationEditor {
-	// TODO No way to restore selection after
-	// TODO We always perform a normal resolve after, forcing re-resolve ( no way to know result)
-	// TODO No way to consider the current selection
 
+	/**
+	 * Returns whether this target location can be edited by this editor. This method will be 
+	 * called when a selection is made to determine if the edit button should be enabled.
+	 * 
+	 * @param target the target definition being edited
+	 * @param targetLocation the target location to edit
+	 * @return whether this editor can edit the target location
+	 */
 	public boolean canEdit(ITargetDefinition target, ITargetLocation targetLocation);
 
+	/**
+	 * Returns a wizard that will be opened to edit the given target location.  The wizard
+	 * is responsible for modifying the target location and/or target. The target definition
+	 * will be resolved if the wizard completes successfully.
+	 *  
+	 * @param target the target definition being edited
+	 * @param targetLocation the target location to edit
+	 * @return wizard to open for editing the target location
+	 */
 	public IWizard getEditWizard(ITargetDefinition target, ITargetLocation targetLocation);
 
 }

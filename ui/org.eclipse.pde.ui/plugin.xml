@@ -2191,8 +2191,7 @@
             class="org.eclipse.pde.internal.ui.shared.target.InstallableUnitWizard"
             icon="icons/obj16/metadata_repo_obj.gif"
             id="org.eclipse.pde.ui.InstallableUnitProvisioner"
-            name="%targetLocationProvider.IU.name"
-            type="org.eclipse.pde.ui.locationProvider1">
+            name="%targetLocationProvider.IU.name">
          <description>
             %targetLocationProvider.IU.description
          </description>

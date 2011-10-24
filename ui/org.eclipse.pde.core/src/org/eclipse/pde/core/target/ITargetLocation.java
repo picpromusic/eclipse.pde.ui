@@ -21,12 +21,24 @@ import org.eclipse.core.runtime.*;
  * to be persisted correctly, clients must provide a factory through the 
  * <code>org.eclipse.pde.core.targetLocations</code> extension point.
  * </p><p>
- * To display an implementation in the PDE UI, clients must supply an adapter factory 
- * that adapts their ITargetLocation implementation to the following: 
+ * To display an implementation in the PDE UI, clients may do the following:
  * </p><p>
- * <code>IWizardNode</code>: Provides a IWizardNode object to supply a wizard for creating new locations of this type
+ * - Implement <code>ITargetLocationWizard</code> and contribute to the <code>org.eclipse.pde.ui.targetLocationProvisioners</code>
+ * extension point.
  * </p><p>
- * <code>ILabelProvider</code>: Provides label text and image for the location implementation in the UI
+ * - Have their target location adapt to <code>org.eclipse.jface.viewers.ILabelProvider</code>
+ * to provide text and icon labels in the target definition wizard and editor.
+ * </p><p>
+ * - Have their target location adapt to <code>org.eclipse.jface.viewers.ITreeContentProvider</code>
+ * to provide children items in the target definition wizard and editor. The children must adapt to
+ * <code>ILabelProvider</code> to get text and icon labels in the tree.
+ * </p><p>
+ * - Have their target location adapt to <code>org.eclipse.pde.ui.target.ITargetLocationEditor</code>
+ * to open an edit wizard when the edit button is pressed on the target definition wizard and editor.
+ * </p><p>
+ * - Have their target location adapt to <code>org.eclipse.pde.ui.target.ITargetLocationUpdater</code>
+ * to run an update job on the location when the update button is pressed on the target definition
+ * wizard and editor.
  * </p>
  * 
  * @since 3.8

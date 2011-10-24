@@ -7,7 +7,9 @@
       </appInfo>
       <documentation>
          &lt;p&gt;
-This extension point is used to register new target plug-in location provider. Each plug-in location provider is listed when the user attempts to add plug-ins from the PDE Target Platform&apos;s Preference Page.  The selected location provider is responsible for providing the target location which contain plug-ins the user wants to add to the Target Platform.
+This extension point is used to register a target location provisioner wizard that will create new target locations. Each plug-in provisioner is listed when the user attempts to add plug-ins to a target definition from the Target Platform Preference Page or Target Editor.  The selected provisioner is responsible for providing the target location or locations to add to the target definition.
+&lt;/p&gt;&lt;p&gt;
+Clients can provide their own target location implementations through the &lt;code&gt;org.eclipse.pde.core.targetLocations&lt;/code&gt; extension point.  This extension point allows custom location implementations to be added by the user. Additional UI interaction is handled using the adapter framework (see documentation on &lt;code&gt;org.eclipse.pde.core.target.ITargetDefinition&lt;/code&gt;).
 &lt;/p&gt;
       </documentation>
    </annotation>
@@ -116,7 +118,7 @@ represent the provisioner.
          <meta.section type="since"/>
       </appInfo>
       <documentation>
-         3.8
+         3.7 Juno
       </documentation>
    </annotation>
 
@@ -128,16 +130,15 @@ represent the provisioner.
          &lt;p&gt;
 The following is an example of the extension point:
 &lt;pre&gt;
-   &lt;extension
-         point=&quot;org.eclipse.pde.ui.targetLocationProviders&quot;&gt;
+    &lt;extension
+         point=&quot;org.eclipse.pde.ui.targetLocationProvisioners&quot;&gt;
       &lt;locationProvider
-            icon=&quot;icons/obj16/metadata_repo_obj.gif&quot;
-            id=&quot;org.eclipse.pde.ui.InstallableUnit&quot;
-            name=&quot;%targetLocationProvider.IU.name&quot;
-            type=&quot;InstallableUnit&quot;
-            uifactory=&quot;org.eclipse.pde.internal.ui.shared.target.IUFactory&quot;&gt;
+            class=&quot;org.eclipse.example.exampleTargetWizard&quot;
+            icon=&quot;icons/obj16/exampleTargetLocation.gif&quot;
+            id=&quot;org.eclipse.example.exampleTargetProvisioner&quot;
+            name=&quot;%targetLocationProvider.example.name&quot;
          &lt;description&gt;
-            %targetLocationProvider.IU.description
+            %targetLocationProvider.example.description
          &lt;/description&gt;
       &lt;/locationProvider&gt;
    &lt;/extension&gt;
@@ -151,7 +152,7 @@ The following is an example of the extension point:
       </appInfo>
       <documentation>
          &lt;p&gt;
-PDE supplies an update site location provider to add plug-ins from repositories.
+PDE supplies an internal location provisioner implementation to add plug-ins from update sites and p2 repositories. See &lt;code&gt;org.eclipse.pde.ui.shared.target.InstallableUnitWizard&lt;/code&gt;.
 &lt;/p&gt;
       </documentation>
    </annotation>
@@ -175,7 +176,7 @@ accompanies this distribution, and is available at
          <meta.section type="apiInfo"/>
       </appInfo>
       <documentation>
-         Each template mut provide an adapter factory to provide labels and contents for the target location. It may optionally implement &lt;code&gt;org.eclipse.pde.ui.ILocationUIFactory&lt;/code&gt; interface if it needs to be seeded with the target definition.
+         The wizard contributed by this extension point must implement &lt;code&gt;org.eclipse.pde.ui.target.ITargetLocationWizard&lt;/code&gt;.
       </documentation>
    </annotation>
 

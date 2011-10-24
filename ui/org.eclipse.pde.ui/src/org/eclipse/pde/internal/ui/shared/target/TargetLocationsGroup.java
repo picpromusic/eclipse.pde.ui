@@ -317,7 +317,7 @@ public class TargetLocationsGroup {
 						break; //Only open for one selected item
 					}
 				} else if (location instanceof AbstractBundleContainer) {
-					// TODO Custom code for locations that don't use adapaters yet
+					// TODO Custom code for locations that don't use adapters yet
 					Shell parent = fTreeViewer.getTree().getShell();
 					EditBundleContainerWizard wizard = new EditBundleContainerWizard(fTarget, location);
 					WizardDialog dialog = new WizardDialog(parent, wizard);
@@ -560,6 +560,7 @@ public class TargetLocationsGroup {
 							return status.getChildren();
 						}
 					} else {
+						// Always check for provider last to avoid hurting performance
 						ITreeContentProvider provider = (ITreeContentProvider) Platform.getAdapterManager().getAdapter(parentElement, ITreeContentProvider.class);
 						if (provider != null) {
 							return provider.getChildren(parentElement);
