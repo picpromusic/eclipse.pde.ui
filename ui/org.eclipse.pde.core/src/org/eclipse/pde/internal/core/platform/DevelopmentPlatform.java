@@ -1,27 +1,26 @@
 package org.eclipse.pde.internal.core.platform;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.Dictionary;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
-import org.eclipse.osgi.service.resolver.*;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.pde.core.plugin.IPluginModelBase;
-import org.eclipse.pde.internal.core.PDECore;
-import org.eclipse.pde.internal.core.TargetWeaver;
+import org.eclipse.pde.internal.core.*;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
-import org.eclipse.pde.internal.core.plugin.*;
 import org.eclipse.pde.internal.core.target.TargetPlatformService;
 import org.eclipse.pde.internal.core.target.provisional.*;
-import org.osgi.framework.BundleException;
 
 public class DevelopmentPlatform implements IDevelopmentPlatform {
 
-	private State fState;
+	private PDEState fState;
 	private ITargetDefinition fTargetDefinition;
 	private IBundle[] fAllBundles;
-	private long fBundleId;
+
+//	private long fBundleId;
 
 	public DevelopmentPlatform() {
 	}
@@ -40,8 +39,8 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 		// Create the state
 		fState = null;
 		// TODO Does this need to be a field?
-		StateObjectFactory stateFactory = Platform.getPlatformAdmin().getFactory();
-		State state = stateFactory.createState(true);
+//		StateObjectFactory stateFactory = Platform.getPlatformAdmin().getFactory();
+//		State state = stateFactory.createState(true);
 
 		ITargetDefinition target = fTargetDefinition;
 		SubMonitor subMon = SubMonitor.convert(monitor, "Resolving development platform", 1000);
@@ -66,23 +65,27 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 		subMon.setWorkRemaining(900);
 
 		// Add target bundles to the state
+		List targetURLs = new ArrayList();
 		IResolvedBundle[] targetBundles = target.getBundles();
 		for (int i = 0; i < targetBundles.length; i++) {
 			BundleInfo currentBundle = targetBundles[i].getBundleInfo();
 			File bundleLocation = org.eclipse.core.runtime.URIUtil.toFile(currentBundle.getLocation());
 			if (bundleLocation == null) {
 				PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind("Could not open plug-in at: {0}", currentBundle.getLocation())));
+			} else {
+				targetURLs.add(bundleLocation);
 			}
-			try {
-				Dictionary currentManifest = ManifestHelper.loadManifest(bundleLocation);
-				TargetWeaver.weaveManifest(currentManifest);
-				BundleDescription newBundle = stateFactory.createBundleDescription(state, currentManifest, bundleLocation.getAbsolutePath(), getNextId());
-				state.addBundle(newBundle);
-			} catch (IOException e) {
-				PDECore.log(e);
-			} catch (BundleException e) {
-				PDECore.log(e);
-			}
+
+//			try {
+//				Dictionary currentManifest = ManifestHelper.loadManifest(bundleLocation);
+//				TargetWeaver.weaveManifest(currentManifest);
+//				BundleDescription newBundle = stateFactory.createBundleDescription(state, currentManifest, bundleLocation.getAbsolutePath(), getNextId());
+//				state.addBundle(newBundle);
+//			} catch (IOException e) {
+//				PDECore.log(e);
+//			} catch (BundleException e) {
+//				PDECore.log(e);
+//			}
 		}
 
 		// TODO Need to collect platform properties for the state as MinimalState does
@@ -94,11 +97,16 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 		// Add workspace bundles to the state
 
 		// Resolve the state
-		state.resolve(true);
-		fState = state;
+		// Create a state that contains all bundles from the target and workspace
+		// If a workspace bundle has the same symbolic name as a target bundle,
+		// the target counterpart is subsequently removed from the state.
+
+		fState = new PDEState(getPluginPaths(), (URL[]) targetURLs.toArray(new URL[targetURLs.size()]), true, true, subMon.newChild(100));
+
+		fState.getWorkspaceModels();
+		fState.getTargetModels();
 
 		// Create plug-in models
-		// TODO This will be likely moved elsewhere, but included for performance comparisons
 
 		// Handle feature models
 		IFeatureModel[] targetFeatures = target.getAllFeatures();
@@ -110,26 +118,9 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 	 * 
 	 * @return next available bundle id
 	 */
-	private long getNextId() {
-		return ++fBundleId;
-	}
-
-	/**
-	 * Creates a plugin model base for the given OSGi bundle description
-	 * 
-	 * @param desc OSGi description for the bundle
-	 * @return a plugin model base
-	 */
-	private IPluginModelBase createExternalModel(BundleDescription desc) {
-		ExternalPluginModelBase model = null;
-		if (desc.getHost() == null)
-			model = new ExternalPluginModel();
-		else
-			model = new ExternalFragmentModel();
-		model.load(desc, this);
-		model.setBundleDescription(desc);
-		return model;
-	}
+//	private long getNextId() {
+//		return ++fBundleId;
+//	}
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.internal.core.platform.IDevelopmentPlatform#getTargetDefinition()
@@ -141,7 +132,7 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 	/* (non-Javadoc)
 	 * @see org.eclipse.pde.internal.core.platform.IDevelopmentPlatform#getState()
 	 */
-	public State getState() {
+	public PDEState getState() {
 		return fState;
 	}
 
@@ -153,6 +144,29 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 			return null;
 		}
 		return fAllBundles[0];
+	}
+
+	/**
+	 * Return URLs to projects in the workspace that have a manifest file (MANIFEST.MF
+	 * or plugin.xml)
+	 * 
+	 * @return an array of URLs to workspace plug-ins
+	 */
+	private URL[] getPluginPaths() {
+		ArrayList list = new ArrayList();
+		IProject[] projects = PDECore.getWorkspace().getRoot().getProjects();
+		for (int i = 0; i < projects.length; i++) {
+			if (WorkspaceModelManager.isPluginProject(projects[i])) {
+				try {
+					IPath path = projects[i].getLocation();
+					if (path != null) {
+						list.add(path.toFile().toURL());
+					}
+				} catch (MalformedURLException e) {
+				}
+			}
+		}
+		return (URL[]) list.toArray(new URL[list.size()]);
 	}
 
 }

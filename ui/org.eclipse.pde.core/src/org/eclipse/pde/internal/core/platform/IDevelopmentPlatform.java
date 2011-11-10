@@ -12,7 +12,7 @@ package org.eclipse.pde.internal.core.platform;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.osgi.service.resolver.State;
+import org.eclipse.pde.internal.core.PDEState;
 import org.eclipse.pde.internal.core.target.provisional.ITargetDefinition;
 
 /**
@@ -26,7 +26,7 @@ public interface IDevelopmentPlatform {
 
 	public ITargetDefinition getTargetDefinition();
 
-	public State getState();
+	public PDEState getState();
 
 	public IBundle findBundle(String name, String version);
 
