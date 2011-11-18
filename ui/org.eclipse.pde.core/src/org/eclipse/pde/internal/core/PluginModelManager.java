@@ -11,8 +11,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core;
 
-import org.eclipse.pde.internal.core.platform.DevelopmentPlatform;
-
 import java.util.*;
 import java.util.Map.Entry;
 import org.eclipse.core.resources.IProject;
@@ -501,30 +499,17 @@ public class PluginModelManager implements IModelProviderListener {
 	 * the table is initialized.
 	 * 
 	 */
-	private synchronized void initializeTable() {
+	private synchronized void initialize(PDEState state) {
 		if (fEntries != null)
 			return;
 
-		// XXX Added to test the new functionality
-		DevelopmentPlatform platform = new DevelopmentPlatform();
-		try {
-			platform.resolve(new NullProgressMonitor());
-		} catch (CoreException e) {
-			System.err.println(e.getMessage());
-			System.err.println(e.getStackTrace());
-		}
-
-		// Cannot assign to fEntries here - will create a race condition with isInitialized()
-		Map entries = Collections.synchronizedMap(new TreeMap());
-
-		// Create a state that contains all bundles from the target and workspace
-		// If a workspace bundle has the same symbolic name as a target bundle,
-		// the target counterpart is subsequently removed from the state.
+		// Initialize the state
 		fState = new PDEState(fWorkspaceManager.getPluginPaths(), fExternalManager.getPluginPaths(), true, true, new NullProgressMonitor());
 
-		// initialize the enabled/disabled state of target models
-		// based on whether the bundle is checked/unchecked on the Target Platform
-		// preference page.
+		// Initialize the workspace plug-ins manager
+		fWorkspaceManager.initializeModels(fState.getWorkspaceModels());
+
+		// Initialize the target plug-ins manager
 		fExternalManager.initializeModels(fState.getTargetModels());
 
 		// add target models to the master table

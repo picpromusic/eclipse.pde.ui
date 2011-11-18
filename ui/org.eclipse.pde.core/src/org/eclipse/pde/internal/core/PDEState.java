@@ -23,8 +23,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.osgi.service.pluginconversion.PluginConversionException;
 import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.osgi.service.resolver.State;
-import org.eclipse.pde.core.plugin.IPluginModelBase;
-import org.eclipse.pde.core.plugin.PluginRegistry;
+import org.eclipse.pde.core.plugin.*;
 import org.eclipse.pde.internal.core.bundle.*;
 import org.eclipse.pde.internal.core.plugin.*;
 import org.eclipse.pde.internal.core.project.PDEProject;
@@ -32,106 +31,114 @@ import org.eclipse.pde.internal.core.util.CoreUtility;
 
 public class PDEState extends MinimalState {
 
-	private PDEAuxiliaryState fAuxiliaryState;
+	/**
+	 * Subclass of ModelEntry
+	 * It adds methods that add/remove model from the entry.
+	 * These methods must not be on ModelEntry itself because
+	 * ModelEntry is an API class and we do not want clients to manipulate
+	 * the ModelEntry
+	 * 
+	 */
+	private class LocalModelEntry extends ModelEntry {
 
-	private ArrayList fTargetModels = new ArrayList();
-	private ArrayList fWorkspaceModels = new ArrayList();
-	private boolean fCombined;
-	private long fTargetTimestamp;
-	private boolean fNewState;
+		/**
+		 * Constructs a model entry that will keep track
+		 * of all bundles in the workspace and target that share the same ID.
+		 * 
+		 * @param id  the bundle ID
+		 */
+		public LocalModelEntry(String id) {
+			super(id);
+		}
+
+		/**
+		 * Adds a model to the entry.  
+		 * An entry keeps two lists: one for workspace models 
+		 * and one for target (external) models.
+		 * If the model being added is associated with a workspace resource,
+		 * it is added to the workspace list; otherwise, it is added to the external list.
+		 * 
+		 * @param model  model to be added to the entry
+		 */
+		public void addModel(IPluginModelBase model) {
+			if (model.getUnderlyingResource() != null)
+				fWorkspaceEntries.add(model);
+			else
+				fExternalEntries.add(model);
+		}
+
+		/**
+		 * Removes the given model for the workspace list if the model is associated
+		 * with workspace resource.  Otherwise, it is removed from the external list.
+		 * 
+		 * @param model  model to be removed from the model entry
+		 */
+		public void removeModel(IPluginModelBase model) {
+			if (model.getUnderlyingResource() != null)
+				fWorkspaceEntries.remove(model);
+			else
+				fExternalEntries.remove(model);
+		}
+	}
+
+	private PDEAuxiliaryState fAuxiliaryState;
+	private List/*<IPluginModelBase>*/fTargetModels = new ArrayList();
+	private List/*<IPluginModelBase>*/fWorkspaceModels = new ArrayList();
+	private List/*<IPluginModelBase>*/fConflictingModels = new ArrayList();
 
 	/**
-	 * Creates a deep copy of the PDEState and its external models.  None of the workspace models are included in the copy.
-	 * @param state
+	 * Creates a new PDE state containing the given workspace and target models
+	 * @param workspace list of projects in the workspaces to add to the state, possibly empty
+	 * @param target list of file urls pointing to target (external) plug-ins, possibly empty
+	 * @param monitor progress monitor, can be <code>null</code>
 	 */
-	public PDEState(PDEState state) {
-		super(state);
-		fCombined = false;
-		fTargetTimestamp = state.fTargetTimestamp;
-		// make sure to copy auxiliary state before trying to copy models, otherwise you will get NPEs.  Need auxiliary data to accurate create new models.
-		copyAuxiliaryState();
-		copyModels(state);
-	}
+	public PDEState(URL[] workspace, URL[] target, IProgressMonitor monitor) {
 
-	private void copyAuxiliaryState() {
-		// always read the state instead of copying over contents of current state.  If current state has not been reloaded, it will
-		// not contain any data from the target plug-ins.
-		fAuxiliaryState = new PDEAuxiliaryState();
-		fAuxiliaryState.readPluginInfoCache(new File(DIR, Long.toString(fTargetTimestamp) + ".target")); //$NON-NLS-1$
-	}
+		// TODO Do we need a way to prevent caching? This was supported for workspace plug-ins using System.getProperty("pde.nocache")
 
-	private void copyModels(PDEState state) {
-		IPluginModelBase[] bases = state.getTargetModels();
-		fTargetModels = new ArrayList(bases.length);
-		for (int i = 0; i < bases.length; i++) {
-			BundleDescription oldBD = bases[i].getBundleDescription();
-			if (oldBD == null)
-				continue;
-
-			// do a deep copy of the model and accurately set the copied BundleDescription
-			BundleDescription newBD = getState().getBundle(oldBD.getBundleId());
-			// newDesc will be null if a workspace plug-in has the same Bundle-SymbolicName as the target plug-in.
-			// This is because in PluginModelManager we add the workspace's BundleDescription and remove the corresponding targets.
-			// This is done so that the resolver state will always resolve to the workspace's BundleDescription and not one in the target.
-			if (newBD == null) {
-				// If this happens, copy the target bundle's BundleDescription then add it back into the copied state.
-				newBD = Platform.getPlatformAdmin().getFactory().createBundleDescription(oldBD);
-				getState().addBundle(newBD);
-			}
-			IPluginModelBase model = createExternalModel(newBD);
-			model.setEnabled(bases[i].isEnabled());
-			fTargetModels.add(model);
-		}
-		// remove workspace models to accurately represent only the target platform
-		bases = PluginRegistry.getWorkspaceModels();
-		for (int i = 0; i < bases.length; i++) {
-			removeBundleDescription(bases[i].getBundleDescription());
-		}
-	}
-
-	public PDEState(URL[] urls, boolean resolve, IProgressMonitor monitor) {
-		this(new URL[0], urls, resolve, false, monitor);
-	}
-
-	public PDEState(URL[] workspace, URL[] target, boolean resolve, boolean removeTargetDuplicates, IProgressMonitor monitor) {
 		long start = System.currentTimeMillis();
 		fAuxiliaryState = new PDEAuxiliaryState();
 
-		if (resolve) {
-			readTargetState(target, monitor);
-		} else {
-			createNewTargetState(resolve, target, monitor);
-		}
-
-		if (removeTargetDuplicates) {
-			removeDuplicatesFromState(fState);
-		}
-
-		createTargetModels(fState.getBundles());
-
-		if (resolve && workspace.length > 0 && !fNewState && !"true".equals(System.getProperty("pde.nocache"))) //$NON-NLS-1$ //$NON-NLS-2$
-			readWorkspaceState(workspace);
+		SubMonitor subMon = SubMonitor.convert(monitor, "Creating PDE State", 300);
+		addTargetModels(target, subMon.newChild(150));
+		addWorkspaceBundles(workspace, subMon.newChild(150));
+		subMon.done();
 
 		if (DEBUG)
 			System.out.println("Time to create state: " + (System.currentTimeMillis() - start) + " ms"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
-	private void readTargetState(URL[] urls, IProgressMonitor monitor) {
-		fTargetTimestamp = computeTimestamp(urls);
+	/**
+	 * Creates PDE models for the given bundles and adds them to this state. If the saved
+	 * state contains the same models, the previous state will be loaded instead of
+	 * recreating it from scratch.
+	 * 
+	 * @param targetBundles list of file URLs pointing to bundles
+	 * @param monitor progress monitor
+	 */
+	private void addTargetModels(URL[] targetBundles, IProgressMonitor monitor) {
+		SubMonitor subMon = SubMonitor.convert(monitor, 150);
+
+		// Load the state from the cache or create a new one
+		fTargetModels.clear();
+		long timestamp = computeTimestamp(targetBundles);
 		if (DEBUG) {
-			System.out.println("Timestamp of " + urls.length + " target URLS: " + fTargetTimestamp); //$NON-NLS-1$ //$NON-NLS-2$
+			System.out.println("Timestamp of " + targetBundles.length + " target URLS: " + timestamp); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		File dir = new File(DIR, Long.toString(fTargetTimestamp) + ".target"); //$NON-NLS-1$
+
+		File dir = getTargetCacheDirectory(timestamp);
 		if ((fState = readStateCache(dir)) == null || !fAuxiliaryState.readPluginInfoCache(dir)) {
 			if (DEBUG) {
-				System.out.println("Creating new state, persisted state did not exist"); //$NON-NLS-1$
+				System.out.println("Creating new state, persisted target state did not exist"); //$NON-NLS-1$
 			}
-			createNewTargetState(true, urls, monitor);
+			createNewState(true, targetBundles, subMon.newChild(50));
 			resolveState(false);
+			subMon.setWorkRemaining(50);
 		} else {
 			if (DEBUG) {
-				System.out.println("Restored previously persisted state"); //$NON-NLS-1$
+				System.out.println("Restoring previously persisted target state"); //$NON-NLS-1$
 			}
+			subMon.setWorkRemaining(100); // Already read the state
 			// get the system bundle from the State
 			if (fState.getPlatformProperties() != null && fState.getPlatformProperties().length > 0) {
 				String systemBundle = (String) fState.getPlatformProperties()[0].get(ICoreConstants.OSGI_SYSTEM_BUNDLE);
@@ -144,17 +151,41 @@ public class PDEState extends MinimalState {
 			if (propertiesChanged)
 				fState.resolve(false);
 			fId = fState.getHighestBundleId();
+			subMon.setWorkRemaining(50); // State is resolved
 		}
+
+		if (subMon.isCanceled()) {
+			return;
+		}
+
+		// Create the models
+		BundleDescription[] bundles = fState.getBundles();
+		for (int i = 0; i < bundles.length; i++) {
+			fTargetModels.add(createExternalModel(bundles[i]));
+		}
+		subMon.setWorkRemaining(0);
+
+		if (DEBUG) {
+			System.out.println(fTargetModels.size() + " target plug-in models added"); //$NON-NLS-1$
+		}
+
+		subMon.done();
 	}
 
-	private void createNewTargetState(boolean resolve, URL[] urls, IProgressMonitor monitor) {
+	/**
+	 * Creates a new OSGi state, setting fState and adds the plug-ins to it from the file urls
+	 * @param resolve whether the state should have a resolver set
+	 * @param urls file urls for bundles to add to the state
+	 * @param monitor progress monitor, must not be <code>null</code>
+	 */
+	private void createNewState(boolean resolve, URL[] urls, IProgressMonitor monitor) {
 		fState = stateObjectFactory.createState(resolve);
 		monitor.beginTask("", urls.length); //$NON-NLS-1$
 		for (int i = 0; i < urls.length; i++) {
 			File file = new File(urls[i].getFile());
 			try {
 				if (monitor.isCanceled())
-					// if canceled, stop loading bundles
+					// if cancelled, stop loading bundles
 					return;
 				monitor.subTask(file.getName());
 				addBundle(file, -1);
@@ -167,62 +198,84 @@ public class PDEState extends MinimalState {
 				monitor.worked(1);
 			}
 		}
-		fNewState = true;
-	}
-
-	protected void addAuxiliaryData(BundleDescription desc, Dictionary manifest, boolean hasBundleStructure) {
-		fAuxiliaryState.addAuxiliaryData(desc, manifest, hasBundleStructure);
+		monitor.done();
 	}
 
 	/**
-	 * When creating a target state, having duplicates of certain bundles including core runtime cause problems when launching.  The
-	 * {@link LoadTargetDefinitionJob} removes duplicates for us, but on restart the state is created from preferences.  This method
-	 * search the state for bundles with the same ID/Version.  Where multiple bundles are found, all but one are removed from the state.
+	 * Adds workspace plug-ins to the state, either reading them from the cached state or creating them
 	 * 
-	 * @param state state to search for duplicates in
+	 * @param workspaceBundles list of file urls pointing to workspace bundles
+	 * @param monitor progress monitor, may be <code>null</code>
 	 */
-	private void removeDuplicatesFromState(State state) {
-		BundleDescription[] bundles = state.getBundles();
-		for (int i = 0; i < bundles.length; i++) {
-			BundleDescription desc = bundles[i];
-			String id = desc.getSymbolicName();
-			BundleDescription[] conflicts = state.getBundles(id);
-			if (conflicts.length > 1) {
-				for (int j = 0; j < conflicts.length; j++) {
-					if (desc.getVersion().equals(conflicts[j].getVersion()) && desc.getBundleId() != conflicts[j].getBundleId()) {
-						fState.removeBundle(desc);
+	private void addWorkspaceBundles(URL[] workspaceBundles, IProgressMonitor monitor) {
+		fWorkspaceModels.clear();
+		if (workspaceBundles.length == 0) {
+			return;
+		}
+
+		// TODO Fix progress
+		SubMonitor subMon = SubMonitor.convert(monitor, (workspaceBundles.length * 2) + 25);
+
+		long timestamp = computeTimestamp(workspaceBundles);
+		File dir = getWorkspaceCacheDirectory(timestamp);
+		State localState = readStateCache(dir);
+		if (localState == null || !fAuxiliaryState.readPluginInfoCache(dir)) {
+			if (DEBUG) {
+				System.out.println("Creating new state, persisted workspace state did not exist"); //$NON-NLS-1$
+			}
+
+			long targetCount = fId;
+			for (int i = 0; i < workspaceBundles.length; i++) {
+				File file = new File(workspaceBundles[i].getFile());
+				try {
+					if (monitor.isCanceled())
+						return;
+					monitor.subTask(file.getName());
+					BundleDescription desc = addBundle(file, -1);
+					if (desc != null) {
+						//Remove conflicting target bundles
+						String name = desc.getSymbolicName();
+						BundleDescription[] conflicts = fState.getBundles(name);
+						for (int j = 0; j < conflicts.length; j++) {
+							// only remove bundles with a conflicting symbolic name
+							// if the conflicting bundles come from the target.
+							// Workspace bundles with conflicting symbolic names are allowed
+							if (conflicts[j].getBundleId() <= targetCount) {
+								fState.removeBundle(conflicts[j]);
+
+							}
+						}
+
+						// Create PDE model
+						IPluginModelBase model = createWorkspaceModel(desc);
+						if (model != null) {
+							fWorkspaceModels.add(model);
+						}
 					}
+				} catch (PluginConversionException e) {
+				} catch (CoreException e) {
+				} catch (IOException e) {
+					PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, IStatus.ERROR, "Invalid manifest format at " + file.getAbsolutePath(), //$NON-NLS-1$
+							null));
+				} finally {
+					monitor.worked(2);
 				}
 			}
-		}
-	}
+		} else {
+			if (DEBUG) {
+				System.out.println("Restoring previously persisted workspace state"); //$NON-NLS-1$
+			}
+			subMon.setWorkRemaining(100); // Already read the state
 
-	private IPluginModelBase[] createTargetModels(BundleDescription[] bundleDescriptions) {
-		HashMap models = new HashMap((4 / 3) * bundleDescriptions.length + 1);
-		for (int i = 0; i < bundleDescriptions.length; i++) {
-			BundleDescription desc = bundleDescriptions[i];
-			IPluginModelBase base = createExternalModel(desc);
-			fTargetModels.add(base);
-			models.put(desc.getSymbolicName(), base);
-		}
-		if (models.isEmpty())
-			return new IPluginModelBase[0];
-		return (IPluginModelBase[]) models.values().toArray(new IPluginModelBase[models.size()]);
-	}
-
-	private void readWorkspaceState(URL[] urls) {
-		long workspace = computeTimestamp(urls);
-		File dir = new File(DIR, Long.toString(workspace) + ".workspace"); //$NON-NLS-1$
-		State localState = readStateCache(dir);
-		fCombined = localState != null && fAuxiliaryState.readPluginInfoCache(dir);
-		if (fCombined) {
 			long targetCount = fId;
-			BundleDescription[] bundles = localState.getBundles();
-			for (int i = 0; i < bundles.length; i++) {
-				BundleDescription desc = bundles[i];
+			BundleDescription[] cachedBundles = localState.getBundles();
+			for (int i = 0; i < cachedBundles.length; i++) {
+				if (monitor.isCanceled())
+					return;
+				BundleDescription desc = cachedBundles[i];
 				String id = desc.getSymbolicName();
+				monitor.subTask(id);
 				BundleDescription[] conflicts = fState.getBundles(id);
-
 				for (int j = 0; j < conflicts.length; j++) {
 					// only remove bundles with a conflicting symblic name
 					// if the conflicting bundles come from the target.
@@ -230,21 +283,26 @@ public class PDEState extends MinimalState {
 					if (conflicts[j].getBundleId() <= targetCount)
 						fState.removeBundle(conflicts[j]);
 				}
-
 				BundleDescription newbundle = stateObjectFactory.createBundleDescription(desc);
 				IPluginModelBase model = createWorkspaceModel(newbundle);
 				if (model != null && fState.addBundle(newbundle)) {
 					fId = Math.max(fId, newbundle.getBundleId());
 					fWorkspaceModels.add(model);
 				}
+				monitor.worked(2);
 			}
-			fId = Math.max(fId, fState.getBundles().length);
-			fState.resolve(false);
-		}
-	}
+			fId = fState.getHighestBundleId();
 
-	public boolean isCombined() {
-		return fCombined;
+		}
+
+		subMon.setWorkRemaining(25);
+		fState.resolve(false);
+		subMon.setWorkRemaining(0);
+		subMon.done();
+
+		if (DEBUG) {
+			System.out.println(fWorkspaceModels.size() + " workspace plug-in models added"); //$NON-NLS-1$
+		}
 	}
 
 	private State readStateCache(File dir) {
@@ -364,9 +422,21 @@ public class PDEState extends MinimalState {
 	}
 
 	/**
-	 * Saves state associated with the external PDE target. 
+	 * Persists the contents of the state to disk, garbage collects old persisted states
 	 */
-	public void saveExternalState() {
+	public void saveState() {
+		long targetTimestamp = saveExternalState();
+		long workspaceTimestamp = saveWorkspaceState();
+		clearStaleStates(".target", targetTimestamp); //$NON-NLS-1$
+		clearStaleStates(".workspace", workspaceTimestamp); //$NON-NLS-1$
+		clearStaleStates(".cache", 0); //$NON-NLS-1$
+	}
+
+	/**
+	 * Saves state associated with the external PDE target.
+	 * @return timestamp used to create cache or 0
+	 */
+	private long saveExternalState() {
 		IPluginModelBase[] models = PluginRegistry.getExternalModels();
 		URL[] urls = new URL[models.length];
 		for (int i = 0; i < urls.length; i++) {
@@ -376,13 +446,13 @@ public class PDEState extends MinimalState {
 				if (DEBUG) {
 					System.out.println("FAILED to save external state due to MalformedURLException"); //$NON-NLS-1$
 				}
-				return;
+				return 0;
 			}
 		}
-		fTargetTimestamp = computeTimestamp(urls);
-		File dir = new File(DIR, Long.toString(fTargetTimestamp) + ".target"); //$NON-NLS-1$
+		long timestamp = computeTimestamp(urls);
+		File dir = getTargetCacheDirectory(timestamp);
 
-		boolean osgiStateExists = dir.exists() && dir.isDirectory();
+		boolean osgiStateExists = dir.isDirectory();
 		boolean auxStateExists = fAuxiliaryState.exists(dir);
 		if (!osgiStateExists || !auxStateExists) {
 			if (!dir.exists())
@@ -401,18 +471,28 @@ public class PDEState extends MinimalState {
 		} else if (DEBUG) {
 			System.out.println("External state unchanged, save skipped."); //$NON-NLS-1$
 		}
+
+		return timestamp;
 	}
 
 	/**
-	 * Save state associated with workspace models and deletes persisted
-	 * files associated with other time stamps.
+	 * Save state associated with workspace models
+	 * @return timestamp used to create cache or 0
 	 */
-	public void saveWorkspaceState() {
+	private long saveWorkspaceState() {
 		IPluginModelBase[] models = PluginRegistry.getWorkspaceModels();
 		long timestamp = 0;
-		if (!"true".equals(System.getProperty("pde.nocache")) && shouldSaveState(models)) { //$NON-NLS-1$ //$NON-NLS-2$
-			timestamp = computeTimestamp(models);
-			File dir = new File(DIR, Long.toString(timestamp) + ".workspace"); //$NON-NLS-1$
+		if (shouldSaveState(models)) {
+			URL[] urls = new URL[models.length];
+			for (int i = 0; i < models.length; i++) {
+				try {
+					IProject project = models[i].getUnderlyingResource().getProject();
+					urls[i] = new File(project.getLocation().toString()).toURL();
+				} catch (MalformedURLException e) {
+				}
+			}
+			timestamp = computeTimestamp(urls);
+			File dir = getWorkspaceCacheDirectory(timestamp);
 			if (DEBUG) {
 				System.out.println("Saving workspace state to: " + dir.getAbsolutePath()); //$NON-NLS-1$
 			}
@@ -425,21 +505,8 @@ public class PDEState extends MinimalState {
 			saveState(state, dir);
 			PDEAuxiliaryState.writePluginInfo(models, dir);
 		}
-		clearStaleStates(".target", fTargetTimestamp); //$NON-NLS-1$
-		clearStaleStates(".workspace", timestamp); //$NON-NLS-1$
-		clearStaleStates(".cache", 0); //$NON-NLS-1$
-	}
+		return timestamp;
 
-	private long computeTimestamp(IPluginModelBase[] models) {
-		URL[] urls = new URL[models.length];
-		for (int i = 0; i < models.length; i++) {
-			try {
-				IProject project = models[i].getUnderlyingResource().getProject();
-				urls[i] = new File(project.getLocation().toString()).toURL();
-			} catch (MalformedURLException e) {
-			}
-		}
-		return computeTimestamp(urls);
 	}
 
 	private boolean shouldSaveState(IPluginModelBase[] models) {
@@ -458,7 +525,7 @@ public class PDEState extends MinimalState {
 	}
 
 	private void clearStaleStates(String extension, long latest) {
-		File dir = new File(PDECore.getDefault().getStateLocation().toOSString());
+		File dir = new File(DIR);
 		File[] children = dir.listFiles();
 		if (children != null) {
 			for (int i = 0; i < children.length; i++) {
@@ -513,38 +580,29 @@ public class PDEState extends MinimalState {
 		return fAuxiliaryState.getBundleSourceEntry(bundleID);
 	}
 
-	public BundleDescription[] addAdditionalBundles(URL[] newBundleURLs) {
-		// add new Bundles to the State
-		ArrayList descriptions = new ArrayList(newBundleURLs.length);
-		for (int i = 0; i < newBundleURLs.length; i++) {
-			File file = new File(newBundleURLs[i].getFile());
-			try {
-				BundleDescription desc = addBundle(file, -1);
-				if (desc != null)
-					descriptions.add(desc);
-			} catch (PluginConversionException e) {
-			} catch (CoreException e) {
-			} catch (IOException e) {
-				PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, IStatus.ERROR, "Invalid manifest format at " + file.getAbsolutePath(), //$NON-NLS-1$
-						null));
-			}
-		}
-		// compute Timestamp and save all new information
-		fTargetTimestamp = computeTimestamp(newBundleURLs, fTargetTimestamp);
-		File dir = new File(DIR, Long.toString(fTargetTimestamp) + ".target"); //$NON-NLS-1$
-		if (!dir.exists())
-			dir.mkdirs();
-		fAuxiliaryState.savePluginInfo(dir);
-		saveState(dir);
-
-		// resolve state - same steps as when populating a new State
-		resolveState(false);
-
-		return (BundleDescription[]) descriptions.toArray(new BundleDescription[descriptions.size()]);
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.internal.core.MinimalState#addAuxiliaryData(org.eclipse.osgi.service.resolver.BundleDescription, java.util.Dictionary, boolean)
+	 */
+	protected void addAuxiliaryData(BundleDescription desc, Dictionary manifest, boolean hasBundleStructure) {
+		fAuxiliaryState.addAuxiliaryData(desc, manifest, hasBundleStructure);
 	}
 
-	public File getTargetDirectory() {
-		return new File(DIR, Long.toString(fTargetTimestamp) + ".target"); //$NON-NLS-1$
+	/**
+	 * Returns the file directory where the state's target plug-ins are cached based on this state's timestamp
+	 * @param timestamp the timestamp to lookup, see {@link #computeTimestamp(URL[])}
+	 * @return the target plug-in cache directory for this state
+	 */
+	public File getTargetCacheDirectory(long timestamp) {
+		return new File(DIR, Long.toString(timestamp) + ".target"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Returns the file directory where the state's workspace plug-ins are cached based on this state's timestamp
+	 * @param timestamp the timestamp to lookup, see {@link #computeTimestamp(URL[])}
+	 * @return the workspace plug-in cache directory for this state
+	 */
+	public File getWorkspaceCacheDirectory(long timestamp) {
+		return new File(DIR, Long.toString(timestamp) + ".workspace"); //$NON-NLS-1$
 	}
 
 }

@@ -1,5 +1,8 @@
 package org.eclipse.pde.internal.core.platform;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.pde.internal.core.PDECore;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,6 +13,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.internal.core.*;
+import org.eclipse.pde.internal.core.ibundle.IBundle;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
 import org.eclipse.pde.internal.core.target.TargetPlatformService;
 import org.eclipse.pde.internal.core.target.provisional.*;
@@ -17,65 +21,62 @@ import org.eclipse.pde.internal.core.target.provisional.*;
 public class DevelopmentPlatform implements IDevelopmentPlatform {
 
 	private PDEState fState;
+	private PluginModelManager fPluginModelManager;
+	private FeatureModelManager fFeatureModelManager;
 	private ITargetDefinition fTargetDefinition;
-	private IBundle[] fAllBundles;
 
-//	private long fBundleId;
-
-	public DevelopmentPlatform() {
-	}
+//	public static IPluginModelBase[] createModels(URL[] bundleFiles){
+//		
+//	}
 
 	public DevelopmentPlatform(ITargetDefinition targetDefinition) {
 		fTargetDefinition = targetDefinition;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.pde.internal.core.platform.IDevelopmentPlatform#resolve(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void resolve(IProgressMonitor monitor) throws CoreException {
+	public void initialize(IProgressMonitor monitor) throws CoreException {
 		// TODO Should we return a multi status instead of handling it ourselves
 		// TODO Support tracing statements here
+		SubMonitor subMon = SubMonitor.convert(monitor, "Resolving development platform", 1000);
 
 		// Create the state
 		fState = null;
-		// TODO Does this need to be a field?
-//		StateObjectFactory stateFactory = Platform.getPlatformAdmin().getFactory();
-//		State state = stateFactory.createState(true);
-
-		ITargetDefinition target = fTargetDefinition;
-		SubMonitor subMon = SubMonitor.convert(monitor, "Resolving development platform", 1000);
 
 		// If using the default target, load a target definition
-		if (target == null) {
+		if (fTargetDefinition == null) {
 			ITargetPlatformService targetService = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
 			if (targetService == null) {
 				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, "Unable to acquire target platform service"));
 			}
-			target = ((TargetPlatformService) targetService).newDefaultTargetDefinition();
+			fTargetDefinition = ((TargetPlatformService) targetService).newDefaultTargetDefinition();
 		}
 
 		if (subMon.isCanceled()) {
 			return;
 		}
 
-		// Resolve the target
-		if (!target.isResolved()) {
-			target.resolve(subMon.newChild(100));
+		// Resolve the target bundles
+		List targetURLs = new ArrayList();
+		subMon.subTask("Resolving target definition");
+		IStatus status = null;
+		if (!fTargetDefinition.isResolved()) {
+			status = fTargetDefinition.resolve(subMon.newChild(100));
 		}
 		subMon.setWorkRemaining(900);
-
-		// Add target bundles to the state
-		List targetURLs = new ArrayList();
-		IResolvedBundle[] targetBundles = target.getBundles();
-		for (int i = 0; i < targetBundles.length; i++) {
-			BundleInfo currentBundle = targetBundles[i].getBundleInfo();
-			File bundleLocation = org.eclipse.core.runtime.URIUtil.toFile(currentBundle.getLocation());
-			if (bundleLocation == null) {
-				PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind("Could not open plug-in at: {0}", currentBundle.getLocation())));
-			} else {
-				targetURLs.add(bundleLocation);
-			}
-
+		
+		if (status != null && status.getSeverity() == IStatus.ERROR){
+			// Log the status and assume there are no target bundles
+			PDECore.log(status);
+		} else {
+			// Add target bundles to the state
+			IResolvedBundle[] targetBundles = fTargetDefinition.getBundles();
+			for (int i = 0; i < targetBundles.length; i++) {
+				BundleInfo currentBundle = targetBundles[i].getBundleInfo();
+				File bundleLocation = org.eclipse.core.runtime.URIUtil.toFile(currentBundle.getLocation());
+				if (bundleLocation == null) {
+					PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, NLS.bind("Could not open plug-in at: {0}", currentBundle.getLocation())));
+				} else {
+					targetURLs.add(bundleLocation);
+				}
 //			try {
 //				Dictionary currentManifest = ManifestHelper.loadManifest(bundleLocation);
 //				TargetWeaver.weaveManifest(currentManifest);
@@ -87,14 +88,21 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 //				PDECore.log(e);
 //			}
 		}
-
-		// TODO Need to collect platform properties for the state as MinimalState does
-
-		// TODO Is it faster to always create the state or save/load it for restarts
-
-		// TODO We were caching the workspace models in the state, see PluginModelManager#initializeTable()
-
-		// Add workspace bundles to the state
+			
+		// Resolve workspace bundles
+		ArrayList workspaceURLs = new ArrayList();
+		IProject[] projects = PDECore.getWorkspace().getRoot().getProjects();
+		for (int i = 0; i < projects.length; i++) {
+			if (WorkspaceModelManager.isPluginProject(projects[i])) {
+				try {
+					IPath path = projects[i].getLocation();
+					if (path != null) {
+						workspaceURLs.add(path.toFile().toURL());
+					}
+				} catch (MalformedURLException e) {
+				}
+			}
+		}
 
 		// Resolve the state
 		// Create a state that contains all bundles from the target and workspace

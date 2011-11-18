@@ -10,10 +10,46 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.platform;
 
+import java.util.HashMap;
+import java.util.Map;
+import org.eclipse.pde.internal.core.PDEState;
+import org.eclipse.pde.internal.core.PluginModelManager;
+
 /**
  * Internal singleton manager to keep track of all {@link IDevelopmentPlatform}s
  *
  */
-public class PlatformManager {
+public class PlatformManager implements IDevelopmentPlatformService {
 
+	private Map/*<String, IDevelopmentPlatform>*/fPlatforms;
+
+	/**
+	 * Service instance
+	 */
+	private static IDevelopmentPlatformService fgDefault;
+
+	/**
+	 * The dev platform service should be obtained by requesting the {@link IDevelopmentPlatformService} from OSGi. This
+	 * method should only be used internally be PDE.
+	 * 
+	 * @return The singleton implementation of this service
+	 */
+	public synchronized static IDevelopmentPlatformService getDefault() {
+		if (fgDefault == null) {
+			fgDefault = new PlatformManager();
+		}
+		return fgDefault;
+	}
+
+	private PlatformManager() {
+		fPlatforms = new HashMap();
+	}
+
+	public void addPlatform(PDEState state) {
+
+	}
+
+	public PluginModelManager getPluginModelManager(String platformId) {
+		return ((IDevelopmentPlatform) fPlatforms.get(platformId)).getPluginModelManager();
+	}
 }

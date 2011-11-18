@@ -23,6 +23,8 @@ import org.eclipse.pde.core.project.IBundleProjectService;
 import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.eclipse.pde.internal.core.builders.FeatureRebuilder;
 import org.eclipse.pde.internal.core.builders.PluginRebuilder;
+import org.eclipse.pde.internal.core.platform.IDevelopmentPlatformService;
+import org.eclipse.pde.internal.core.platform.PlatformManager;
 import org.eclipse.pde.internal.core.project.BundleProjectService;
 import org.eclipse.pde.internal.core.schema.SchemaRegistry;
 import org.eclipse.pde.internal.core.target.P2TargetUtils;
@@ -152,6 +154,11 @@ public class PDECore extends Plugin {
 	 */
 	private ServiceRegistration fBundleProjectService;
 
+	/**
+	 * Development platform service.
+	 */
+	private ServiceRegistration fDevelopmentPlatformService;
+
 	public PDECore() {
 		inst = this;
 	}
@@ -267,6 +274,7 @@ public class PDECore extends Plugin {
 
 		fTargetPlatformService = context.registerService(ITargetPlatformService.class.getName(), TargetPlatformService.getDefault(), new Hashtable());
 		fBundleProjectService = context.registerService(IBundleProjectService.class.getName(), BundleProjectService.getDefault(), new Hashtable());
+		fDevelopmentPlatformService = context.registerService(IDevelopmentPlatformService.class.getName(), PlatformManager.getDefault(), new Hashtable());
 
 		// use save participant to clean orphaned profiles.
 		ResourcesPlugin.getWorkspace().addSaveParticipant(PLUGIN_ID, new ISaveParticipant() {
@@ -345,7 +353,10 @@ public class PDECore extends Plugin {
 			fBundleProjectService.unregister();
 			fBundleProjectService = null;
 		}
-
+		if (fDevelopmentPlatformService != null) {
+			fDevelopmentPlatformService.unregister();
+			fDevelopmentPlatformService = null;
+		}
 		ResourcesPlugin.getWorkspace().removeSaveParticipant(PLUGIN_ID);
 	}
 
