@@ -1,0 +1,65 @@
+/*******************************************************************************
+ * Copyright (c) 2010 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
+package org.eclipse.ui.trace.internal.providers;
+
+import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.jface.viewers.ViewerCell;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.trace.internal.datamodel.TracingComponentDebugOption;
+import org.eclipse.ui.trace.internal.utils.TracingConstants;
+import org.eclipse.ui.trace.internal.utils.TracingUtils;
+
+/**
+ * A label provide object for the tracing UI viewers columns.
+ * 
+ * @since 3.6
+ */
+public class TracingComponentColumnLabelProvider extends ColumnLabelProvider {
+
+	/**
+	 * Construct a new {@link TracingComponentColumnLabelProvider} for the specified index.
+	 * 
+	 * @param index
+	 *            The column index. One of either {@link TracingConstants#LABEL_COLUMN_INDEX} for the label column or
+	 *            {@link TracingConstants#VALUE_COLUMN_INDEX} for the value column.
+	 */
+	public TracingComponentColumnLabelProvider(final int index) {
+
+		super();
+		this.columnIndex = index;
+	}
+
+	@Override
+	public void update(ViewerCell cell) {
+		super.update(cell);
+		Object element = cell.getElement();
+		if (element instanceof TracingComponentDebugOption && this.columnIndex == TracingConstants.VALUE_COLUMN_INDEX) {
+			if (TracingUtils.isValueBoolean((TracingComponentDebugOption) element)) {
+				Color bgColor = Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
+				cell.setBackground(bgColor);
+			}
+		}
+	}
+
+	@Override
+	public String getText(final Object element) {
+
+		return TracingComponentLabelProvider.getLabel(this.columnIndex, element);
+	}
+
+	/**
+	 * The column index. One of {@link TracingConstants#LABEL_COLUMN_INDEX} or
+	 * {@link TracingConstants#VALUE_COLUMN_INDEX}
+	 */
+	private int columnIndex;
+}
