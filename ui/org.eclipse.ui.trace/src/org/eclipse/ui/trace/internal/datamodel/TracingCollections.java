@@ -19,51 +19,60 @@ import org.eclipse.ui.trace.internal.utils.TracingUtils;
 import org.osgi.framework.Bundle;
 
 /**
- * A utility class for handling the various caches of the product tracing UI.
+ * A utility class for handling the various collections of the product tracing UI.
  * 
  * @since 3.6
  */
-public class TracingCaches {
+public class TracingCollections {
 
 	/**
-	 * Constructor for the {@link TracingCaches}
+	 * Constructor for the {@link TracingCollections}
 	 */
-	protected TracingCaches() {
+	protected TracingCollections() {
 
-		this.COMPONENT_CACHE = new HashMap<String, TracingComponent>();
-		this.DEBUG_OPTION_CACHE = new HashMap<String, List<TracingComponentDebugOption>>();
-		this.BUNDLE_OPTIONS_CACHE = new HashMap<Bundle, Properties>();
-		this.BUNDLE_CONSUMED_CACHE = new HashMap<Bundle, Boolean>();
-		this.BUNDLE_COMPONENT_CACHE = new HashMap<Bundle, List<TracingComponent>>();
+		this.fComponentCollection = new HashMap<String, TracingComponent>();
+		this.fDebugOptionCollection = new HashMap<String, List<TracingComponentDebugOption>>();
+		this.fBundleOptionsCollection = new HashMap<Bundle, Properties>();
+		this.fBundleConsumedCollection = new HashMap<Bundle, Boolean>();
+		this.fBundleComponentCollection = new HashMap<Bundle, List<TracingComponent>>();
+		this.fModifiedDebugOptions = new ModifiedDebugOptions();
 	}
 
 	/**
-	 * Accessor for the singleton instance of the {@link TracingCaches}
+	 * Accessor for the singleton instance of the {@link TracingCollections}
 	 * 
-	 * @return Return the single instance of the {@link TracingCaches}
+	 * @return Return the single instance of the {@link TracingCollections}
 	 */
-	public final static TracingCaches getInstance() {
+	public final static TracingCollections getInstance() {
 
-		if (TracingCaches.instance == null) {
-			TracingCaches.instance = new TracingCaches();
+		if (TracingCollections.instance == null) {
+			TracingCollections.instance = new TracingCollections();
 		}
-		return TracingCaches.instance;
+		return TracingCollections.instance;
 	}
 
 	/**
-	 * Cache a {@link TracingComponentDebugOption} element if it has not already been cached.
+	 * Accessor for the modified options model
+	 * 
+	 * @return Return the <code>ModifiedDebugOptions</code> model
+	 */
+	public final ModifiedDebugOptions getModifiedDebugOptions() {
+		return this.fModifiedDebugOptions;
+	}
+
+	/**
+	 * Store a {@link TracingComponentDebugOption} element if it has not already been stored.
 	 * 
 	 * @param newDebugOption
-	 *            The {@link TracingComponentDebugOption} to add to the cache.
+	 *            The {@link TracingComponentDebugOption} to add to the collection.
 	 */
-	public final void cacheTracingDebugOption(final TracingComponentDebugOption newDebugOption) {
+	public final void storeTracingDebugOption(final TracingComponentDebugOption newDebugOption) {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, newDebugOption);
 		}
 		if (newDebugOption != null) {
-			List<TracingComponentDebugOption> debugOptions = this.DEBUG_OPTION_CACHE
-					.get(newDebugOption.getOptionPath());
+			List<TracingComponentDebugOption> debugOptions = this.fDebugOptionCollection.get(newDebugOption.getOptionPath());
 			if (TracingUIActivator.DEBUG_MODEL) {
 				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing debug options for '" //$NON-NLS-1$
 						+ newDebugOption.getOptionPath() + "': " + debugOptions); //$NON-NLS-1$
@@ -71,7 +80,7 @@ public class TracingCaches {
 			if (debugOptions == null) {
 				// create the list of {@link TracingComponentDebugOption} elements
 				debugOptions = new ArrayList<TracingComponentDebugOption>();
-				this.DEBUG_OPTION_CACHE.put(newDebugOption.getOptionPath(), debugOptions);
+				this.fDebugOptionCollection.put(newDebugOption.getOptionPath(), debugOptions);
 			}
 			// add the newly created {@link TracingComponentDebugOption}
 			if (!debugOptions.contains(newDebugOption)) {
@@ -91,7 +100,7 @@ public class TracingCaches {
 	 * 
 	 * @param optionPath
 	 *            The name of the option-path.
-	 * @return An array of cached {@link TracingComponentDebugOption} elements that contain the option-path value.
+	 * @return An array of stored {@link TracingComponentDebugOption} elements that contain the option-path value.
 	 */
 	public final TracingComponentDebugOption[] getTracingDebugOptions(final String optionPath) {
 
@@ -100,12 +109,11 @@ public class TracingCaches {
 		}
 		List<TracingComponentDebugOption> debugOptions = null;
 		if (optionPath != null) {
-			debugOptions = this.DEBUG_OPTION_CACHE.get(optionPath);
+			debugOptions = this.fDebugOptionCollection.get(optionPath);
 		}
 		if (debugOptions == null) {
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-						"There are no debug options for '" + optionPath + "' so returning an empty list."); //$NON-NLS-1$ //$NON-NLS-2$
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no debug options for '" + optionPath + "' so returning an empty list."); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			debugOptions = Collections.emptyList();
 		}
@@ -116,8 +124,8 @@ public class TracingCaches {
 	}
 
 	/**
-	 * Access a {@link TracingComponent} from the internal cache. If a {@link TracingComponent} does not exist based on
-	 * the content in the {@link IConfigurationElement} then a new {@link TracingComponent} will be created and cached.
+	 * Access a {@link TracingComponent} from the internal collection. If a {@link TracingComponent} does not exist based on
+	 * the content in the {@link IConfigurationElement} then a new {@link TracingComponent} will be created and stored.
 	 * 
 	 * @param element
 	 *            The {@link IConfigurationElement} for a 'tracingComponent' extension.
@@ -136,28 +144,23 @@ public class TracingCaches {
 				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "tracing component id: " + id); //$NON-NLS-1$
 			}
 			if (id != null) {
-				component = this.COMPONENT_CACHE.get(id);
+				component = this.fComponentCollection.get(id);
 				if (component == null) {
 					if (TracingUIActivator.DEBUG_MODEL) {
-						TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-								"Creating a new tracing component for id: " + id); //$NON-NLS-1$
+						TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Creating a new tracing component for id: " + id); //$NON-NLS-1$
 					}
 					// create a new tracing component since one doesn't exist with this id
 					component = new TracingComponent(element);
-					this.COMPONENT_CACHE.put(id, component);
-				}
-				else {
+					this.fComponentCollection.put(id, component);
+				} else {
 					// A tracing component already exists with this id. Add the bundles provided by
 					// the new component to the existing one.
 					if (TracingUIActivator.DEBUG_MODEL) {
-						TRACE.trace(
-								TracingConstants.TRACE_MODEL_STRING,
-								"The tracing component for id '" + id + "' already exists.  The bundles for this new component are added to the existing component."); //$NON-NLS-1$ //$NON-NLS-2$
+						TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "The tracing component for id '" + id + "' already exists.  The bundles for this new component are added to the existing component."); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 					component.addBundles(element);
 					// update the label (if necessary)
-					final String newComponentLabel = element
-							.getAttribute(TracingConstants.TRACING_EXTENSION_LABEL_ATTRIBUTE);
+					final String newComponentLabel = element.getAttribute(TracingConstants.TRACING_EXTENSION_LABEL_ATTRIBUTE);
 					if (newComponentLabel != null) {
 						component.setLabel(newComponentLabel);
 					}
@@ -188,16 +191,15 @@ public class TracingCaches {
 		}
 		Properties results = null;
 		if (bundle != null) {
-			results = this.BUNDLE_OPTIONS_CACHE.get(bundle);
+			results = this.fBundleOptionsCollection.get(bundle);
 			if (results == null) {
 				// this bundle has not been processed yet - so do it now.
 				if (TracingUIActivator.DEBUG_MODEL) {
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-							"The options for bundle '" + bundle + "' have not been processed."); //$NON-NLS-1$ //$NON-NLS-2$
+					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "The options for bundle '" + bundle + "' have not been processed."); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				results = TracingUtils.loadOptionsFromBundle(bundle);
-				// and cache the results
-				this.BUNDLE_OPTIONS_CACHE.put(bundle, results);
+				// and store the results
+				this.fBundleOptionsCollection.put(bundle, results);
 			}
 		}
 		if (TracingUIActivator.DEBUG_MODEL) {
@@ -217,10 +219,10 @@ public class TracingCaches {
 	public final void setBundleIsConsumed(final Bundle bundle, final boolean consumed) {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] { bundle, Boolean.valueOf(consumed) });
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {bundle, Boolean.valueOf(consumed)});
 		}
 		if (bundle != null) {
-			this.BUNDLE_CONSUMED_CACHE.put(bundle, Boolean.valueOf(consumed));
+			this.fBundleConsumedCollection.put(bundle, Boolean.valueOf(consumed));
 		}
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
@@ -242,11 +244,9 @@ public class TracingCaches {
 		}
 		boolean result = false;
 		if (bundle != null) {
-			Boolean isConsumed = this.BUNDLE_CONSUMED_CACHE.get(bundle);
+			Boolean isConsumed = this.fBundleConsumedCollection.get(bundle);
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(
-						TracingConstants.TRACE_MODEL_STRING,
-						"Checking the cache if the bundle '" + bundle.getSymbolicName() + "' is consumed... result: " + isConsumed); //$NON-NLS-1$ //$NON-NLS-2$
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Checking the collection if the bundle '" + bundle.getSymbolicName() + "' is consumed... result: " + isConsumed); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 			if (isConsumed != null) {
 				result = isConsumed.booleanValue();
@@ -259,29 +259,29 @@ public class TracingCaches {
 	}
 
 	/**
-	 * Cache that the specified {@link Bundle} has been added to the specified {@link TracingComponent}.
+	 * Store that the specified {@link Bundle} has been added to the specified {@link TracingComponent}.
 	 * 
 	 * @param component
 	 *            The {@link TracingComponent} that includes the specified {@link Bundle}.
 	 * @param bundle
 	 *            The {@link Bundle} included in the specified {@link TracingComponent}.
 	 */
-	public final void cacheBundleInComponent(final TracingComponent component, final Bundle bundle) {
+	public final void storeBundleInComponent(final TracingComponent component, final Bundle bundle) {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] { component, bundle });
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {component, bundle});
 		}
 		if ((bundle != null) && (component != null)) {
-			List<TracingComponent> components = this.BUNDLE_COMPONENT_CACHE.get(bundle);
+			List<TracingComponent> components = this.fBundleComponentCollection.get(bundle);
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in cache: " + components); //$NON-NLS-1$
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in collection: " + components); //$NON-NLS-1$
 			}
 			if (components == null) {
 				components = new ArrayList<TracingComponent>();
-				this.BUNDLE_COMPONENT_CACHE.put(bundle, components);
+				this.fBundleComponentCollection.put(bundle, components);
 			}
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding component to cache: " + component); //$NON-NLS-1$
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding component to collection: " + component); //$NON-NLS-1$
 			}
 			components.add(component);
 		}
@@ -304,15 +304,14 @@ public class TracingCaches {
 		}
 		List<TracingComponent> components = null;
 		if (bundle != null) {
-			components = this.BUNDLE_COMPONENT_CACHE.get(bundle);
+			components = this.fBundleComponentCollection.get(bundle);
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in cache: " + components); //$NON-NLS-1$
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in collection: " + components); //$NON-NLS-1$
 			}
 		}
 		if (components == null) {
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-						"There are no components in the cache so creating an empty list."); //$NON-NLS-1$
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no components in the collection so creating an empty list."); //$NON-NLS-1$
 			}
 			components = Collections.emptyList();
 		}
@@ -323,50 +322,53 @@ public class TracingCaches {
 	}
 
 	/**
-	 * Clear the various caches
+	 * Clear the various collections
 	 */
 	public final void clear() {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
 		}
-		this.COMPONENT_CACHE.clear();
-		this.DEBUG_OPTION_CACHE.clear();
-		this.BUNDLE_OPTIONS_CACHE.clear();
-		this.BUNDLE_CONSUMED_CACHE.clear();
-		this.BUNDLE_COMPONENT_CACHE.clear();
+		this.fComponentCollection.clear();
+		this.fDebugOptionCollection.clear();
+		this.fBundleOptionsCollection.clear();
+		this.fBundleConsumedCollection.clear();
+		this.fBundleComponentCollection.clear();
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 		}
 	}
 
-	/** A cache of {@link TracingComponent} entries that are constructed for a specific {@link String} id. */
-	private Map<String, TracingComponent> COMPONENT_CACHE = null;
+	/** The debug options {@link ModifiedDebugOptions} added or removed */
+	private ModifiedDebugOptions fModifiedDebugOptions = null;
+
+	/** A collection of {@link TracingComponent} entries that are constructed for a specific {@link String} id. */
+	private Map<String, TracingComponent> fComponentCollection = null;
 
 	/**
-	 * A cache of {@link TracingComponentDebugOption} entries that are constructed for a specific {@link String}
+	 * A collection of {@link TracingComponentDebugOption} entries that are constructed for a specific {@link String}
 	 * option-path name.
 	 */
-	private Map<String, List<TracingComponentDebugOption>> DEBUG_OPTION_CACHE = null;
+	private Map<String, List<TracingComponentDebugOption>> fDebugOptionCollection = null;
 
-	/** A cache of {@link Properties} entries which contain the various tracing strings for a specific {@link Bundle}. */
-	private Map<Bundle, Properties> BUNDLE_OPTIONS_CACHE = null;
+	/** A collection of {@link Properties} entries which contain the various tracing strings for a specific {@link Bundle}. */
+	private Map<Bundle, Properties> fBundleOptionsCollection = null;
 
 	/**
-	 * A cache of {@link Bundle} entries with a {@link Boolean} value to state if it is a consumed by any tracing
+	 * A collection of {@link Bundle} entries with a {@link Boolean} value to state if it is a consumed by any tracing
 	 * component.
 	 */
-	private Map<Bundle, Boolean> BUNDLE_CONSUMED_CACHE = null;
+	private Map<Bundle, Boolean> fBundleConsumedCollection = null;
 
 	/**
-	 * A cache of {@link Bundle} entries with a {@link List} of the {@link TracingComponent}'s (i.e. components that
+	 * A collection of {@link Bundle} entries with a {@link List} of the {@link TracingComponent}'s (i.e. components that
 	 * contain this bundle)
 	 */
-	private Map<Bundle, List<TracingComponent>> BUNDLE_COMPONENT_CACHE = null;
+	private Map<Bundle, List<TracingComponent>> fBundleComponentCollection = null;
 
 	/** Trace object for this bundle */
 	private final static DebugTrace TRACE = TracingUIActivator.getDefault().getTrace();
 
 	/** The singleton instance of this class */
-	private static TracingCaches instance = null;
+	private static TracingCollections instance = null;
 }

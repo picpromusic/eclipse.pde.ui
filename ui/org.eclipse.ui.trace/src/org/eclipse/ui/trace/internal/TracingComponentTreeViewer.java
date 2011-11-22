@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.ui.trace.internal;
 
-import org.eclipse.jface.viewers.CheckboxTreeViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
@@ -40,7 +39,7 @@ public class TracingComponentTreeViewer extends FilteredTree {
 	@Override
 	protected TreeViewer doCreateTreeViewer(final Composite treeViewerParentComposite, final int style) {
 
-		return new CheckboxTreeViewer(treeViewerParentComposite, style | SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL);
+		return new TreeViewer(treeViewerParentComposite, style | SWT.BORDER | SWT.SINGLE | SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION);
 	}
 
 	@Override

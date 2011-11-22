@@ -97,6 +97,9 @@ public class TracingConstants {
 	/** The preference identifier for the maximum number of tracing files */
 	public final static String PREFERENCE_MAX_FILE_COUNT_IDENTIFIER = "tracingMaxFileCount"; //$NON-NLS-1$
 
+	/** The preference identifier for the location of tracing files */
+	public final static String PREFERENCE_FILE_PATH = "tracingFilePath"; //$NON-NLS-1$
+
 	/** The tracing identifier for generic tracing of this bundle */
 	public final static String TRACE_DEBUG_STRING = "/debug"; //$NON-NLS-1$
 

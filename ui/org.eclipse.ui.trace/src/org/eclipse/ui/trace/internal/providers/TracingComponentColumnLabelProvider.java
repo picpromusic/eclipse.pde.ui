@@ -11,13 +11,7 @@
 package org.eclipse.ui.trace.internal.providers;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
-import org.eclipse.jface.viewers.ViewerCell;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.trace.internal.datamodel.TracingComponentDebugOption;
 import org.eclipse.ui.trace.internal.utils.TracingConstants;
-import org.eclipse.ui.trace.internal.utils.TracingUtils;
 
 /**
  * A label provide object for the tracing UI viewers columns.
@@ -37,18 +31,6 @@ public class TracingComponentColumnLabelProvider extends ColumnLabelProvider {
 
 		super();
 		this.columnIndex = index;
-	}
-
-	@Override
-	public void update(ViewerCell cell) {
-		super.update(cell);
-		Object element = cell.getElement();
-		if (element instanceof TracingComponentDebugOption && this.columnIndex == TracingConstants.VALUE_COLUMN_INDEX) {
-			if (TracingUtils.isValueBoolean((TracingComponentDebugOption) element)) {
-				Color bgColor = Display.getDefault().getSystemColor(SWT.COLOR_WIDGET_BACKGROUND);
-				cell.setBackground(bgColor);
-			}
-		}
 	}
 
 	@Override

@@ -10,14 +10,11 @@
  *******************************************************************************/
 package org.eclipse.ui.trace.internal;
 
-import java.io.File;
 import java.util.Hashtable;
-import java.util.Map;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.osgi.service.debug.*;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
-import org.eclipse.ui.trace.internal.utils.DebugOptionsHandler;
 import org.eclipse.ui.trace.internal.utils.TracingConstants;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
@@ -71,49 +68,49 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 			this.trace = trace;
 		}
 
-		private String clean(String option) {
+		private String quotify(String option) {
 			if (option != null) {
-				option = option.replaceAll("\\{\\}", ""); //$NON-NLS-1$//$NON-NLS-2$
+				option = "'" + option + "'"; //$NON-NLS-1$//$NON-NLS-2$
 			}
 			return option;
 		}
 
 		public void trace(String option, String message) {
-			trace.trace(clean(option), message);
+			trace.trace(quotify(option), message);
 		}
 
 		public void trace(String option, String message, Throwable error) {
-			trace.trace(clean(option), message, error);
+			trace.trace(quotify(option), message, error);
 		}
 
 		public void traceDumpStack(String option) {
-			trace.traceDumpStack(clean(option));
+			trace.traceDumpStack(quotify(option));
 		}
 
 		public void traceEntry(String option) {
-			trace.traceEntry(clean(option));
+			trace.traceEntry(quotify(option));
 		}
 
 		public void traceEntry(String option, Object methodArgument) {
-			trace.traceEntry(clean(option), clean(String.valueOf(methodArgument)));
+			trace.traceEntry(quotify(option), quotify(String.valueOf(methodArgument)));
 		}
 
 		public void traceEntry(String option, Object[] methodArguments) {
 			if (methodArguments != null && methodArguments.length > 0) {
 				Object[] methodArgs = new Object[methodArguments.length];
 				for (int i = 0; i < methodArgs.length; i++) {
-					methodArgs[i] = clean(String.valueOf(methodArguments[i]));
+					methodArgs[i] = quotify(String.valueOf(methodArguments[i]));
 				}
-				trace.traceEntry(clean(option), methodArgs);
+				trace.traceEntry(quotify(option), methodArgs);
 			}
 		}
 
 		public void traceExit(String option) {
-			trace.traceExit(clean(option));
+			trace.traceExit(quotify(option));
 		}
 
 		public void traceExit(String option, Object result) {
-			trace.traceExit(clean(option), clean(String.valueOf(result)));
+			trace.traceExit(quotify(option), quotify(String.valueOf(result)));
 		}
 
 	}
@@ -126,9 +123,6 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 		final Hashtable<String, String> props = new Hashtable<String, String>(4);
 		props.put(DebugOptions.LISTENER_SYMBOLICNAME, TracingConstants.BUNDLE_ID);
 		context.registerService(DebugOptionsListener.class.getName(), this, props);
-		final Map<String, String> currentOptions = DebugOptionsHandler.getDebugOptions().getOptions();
-		DebugOptions options = getDebugOptions();
-		File f = options.getFile();
 	}
 
 	@Override
@@ -163,7 +157,7 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 		if (this.debugTracker == null) {
 			BundleContext context = this.getBundle().getBundleContext();
 			if (context != null) {
-				this.debugTracker = new ServiceTracker(context, DebugOptions.class.getName(), null);
+				this.debugTracker = new ServiceTracker<Object, Object>(context, DebugOptions.class.getName(), null);
 				this.debugTracker.open();
 			}
 		}
@@ -211,5 +205,5 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 	private static DebugTrace trace = null;
 
 	/** DebugOptions service tracker */
-	private ServiceTracker debugTracker = null;
+	private ServiceTracker<Object, Object> debugTracker = null;
 }

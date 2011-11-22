@@ -25,8 +25,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 import org.eclipse.ui.dialogs.FilteredTree;
 import org.eclipse.ui.trace.internal.datamodel.*;
-import org.eclipse.ui.trace.internal.listners.TracingCheckStateListener;
-import org.eclipse.ui.trace.internal.listners.TracingDoubleClickListener;
 import org.eclipse.ui.trace.internal.providers.*;
 import org.eclipse.ui.trace.internal.utils.*;
 
@@ -42,9 +40,6 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 
 	/** A list of {@link TracingComponent} objects to display in the UI */
 	private Map<String, TracingComponent> displayableTracingComponents = null;
-
-	/** a listener for check state changes on the debug options */
-	private TracingCheckStateListener checkStateListener = null;
 
 	// widgets
 	/** Enabling Tracing button */
@@ -122,12 +117,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			this.displayableTracingComponents.clear();
 			this.displayableTracingComponents = null;
 		}
-		// clear the options to add & remove
-		if (this.checkStateListener != null) {
-			this.checkStateListener.getModifiedDebugOptions().clear();
-		}
+
 		// clear the component caches
-		TracingCaches.getInstance().clear();
+		TracingCollections.getInstance().clear();
 	}
 
 	/**
@@ -223,9 +215,6 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.getViewer().setContentProvider(new TracingComponentContentProvider());
 		this.getViewer().setComparator(new TracingComponentComparator());
 		this.getViewerTree().setLinesVisible(true);
-		this.getViewer().setCheckStateProvider(new TracingComponentCheckStateProvider(this.getViewer()));
-		this.checkStateListener = new TracingCheckStateListener();
-		this.getViewer().addCheckStateListener(this.checkStateListener);
 		this.getViewer().addDoubleClickListener(new TracingDoubleClickListener());
 		// change the layout of the tree's composite to TreeColumnLayout so we can setup the columns
 		final Composite treeViewerComposite = this.getViewerTree().getParent();
@@ -359,8 +348,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		// set enablement button
 		this.enableTracingButton.setSelection(tracingEnabled);
 		// set the tracing file name.
-		String absolutePath = DebugOptionsHandler.getDebugOptions().getFile().getAbsolutePath();
-		this.tracingFileText.setText(absolutePath);
+		this.tracingFileText.setText(PreferenceHandler.getFilePath());
 		// set the max counter field
 		this.maximumFileCountSpinner.setSelection(PreferenceHandler.getMaxFileCount());
 		// set the max file size field
@@ -493,7 +481,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		TracingComponent[] components = new TracingComponent[cf.length];
 		// populate the full list of tracing components
 		for (int i = 0; i < cf.length; i++) {
-			components[i] = TracingCaches.getInstance().getTracingComponent(cf[i]);
+			components[i] = TracingCollections.getInstance().getTracingComponent(cf[i]);
 			if (TracingUIActivator.DEBUG_UI) {
 				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Built a TracingComponent for traceComponent with id " + components[i].getId()); //$NON-NLS-1$
 			}
@@ -558,7 +546,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 							+ prefDebugOption.getKey() + "' from '" + debugOptionsValue + "' to '" //$NON-NLS-1$ //$NON-NLS-2$
 							+ prefDebugOption.getValue() + "'."); //$NON-NLS-1$
 				}
-				TracingComponentDebugOption[] identicalOptions = TracingCaches.getInstance().getTracingDebugOptions(prefDebugOption.getKey());
+				TracingComponentDebugOption[] identicalOptions = TracingCollections.getInstance().getTracingDebugOptions(prefDebugOption.getKey());
 				for (int identicalOptionsIndex = 0; identicalOptionsIndex < identicalOptions.length; identicalOptionsIndex++) {
 					identicalOptions[identicalOptionsIndex].setOptionPathValue(prefDebugOption.getValue());
 				}
@@ -608,7 +596,8 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			final Map<String, String> currentOptions = DebugOptionsHandler.getDebugOptions().getOptions();
 			newOptions.putAll(currentOptions);
 			// iterate over the list of added debug options and add them
-			final TracingComponentDebugOption[] optionsToAdd = this.checkStateListener.getModifiedDebugOptions().getDebugOptionsToAdd();
+//			final TracingComponentDebugOption[] optionsToAdd = this.checkStateListener.getModifiedDebugOptions().getDebugOptionsToAdd();
+			final TracingComponentDebugOption[] optionsToAdd = TracingCollections.getInstance().getModifiedDebugOptions().getDebugOptionsToAdd();
 			for (int i = 0; i < optionsToAdd.length; i++) {
 				if (TracingUIActivator.DEBUG_UI) {
 					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Adding debug option: " + optionsToAdd[i]); //$NON-NLS-1$
@@ -616,7 +605,8 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 				newOptions.put(optionsToAdd[i].getOptionPath(), optionsToAdd[i].getOptionPathValue());
 			}
 			// iterate over the list of removed debug options and remove them
-			final TracingComponentDebugOption[] optionsToRemove = this.checkStateListener.getModifiedDebugOptions().getDebugOptionsToRemove();
+//			final TracingComponentDebugOption[] optionsToRemove = this.checkStateListener.getModifiedDebugOptions().getDebugOptionsToRemove();
+			final TracingComponentDebugOption[] optionsToRemove = TracingCollections.getInstance().getModifiedDebugOptions().getDebugOptionsToRemove();
 			for (int i = 0; i < optionsToRemove.length; i++) {
 				if (TracingUIActivator.DEBUG_UI) {
 					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Removing debug option: " + optionsToRemove[i]); //$NON-NLS-1$
@@ -625,6 +615,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			}
 			// update the debug options
 			DebugOptionsHandler.getDebugOptions().setOptions(newOptions);
+			TracingCollections.getInstance().getModifiedDebugOptions().clear();
 			// save the tracing file options
 			final String defaultFile = DebugOptionsHandler.getDebugOptions().getFile().getAbsolutePath();
 			if (TracingUIActivator.DEBUG_UI) {
@@ -671,6 +662,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		prefValues.put(TracingConstants.PREFERENCE_ENABLEMENT_IDENTIFIER, Boolean.toString(tracingEnabled));
 		prefValues.put(TracingConstants.PREFERENCE_MAX_FILE_COUNT_IDENTIFIER, Integer.toString(this.maximumFileCountSpinner.getSelection()));
 		prefValues.put(TracingConstants.PREFERENCE_MAX_FILE_SIZE_IDENTIFIER, Integer.toString(this.maximumFileSizeSpinner.getSelection()));
+		prefValues.put(TracingConstants.PREFERENCE_FILE_PATH, this.tracingFileText.getText());
 		// iterate over the displayable components and store their debug options (all trace strings should be saved)
 		final StringBuffer optionsAsString = new StringBuffer();
 		if (this.displayableTracingComponents != null) {
@@ -715,13 +707,13 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	}
 
 	/**
-	 * The {@link CheckboxTreeViewer} for the tracing page
+	 * The {@link TreeViewer} for the tracing page
 	 * 
-	 * @return The {@link CheckboxTreeViewer} for the tracing page
+	 * @return The {@link TreeViewer} for the tracing page
 	 */
-	private CheckboxTreeViewer getViewer() {
+	private TreeViewer getViewer() {
 
-		return (CheckboxTreeViewer) this.filterTree.getViewer();
+		return this.filterTree.getViewer();
 	}
 
 	/**

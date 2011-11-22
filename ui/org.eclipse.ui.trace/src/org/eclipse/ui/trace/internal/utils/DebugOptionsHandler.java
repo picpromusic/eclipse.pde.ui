@@ -33,8 +33,7 @@ public class DebugOptionsHandler {
 			TRACE.traceEntry(null);
 		}
 		if (DebugOptionsHandler.debugTracker == null) {
-			DebugOptionsHandler.debugTracker = new ServiceTracker(TracingUIActivator.getDefault().getBundle()
-					.getBundleContext(), DebugOptions.class.getName(), null);
+			DebugOptionsHandler.debugTracker = new ServiceTracker<Object, Object>(TracingUIActivator.getDefault().getBundle().getBundleContext(), DebugOptions.class.getName(), null);
 			DebugOptionsHandler.debugTracker.open();
 		}
 		final DebugOptions debugOptions = (DebugOptions) DebugOptionsHandler.debugTracker.getService();
@@ -80,7 +79,7 @@ public class DebugOptionsHandler {
 	}
 
 	/** The debug service for this product */
-	private static ServiceTracker debugTracker = null;
+	private static ServiceTracker<Object, Object> debugTracker = null;
 
 	/** Trace object for this bundle */
 	protected final static DebugTrace TRACE = TracingUIActivator.getDefault().getTrace();

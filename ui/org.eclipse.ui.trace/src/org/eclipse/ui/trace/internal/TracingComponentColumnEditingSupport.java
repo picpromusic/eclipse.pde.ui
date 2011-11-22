@@ -12,7 +12,8 @@ package org.eclipse.ui.trace.internal;
 
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.SWT;
-import org.eclipse.ui.trace.internal.datamodel.TracingCaches;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.trace.internal.datamodel.TracingCollections;
 import org.eclipse.ui.trace.internal.datamodel.TracingComponentDebugOption;
 import org.eclipse.ui.trace.internal.utils.TracingConstants;
 import org.eclipse.ui.trace.internal.utils.TracingUtils;
@@ -38,10 +39,11 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 		super(viewer);
 		this.columnIndex = index;
 		switch (this.columnIndex) {
-			case TracingConstants.VALUE_COLUMN_INDEX:
-				this.editor = new TextCellEditor(((CheckboxTreeViewer) viewer).getTree(), SWT.NONE);
+			case TracingConstants.VALUE_COLUMN_INDEX :
+				this.editor = new TextCellEditor((Composite) viewer.getControl(), SWT.NONE);
+//				this.editor = new ComboBoxCellEditor((Composite) viewer.getControl(), new String[] {String.valueOf(true), String.valueOf(false)});
 				break;
-			default:
+			default :
 				// do nothing - no other columns provide editing support
 				this.editor = null;
 		}
@@ -52,16 +54,16 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 
 		boolean canEdit = false;
 		switch (this.columnIndex) {
-			case TracingConstants.VALUE_COLUMN_INDEX:
-				if (element instanceof TracingComponentDebugOption) {
-					String optionPathValue = ((TracingComponentDebugOption) element).getOptionPathValue();
-					canEdit = !TracingUtils.isValueBoolean(optionPathValue);
-				}
-				else {
-					canEdit = true;
-				}
-				break;
-			default:
+			case TracingConstants.VALUE_COLUMN_INDEX :
+				return true;
+//				if (element instanceof TracingComponentDebugOption) {
+//					String optionPathValue = ((TracingComponentDebugOption) element).getOptionPathValue();
+//					canEdit = !TracingUtils.isValueBoolean(optionPathValue);
+//				} else {
+//					canEdit = true;
+//				}
+//				break;
+			default :
 				// do nothing - no other columns provide editing support
 				canEdit = false;
 		}
@@ -79,18 +81,19 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 
 		Object value = null;
 		switch (this.columnIndex) {
-			case 1:
+			case 1 :
 				if (element instanceof TracingComponentDebugOption) {
 					String optionPathValue = ((TracingComponentDebugOption) element).getOptionPathValue();
-					if (!TracingUtils.isValueBoolean(optionPathValue)) {
-						value = ((TracingComponentDebugOption) element).getOptionPathValue();
+					if (TracingUtils.isValueBoolean(optionPathValue)) {
+						value = String.valueOf(Boolean.valueOf(optionPathValue));
+					} else {
+						value = optionPathValue;
 					}
-				}
-				else if (element instanceof String) {
+				} else if (element instanceof String) {
 					value = element;
 				}
 				break;
-			default:
+			default :
 				// do nothing - no other columns provide editing support
 		}
 		return value;
@@ -100,20 +103,24 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 	protected void setValue(final Object element, final Object value) {
 
 		switch (this.columnIndex) {
-			case 1:
+			case 1 :
 				if (element instanceof TracingComponentDebugOption) {
 					TracingComponentDebugOption option = (TracingComponentDebugOption) element;
 					// find identical debug options and update them (this will include 'this' debug option that was
 					// modified)
-					TracingComponentDebugOption[] identicalOptions = TracingCaches.getInstance()
-							.getTracingDebugOptions(option.getOptionPath());
+					TracingComponentDebugOption[] identicalOptions = TracingCollections.getInstance().getTracingDebugOptions(option.getOptionPath());
 					for (int identicalOptionsIndex = 0; identicalOptionsIndex < identicalOptions.length; identicalOptionsIndex++) {
-						identicalOptions[identicalOptionsIndex].setOptionPathValue((String) value);
+						identicalOptions[identicalOptionsIndex].setOptionPathValue(String.valueOf(value));
 						this.getViewer().update(identicalOptions[identicalOptionsIndex], null);
+					}
+					if (!Boolean.parseBoolean(String.valueOf(value))) {
+						TracingCollections.getInstance().getModifiedDebugOptions().removeDebugOption(option);
+					} else {
+						TracingCollections.getInstance().getModifiedDebugOptions().addDebugOption(option);
 					}
 				}
 				break;
-			default:
+			default :
 				// do nothing - no other columns provide editing support
 		}
 	}
@@ -128,4 +135,5 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 	 * The {@link CellEditor} for the value column
 	 */
 	private CellEditor editor;
+
 }

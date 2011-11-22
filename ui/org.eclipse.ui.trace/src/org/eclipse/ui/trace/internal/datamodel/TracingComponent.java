@@ -143,7 +143,7 @@ public class TracingComponent extends AbstractTracingNode {
 			final Iterator<Bundle> bundleIterator = this.bundles.iterator();
 			while (bundleIterator.hasNext()) {
 				Bundle bundle = bundleIterator.next();
-				Properties options = TracingCaches.getInstance().getDebugOptions(bundle);
+				Properties options = TracingCollections.getInstance().getDebugOptions(bundle);
 				if (TracingUIActivator.DEBUG_MODEL) {
 					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, options.size()
 							+ "options for bundle '" + bundle.getSymbolicName() + ": " + options); //$NON-NLS-1$ //$NON-NLS-2$
@@ -164,7 +164,7 @@ public class TracingComponent extends AbstractTracingNode {
 						}
 						else {
 							// create a TracingComponentDebugOption for this entry
-							final TracingComponentDebugOption[] debugOptions = TracingCaches.getInstance()
+							final TracingComponentDebugOption[] debugOptions = TracingCollections.getInstance()
 									.getTracingDebugOptions(key);
 							if (debugOptions.length > 0) {
 								// An existing tracing debug option has already been created but it does not
@@ -184,7 +184,7 @@ public class TracingComponent extends AbstractTracingNode {
 								finalValue);
 						newDebugOption.setParent(this);
 						// and cache it
-						TracingCaches.getInstance().cacheTracingDebugOption(newDebugOption);
+						TracingCollections.getInstance().storeTracingDebugOption(newDebugOption);
 					}
 				}
 			}
@@ -227,14 +227,14 @@ public class TracingComponent extends AbstractTracingNode {
 					if (TracingUIActivator.DEBUG_MODEL) {
 						TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Found matching bundle: " + symbolicName); //$NON-NLS-1$
 					}
-					if (!TracingCaches.getInstance().isBundleConsumed(allBundles[bundleIndex])) {
+					if (!TracingCollections.getInstance().isBundleConsumed(allBundles[bundleIndex])) {
 						if (TracingUIActivator.DEBUG_MODEL) {
 							TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "This bundle was not previously consumed"); //$NON-NLS-1$
 						}
 						// this bundle has not been consumed by any other component yet so include it here.
 						this.bundles.add(allBundles[bundleIndex]);
 						// cache that this bundle is in this component
-						TracingCaches.getInstance().cacheBundleInComponent(this, allBundles[bundleIndex]);
+						TracingCollections.getInstance().storeBundleInComponent(this, allBundles[bundleIndex]);
 						// check to see if this bundle is being consumed (meaning that this bundle should not appear in
 						// any other tracing component
 						if (consumed) {
@@ -243,14 +243,14 @@ public class TracingComponent extends AbstractTracingNode {
 										"This bundle is flagged as being consumed by this component " + this); //$NON-NLS-1$
 							}
 							// tell the cache that this bundle is consumed
-							TracingCaches.getInstance().setBundleIsConsumed(allBundles[bundleIndex], consumed);
+							TracingCollections.getInstance().setBundleIsConsumed(allBundles[bundleIndex], consumed);
 							// remove this bundle from any other tracing component that is including it (except this
 							// component)
 							if (TracingUIActivator.DEBUG_MODEL) {
 								TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
 										"Removing this bundle from other components that included this bundle"); //$NON-NLS-1$
 							}
-							TracingComponent[] components = TracingCaches.getInstance().getComponentsContainingBundle(
+							TracingComponent[] components = TracingCollections.getInstance().getComponentsContainingBundle(
 									allBundles[bundleIndex]);
 							for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
 								if (!components[componentIndex].equals(this)) {

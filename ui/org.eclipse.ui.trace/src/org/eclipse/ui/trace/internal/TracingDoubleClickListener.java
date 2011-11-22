@@ -8,9 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.ui.trace.internal.listners;
-
-import org.eclipse.ui.trace.internal.TracingUIActivator;
+package org.eclipse.ui.trace.internal;
 
 import org.eclipse.jface.viewers.*;
 import org.eclipse.osgi.service.debug.DebugTrace;
@@ -30,7 +28,7 @@ public class TracingDoubleClickListener implements IDoubleClickListener {
 			TRACE.traceEntry(TracingConstants.TRACE_UI_LISTENERS_STRING, event);
 		}
 		// auto-expand or collapse the selected node
-		CheckboxTreeViewer traceComponentViewer = (CheckboxTreeViewer) event.getViewer();
+		TreeViewer traceComponentViewer = (TreeViewer) event.getViewer();
 		final Object selectedItem = ((IStructuredSelection) traceComponentViewer.getSelection()).getFirstElement();
 		final boolean expandedState = traceComponentViewer.getExpandedState(selectedItem);
 		if (selectedItem instanceof TracingNode) {
