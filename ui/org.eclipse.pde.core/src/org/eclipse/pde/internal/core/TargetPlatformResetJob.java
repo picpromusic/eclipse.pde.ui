@@ -15,6 +15,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
+import org.eclipse.pde.internal.core.platform.ExternalLibraryCache;
 
 public class TargetPlatformResetJob extends Job {
 
@@ -33,6 +34,8 @@ public class TargetPlatformResetJob extends Job {
 		IPluginModelBase[] models = fState.getTargetModels();
 		removeDisabledBundles(models);
 		PluginModelManager manager = PDECore.getDefault().getModelManager();
+		// TODO Look at better ways of clearning the extracted libs, this was part of external model manager
+		ExternalLibraryCache.getInstance().cleanExtractedLibraries(manager.getExternalModels());
 		manager.getExternalModelManager().setModels(models);
 		// trigger Extension Registry reloaded before resetState call so listeners can update their extensions points accurately when target is reloaded
 		PDECore.getDefault().getExtensionsRegistry().targetReloaded();

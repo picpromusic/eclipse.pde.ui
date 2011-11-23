@@ -117,6 +117,17 @@ public class MinimalState {
 		return null;
 	}
 
+	/**
+	 * Creates a new bundle description for a bundle and adds it to the OSGi state.  Can
+	 * return <code>null</code> if the provided file is not a valid bundle.
+	 * 
+	 * @param bundleLocation file location of a bundle folder or archive file
+	 * @param bundleId the unique id to give the bundle in the OSGi state
+	 * @return the created bundle description or <code>null</code>
+	 * @throws PluginConversionException if an old style plug-in is found and there is a problem converting it to a bundle
+	 * @throws CoreException if there is a problem parsing the manifest
+	 * @throws IOException if I/O problems occur while reading the bundle
+	 */
 	public BundleDescription addBundle(File bundleLocation, long bundleId) throws PluginConversionException, CoreException, IOException {
 		Dictionary manifest = loadManifest(bundleLocation);
 		// update for development mode

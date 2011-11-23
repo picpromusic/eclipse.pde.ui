@@ -31,60 +31,17 @@ import org.eclipse.pde.internal.core.util.CoreUtility;
 
 public class PDEState extends MinimalState {
 
-	/**
-	 * Subclass of ModelEntry
-	 * It adds methods that add/remove model from the entry.
-	 * These methods must not be on ModelEntry itself because
-	 * ModelEntry is an API class and we do not want clients to manipulate
-	 * the ModelEntry
-	 * 
-	 */
-	private class LocalModelEntry extends ModelEntry {
-
-		/**
-		 * Constructs a model entry that will keep track
-		 * of all bundles in the workspace and target that share the same ID.
-		 * 
-		 * @param id  the bundle ID
-		 */
-		public LocalModelEntry(String id) {
-			super(id);
-		}
-
-		/**
-		 * Adds a model to the entry.  
-		 * An entry keeps two lists: one for workspace models 
-		 * and one for target (external) models.
-		 * If the model being added is associated with a workspace resource,
-		 * it is added to the workspace list; otherwise, it is added to the external list.
-		 * 
-		 * @param model  model to be added to the entry
-		 */
-		public void addModel(IPluginModelBase model) {
-			if (model.getUnderlyingResource() != null)
-				fWorkspaceEntries.add(model);
-			else
-				fExternalEntries.add(model);
-		}
-
-		/**
-		 * Removes the given model for the workspace list if the model is associated
-		 * with workspace resource.  Otherwise, it is removed from the external list.
-		 * 
-		 * @param model  model to be removed from the model entry
-		 */
-		public void removeModel(IPluginModelBase model) {
-			if (model.getUnderlyingResource() != null)
-				fWorkspaceEntries.remove(model);
-			else
-				fExternalEntries.remove(model);
-		}
-	}
-
 	private PDEAuxiliaryState fAuxiliaryState;
-	private List/*<IPluginModelBase>*/fTargetModels = new ArrayList();
-	private List/*<IPluginModelBase>*/fWorkspaceModels = new ArrayList();
-	private List/*<IPluginModelBase>*/fConflictingModels = new ArrayList();
+
+	/**
+	 * Table mapping plugin ID to a {@link ModelEntry}.  Each model entry contains all
+	 * workspace and external plugin models with that ID that belong to this state.  A
+	 * subset of the models will be part of the OSGi state at any given time.
+	 * <p>
+	 * In the future this may be replaced with a smarter caching scheme
+	 * </p>
+	 */
+	private Map fEntries;
 
 	/**
 	 * Creates a new PDE state containing the given workspace and target models
@@ -94,14 +51,17 @@ public class PDEState extends MinimalState {
 	 */
 	public PDEState(URL[] workspace, URL[] target, IProgressMonitor monitor) {
 
-		// TODO Do we need a way to prevent caching? This was supported for workspace plug-ins using System.getProperty("pde.nocache")
+		// TODO Do we need a way to prevent caching states? This was supported for workspace plug-ins using System.getProperty("pde.nocache")
 
 		long start = System.currentTimeMillis();
 		fAuxiliaryState = new PDEAuxiliaryState();
 
 		SubMonitor subMon = SubMonitor.convert(monitor, "Creating PDE State", 300);
+
+		fEntries = new HashMap();
 		addTargetModels(target, subMon.newChild(150));
 		addWorkspaceBundles(workspace, subMon.newChild(150));
+
 		subMon.done();
 
 		if (DEBUG)
@@ -120,7 +80,6 @@ public class PDEState extends MinimalState {
 		SubMonitor subMon = SubMonitor.convert(monitor, 150);
 
 		// Load the state from the cache or create a new one
-		fTargetModels.clear();
 		long timestamp = computeTimestamp(targetBundles);
 		if (DEBUG) {
 			System.out.println("Timestamp of " + targetBundles.length + " target URLS: " + timestamp); //$NON-NLS-1$ //$NON-NLS-2$
@@ -161,12 +120,12 @@ public class PDEState extends MinimalState {
 		// Create the models
 		BundleDescription[] bundles = fState.getBundles();
 		for (int i = 0; i < bundles.length; i++) {
-			fTargetModels.add(createExternalModel(bundles[i]));
+			addModelToTable(createExternalModel(bundles[i]));
 		}
 		subMon.setWorkRemaining(0);
 
 		if (DEBUG) {
-			System.out.println(fTargetModels.size() + " target plug-in models added"); //$NON-NLS-1$
+			System.out.println(bundles.length + " target plug-in models added to the table and state"); //$NON-NLS-1$
 		}
 
 		subMon.done();
@@ -208,13 +167,11 @@ public class PDEState extends MinimalState {
 	 * @param monitor progress monitor, may be <code>null</code>
 	 */
 	private void addWorkspaceBundles(URL[] workspaceBundles, IProgressMonitor monitor) {
-		fWorkspaceModels.clear();
 		if (workspaceBundles.length == 0) {
 			return;
 		}
-
-		// TODO Fix progress
 		SubMonitor subMon = SubMonitor.convert(monitor, (workspaceBundles.length * 2) + 25);
+		int addedCount = 0;
 
 		long timestamp = computeTimestamp(workspaceBundles);
 		File dir = getWorkspaceCacheDirectory(timestamp);
@@ -224,7 +181,6 @@ public class PDEState extends MinimalState {
 				System.out.println("Creating new state, persisted workspace state did not exist"); //$NON-NLS-1$
 			}
 
-			long targetCount = fId;
 			for (int i = 0; i < workspaceBundles.length; i++) {
 				File file = new File(workspaceBundles[i].getFile());
 				try {
@@ -232,31 +188,27 @@ public class PDEState extends MinimalState {
 						return;
 					monitor.subTask(file.getName());
 					BundleDescription desc = addBundle(file, -1);
+
 					if (desc != null) {
-						//Remove conflicting target bundles
-						String name = desc.getSymbolicName();
-						BundleDescription[] conflicts = fState.getBundles(name);
-						for (int j = 0; j < conflicts.length; j++) {
-							// only remove bundles with a conflicting symbolic name
-							// if the conflicting bundles come from the target.
-							// Workspace bundles with conflicting symbolic names are allowed
-							if (conflicts[j].getBundleId() <= targetCount) {
-								fState.removeBundle(conflicts[j]);
-
-							}
-						}
-
-						// Create PDE model
 						IPluginModelBase model = createWorkspaceModel(desc);
 						if (model != null) {
-							fWorkspaceModels.add(model);
+							addedCount++;
+							LocalModelEntry entry = addModelToTable(model);
+							IPluginModelBase[] conflicts = entry.getExternalModels();
+							for (int j = 0; j < conflicts.length; j++) {
+								fState.removeBundle(conflicts[i].getBundleDescription());
+							}
 						}
 					}
 				} catch (PluginConversionException e) {
+					PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, IStatus.ERROR, "Problems reading bundle at " + file.getAbsolutePath(), //$NON-NLS-1$
+							e));
 				} catch (CoreException e) {
+					PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, IStatus.ERROR, "Problems reading bundle at " + file.getAbsolutePath(), //$NON-NLS-1$
+							e));
 				} catch (IOException e) {
-					PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, IStatus.ERROR, "Invalid manifest format at " + file.getAbsolutePath(), //$NON-NLS-1$
-							null));
+					PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, IStatus.ERROR, "Problems reading bundle at " + file.getAbsolutePath(), //$NON-NLS-1$
+							e));
 				} finally {
 					monitor.worked(2);
 				}
@@ -265,34 +217,25 @@ public class PDEState extends MinimalState {
 			if (DEBUG) {
 				System.out.println("Restoring previously persisted workspace state"); //$NON-NLS-1$
 			}
-			subMon.setWorkRemaining(100); // Already read the state
 
-			long targetCount = fId;
 			BundleDescription[] cachedBundles = localState.getBundles();
 			for (int i = 0; i < cachedBundles.length; i++) {
 				if (monitor.isCanceled())
 					return;
-				BundleDescription desc = cachedBundles[i];
-				String id = desc.getSymbolicName();
-				monitor.subTask(id);
-				BundleDescription[] conflicts = fState.getBundles(id);
-				for (int j = 0; j < conflicts.length; j++) {
-					// only remove bundles with a conflicting symblic name
-					// if the conflicting bundles come from the target.
-					// Workspace bundles with conflicting symbolic names are allowed
-					if (conflicts[j].getBundleId() <= targetCount)
-						fState.removeBundle(conflicts[j]);
-				}
-				BundleDescription newbundle = stateObjectFactory.createBundleDescription(desc);
+				monitor.subTask(cachedBundles[i].getSymbolicName());
+				BundleDescription newbundle = stateObjectFactory.createBundleDescription(cachedBundles[i]);
 				IPluginModelBase model = createWorkspaceModel(newbundle);
 				if (model != null && fState.addBundle(newbundle)) {
-					fId = Math.max(fId, newbundle.getBundleId());
-					fWorkspaceModels.add(model);
+					addedCount++;
+					LocalModelEntry entry = addModelToTable(model);
+					IPluginModelBase[] conflicts = entry.getExternalModels();
+					for (int j = 0; j < conflicts.length; j++) {
+						fState.removeBundle(conflicts[i].getBundleDescription());
+					}
 				}
 				monitor.worked(2);
 			}
-			fId = fState.getHighestBundleId();
-
+			fId = fState.getHighestBundleId(); // Adding copied bundles may mean the next id isn't unique
 		}
 
 		subMon.setWorkRemaining(25);
@@ -301,7 +244,7 @@ public class PDEState extends MinimalState {
 		subMon.done();
 
 		if (DEBUG) {
-			System.out.println(fWorkspaceModels.size() + " workspace plug-in models added"); //$NON-NLS-1$
+			System.out.println(addedCount + " workspace plug-in models added"); //$NON-NLS-1$
 		}
 	}
 
@@ -358,6 +301,13 @@ public class PDEState extends MinimalState {
 		return timestamp;
 	}
 
+	/**
+	 * Creates a new workspace model using data from the auxiliary state. Will
+	 * return <code>null</code> if the project the bundle describes does not exist.
+	 * 
+	 * @param desc bundle description to create a model for
+	 * @return the creates workspace model or <code>null</code>
+	 */
 	private IPluginModelBase createWorkspaceModel(BundleDescription desc) {
 		String projectName = fAuxiliaryState.getProject(desc.getBundleId());
 		if (projectName == null)
@@ -402,6 +352,12 @@ public class PDEState extends MinimalState {
 		return model;
 	}
 
+	/**
+	 * Creates and returns an external model for the given bundle description.
+	 * 
+	 * @param desc description to create a model for
+	 * @return new plug-in model
+	 */
 	private IPluginModelBase createExternalModel(BundleDescription desc) {
 		ExternalPluginModelBase model = null;
 		if (desc.getHost() == null)
@@ -413,12 +369,31 @@ public class PDEState extends MinimalState {
 		return model;
 	}
 
-	public IPluginModelBase[] getTargetModels() {
-		return (IPluginModelBase[]) fTargetModels.toArray(new IPluginModelBase[fTargetModels.size()]);
+	/**
+	 * Adds a model (workspace or external) to the table of model entries.
+	 * Does not modify the state.  Returns the model entry containing the model.
+	 * 
+	 * @param model model to add
+	 * @return {@link LocalModelEntry} that was created or edited to store this model
+	 */
+	private LocalModelEntry addModelToTable(IPluginModelBase model) {
+		String id = model.getPluginBase().getId();
+		LocalModelEntry entry = (LocalModelEntry) fEntries.get(id);
+		if (entry == null) {
+			entry = new LocalModelEntry(id);
+			fEntries.put(id, entry);
+		}
+		entry.addModel(model);
+		return entry;
 	}
 
-	public IPluginModelBase[] getWorkspaceModels() {
-		return (IPluginModelBase[]) fWorkspaceModels.toArray(new IPluginModelBase[fWorkspaceModels.size()]);
+	/**
+	 * Returns the table mapping plug-in ID to a {@link LocalModelEntry}.
+	 * 
+	 * @return map of String id to {@link LocalModelEntry}
+	 */
+	public Map getModelEntryTable() {
+		return fEntries;
 	}
 
 	/**
@@ -592,7 +567,7 @@ public class PDEState extends MinimalState {
 	 * @param timestamp the timestamp to lookup, see {@link #computeTimestamp(URL[])}
 	 * @return the target plug-in cache directory for this state
 	 */
-	public File getTargetCacheDirectory(long timestamp) {
+	private File getTargetCacheDirectory(long timestamp) {
 		return new File(DIR, Long.toString(timestamp) + ".target"); //$NON-NLS-1$
 	}
 
@@ -601,7 +576,7 @@ public class PDEState extends MinimalState {
 	 * @param timestamp the timestamp to lookup, see {@link #computeTimestamp(URL[])}
 	 * @return the workspace plug-in cache directory for this state
 	 */
-	public File getWorkspaceCacheDirectory(long timestamp) {
+	private File getWorkspaceCacheDirectory(long timestamp) {
 		return new File(DIR, Long.toString(timestamp) + ".workspace"); //$NON-NLS-1$
 	}
 

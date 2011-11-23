@@ -20,7 +20,6 @@ import org.eclipse.pde.internal.core.*;
  * state as the workspace and target bundles change.
  *
  */
-
 public class PluginModelManager {
 
 	/**
