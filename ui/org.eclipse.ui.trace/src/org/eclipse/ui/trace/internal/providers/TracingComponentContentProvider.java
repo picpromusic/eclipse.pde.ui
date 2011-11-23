@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -45,12 +45,10 @@ public class TracingComponentContentProvider implements ITreeContentProvider {
 
 		TracingNode results[] = null;
 		if (inputElement instanceof TracingNode) {
-			results = new TracingNode[] { (TracingNode) inputElement };
-		}
-		else if (inputElement instanceof TracingNode[]) {
+			results = new TracingNode[] {(TracingNode) inputElement};
+		} else if (inputElement instanceof TracingNode[]) {
 			results = (TracingNode[]) inputElement;
-		}
-		else if (inputElement instanceof Collection<?>) {
+		} else if (inputElement instanceof Collection<?>) {
 			Collection<?> collectionElement = (Collection<?>) inputElement;
 			results = collectionElement.toArray(new TracingNode[collectionElement.size()]);
 		}

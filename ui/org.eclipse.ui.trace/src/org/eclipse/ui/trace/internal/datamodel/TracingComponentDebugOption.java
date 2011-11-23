@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -53,7 +53,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 
 		super();
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] { parentNode, path, value });
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {parentNode, path, value});
 		}
 		assert (path != null);
 		assert (value != null);
@@ -77,8 +77,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 		builder.append(", parent="); //$NON-NLS-1$
 		if (this.getParent() != null) {
 			builder.append(this.getParent());
-		}
-		else {
+		} else {
 			builder.append("<unset>"); //$NON-NLS-1$
 		}
 		builder.append("]"); //$NON-NLS-1$
@@ -122,16 +121,14 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 			if (other.optionPath != null) {
 				return false;
 			}
-		}
-		else if (!this.optionPath.equals(other.optionPath)) {
+		} else if (!this.optionPath.equals(other.optionPath)) {
 			return false;
 		}
 		if (this.getParent() == null) {
 			if (other.getParent() != null) {
 				return false;
 			}
-		}
-		else if (!this.getParent().equals(other.getParent())) {
+		} else if (!this.getParent().equals(other.getParent())) {
 			return false;
 		}
 		return true;
@@ -142,8 +139,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 		boolean isEnabled = false;
 		if (TracingUtils.isValueBoolean(this.optionPathValue)) {
 			isEnabled = Boolean.parseBoolean(this.optionPathValue);
-		}
-		else {
+		} else {
 			// a non-boolean debug option - enable it only if it exists in the DebugOptions
 			String value = DebugOptionsHandler.getDebugOptions().getOption(this.optionPath);
 			isEnabled = (value != null);

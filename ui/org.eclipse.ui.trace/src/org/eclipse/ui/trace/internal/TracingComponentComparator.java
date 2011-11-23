@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,11 +37,9 @@ public class TracingComponentComparator extends ViewerComparator {
 		// take care of the null cases
 		if ((object1 == null) && (object2 == null)) {
 			result = 0;
-		}
-		else if ((object1 == null) && (object2 != null)) {
+		} else if ((object1 == null) && (object2 != null)) {
 			result = -1;
-		}
-		else if ((object1 != null) && (object2 == null)) {
+		} else if ((object1 != null) && (object2 == null)) {
 			result = 1;
 		}
 		return result;
@@ -54,8 +52,7 @@ public class TracingComponentComparator extends ViewerComparator {
 		if ((object1 == null) || (object2 == null)) {
 			// take care of the null cases
 			result = this.compareNullCases(object1, object2);
-		}
-		else {
+		} else {
 			// neither object are null
 			if ((object1 instanceof TracingNode) && (object2 instanceof TracingNode)) {
 				String name1 = ((TracingNode) object1).getLabel();
@@ -63,12 +60,10 @@ public class TracingComponentComparator extends ViewerComparator {
 				if ((name1 == null) || (name2 == null)) {
 					// take care of the null cases
 					result = this.compareNullCases(name1, name2);
-				}
-				else {
+				} else {
 					result = name1.compareTo(name2);
 				}
-			}
-			else if (object1 instanceof String && object2 instanceof String) {
+			} else if (object1 instanceof String && object2 instanceof String) {
 				String label1 = (String) object1;
 				String label2 = (String) object2;
 				result = label1.compareTo(label2);

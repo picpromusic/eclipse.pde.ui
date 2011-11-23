@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -49,8 +49,7 @@ public class TracingComponent extends AbstractTracingNode {
 		this.bundles = new ArrayList<Bundle>();
 		this.addBundles(element);
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-					"number of bundles for this component: " + this.bundles.size()); //$NON-NLS-1$
+			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "number of bundles for this component: " + this.bundles.size()); //$NON-NLS-1$
 		}
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
@@ -83,8 +82,7 @@ public class TracingComponent extends AbstractTracingNode {
 			if (other.getId() != null) {
 				return false;
 			}
-		}
-		else if (!this.getId().equals(other.getId())) {
+		} else if (!this.getId().equals(other.getId())) {
 			return false;
 		}
 		return true;
@@ -120,8 +118,7 @@ public class TracingComponent extends AbstractTracingNode {
 					break;
 				}
 			}
-		}
-		else {
+		} else {
 			isEnabled = false;
 		}
 		return isEnabled;
@@ -145,8 +142,7 @@ public class TracingComponent extends AbstractTracingNode {
 				Bundle bundle = bundleIterator.next();
 				Properties options = TracingCollections.getInstance().getDebugOptions(bundle);
 				if (TracingUIActivator.DEBUG_MODEL) {
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, options.size()
-							+ "options for bundle '" + bundle.getSymbolicName() + ": " + options); //$NON-NLS-1$ //$NON-NLS-2$
+					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, options.size() + "options for bundle '" + bundle.getSymbolicName() + ": " + options); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				if (options.size() > 0) {
 					// this bundle has debug options - loop over each one and build a TracingComponentDebugOption for it
@@ -161,27 +157,23 @@ public class TracingComponent extends AbstractTracingNode {
 						if (debugOptionValue != null) {
 							// This entry is already in the debug options - so use its value.
 							finalValue = debugOptionValue;
-						}
-						else {
+						} else {
 							// create a TracingComponentDebugOption for this entry
-							final TracingComponentDebugOption[] debugOptions = TracingCollections.getInstance()
-									.getTracingDebugOptions(key);
+							final TracingComponentDebugOption[] debugOptions = TracingCollections.getInstance().getTracingDebugOptions(key);
 							if (debugOptions.length > 0) {
 								// An existing tracing debug option has already been created but it does not
 								// exist in the debug options (yet). Use the value of this existing debug option
 								// despite what the .option file may say to ensure the initial value of all debug
 								// options are the same.
 								finalValue = debugOptions[0].getOptionPathValue();
-							}
-							else {
+							} else {
 								// An existing tracing debug option does not exist nor does it exist in the
 								// debug options (yet). Use the value read in from the .options file.
 								finalValue = value;
 							}
 						}
 						// create the TracingComponentDebugOption object
-						final TracingComponentDebugOption newDebugOption = new TracingComponentDebugOption(key,
-								finalValue);
+						final TracingComponentDebugOption newDebugOption = new TracingComponentDebugOption(key, finalValue);
 						newDebugOption.setParent(this);
 						// and cache it
 						TracingCollections.getInstance().storeTracingDebugOption(newDebugOption);
@@ -217,8 +209,7 @@ public class TracingComponent extends AbstractTracingNode {
 	private final void addBundle(final String name, final boolean consumed, final Bundle[] allBundles) {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] { name, String.valueOf(consumed),
-					allBundles });
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {name, String.valueOf(consumed), allBundles});
 		}
 		if (name != null) {
 			for (int bundleIndex = 0; bundleIndex < allBundles.length; bundleIndex++) {
@@ -239,30 +230,25 @@ public class TracingComponent extends AbstractTracingNode {
 						// any other tracing component
 						if (consumed) {
 							if (TracingUIActivator.DEBUG_MODEL) {
-								TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-										"This bundle is flagged as being consumed by this component " + this); //$NON-NLS-1$
+								TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "This bundle is flagged as being consumed by this component " + this); //$NON-NLS-1$
 							}
 							// tell the cache that this bundle is consumed
 							TracingCollections.getInstance().setBundleIsConsumed(allBundles[bundleIndex], consumed);
 							// remove this bundle from any other tracing component that is including it (except this
 							// component)
 							if (TracingUIActivator.DEBUG_MODEL) {
-								TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-										"Removing this bundle from other components that included this bundle"); //$NON-NLS-1$
+								TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Removing this bundle from other components that included this bundle"); //$NON-NLS-1$
 							}
-							TracingComponent[] components = TracingCollections.getInstance().getComponentsContainingBundle(
-									allBundles[bundleIndex]);
+							TracingComponent[] components = TracingCollections.getInstance().getComponentsContainingBundle(allBundles[bundleIndex]);
 							for (int componentIndex = 0; componentIndex < components.length; componentIndex++) {
 								if (!components[componentIndex].equals(this)) {
 									components[componentIndex].removeBundle(allBundles[bundleIndex]);
 								}
 							}
 						}
-					}
-					else {
+					} else {
 						if (TracingUIActivator.DEBUG_MODEL) {
-							TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-									"This bundle is already consumed - ignore it."); //$NON-NLS-1$
+							TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "This bundle is already consumed - ignore it."); //$NON-NLS-1$
 						}
 					}
 				}
@@ -288,22 +274,15 @@ public class TracingComponent extends AbstractTracingNode {
 		final IConfigurationElement[] componentChildren = element.getChildren();
 		final Bundle[] installedBundles = TracingUIActivator.getDefault().getBundle().getBundleContext().getBundles();
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-					"Number of children for this element: " + componentChildren.length); //$NON-NLS-1$
+			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Number of children for this element: " + componentChildren.length); //$NON-NLS-1$
 		}
 		for (int i = 0; i < componentChildren.length; i++) {
 			if (componentChildren[i].getName().equals(TracingConstants.TRACING_EXTENSION_BUNDLE_ATTRIBUTE)) {
 				if (TracingUIActivator.DEBUG_MODEL) {
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-							"Found a child with a name of " + TracingConstants.TRACING_EXTENSION_BUNDLE_ATTRIBUTE); //$NON-NLS-1$
+					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Found a child with a name of " + TracingConstants.TRACING_EXTENSION_BUNDLE_ATTRIBUTE); //$NON-NLS-1$
 				}
-				String name = componentChildren[i]
-						.getAttribute(TracingConstants.TRACING_EXTENSION_BUNDLE_NAME_ATTRIBUTE);
-				boolean consumed = Boolean
-						.valueOf(
-								componentChildren[i]
-										.getAttribute(TracingConstants.TRACING_EXTENSION_BUNDLE_CONSUMED_ATTRIBUTE))
-						.booleanValue();
+				String name = componentChildren[i].getAttribute(TracingConstants.TRACING_EXTENSION_BUNDLE_NAME_ATTRIBUTE);
+				boolean consumed = Boolean.valueOf(componentChildren[i].getAttribute(TracingConstants.TRACING_EXTENSION_BUNDLE_CONSUMED_ATTRIBUTE)).booleanValue();
 				this.addBundle(name, consumed, installedBundles);
 			}
 		}
@@ -323,11 +302,10 @@ public class TracingComponent extends AbstractTracingNode {
 	public void addBundle(final String name, final boolean isConsumed) {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] { name, String.valueOf(isConsumed) });
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {name, String.valueOf(isConsumed)});
 		}
 		if (name != null) {
-			final Bundle[] installedBundles = TracingUIActivator.getDefault().getBundle().getBundleContext()
-					.getBundles();
+			final Bundle[] installedBundles = TracingUIActivator.getDefault().getBundle().getBundleContext().getBundles();
 			this.addBundle(name, isConsumed, installedBundles);
 		}
 		if (TracingUIActivator.DEBUG_MODEL) {

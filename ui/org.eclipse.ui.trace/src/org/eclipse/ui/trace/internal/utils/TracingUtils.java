@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -61,9 +61,7 @@ public class TracingUtils {
 			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, value);
 		}
 		boolean isBoolean = false;
-		if ((value != null)
-				&& (value.equals(TracingConstants.DEBUG_OPTION_VALUE_FALSE) || value
-						.equals(TracingConstants.DEBUG_OPTION_VALUE_TRUE))) {
+		if ((value != null) && (value.equals(TracingConstants.DEBUG_OPTION_VALUE_FALSE) || value.equals(TracingConstants.DEBUG_OPTION_VALUE_TRUE))) {
 			isBoolean = true;
 		}
 		if (TracingUIActivator.DEBUG) {
@@ -148,8 +146,7 @@ public class TracingUtils {
 		}
 		final Map<String, String> result = new HashMap<String, String>();
 		if (debugOptions != null) {
-			StringTokenizer optionTokens = new StringTokenizer(debugOptions,
-					TracingConstants.DEBUG_OPTION_PREFERENCE_SEPARATOR);
+			StringTokenizer optionTokens = new StringTokenizer(debugOptions, TracingConstants.DEBUG_OPTION_PREFERENCE_SEPARATOR);
 			if (TracingUIActivator.DEBUG) {
 				TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "debug options found: " + optionTokens.countTokens()); //$NON-NLS-1$
 			}
@@ -184,29 +181,24 @@ public class TracingUtils {
 			URL optionsFile = bundle.getEntry(TracingConstants.OPTIONS_FILENAME);
 			if (optionsFile != null) {
 				if (TracingUIActivator.DEBUG) {
-					TRACE.trace(TracingConstants.TRACE_DEBUG_STRING,
-							"Reading in .options file found in: " + optionsFile.getPath()); //$NON-NLS-1$
+					TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "Reading in .options file found in: " + optionsFile.getPath()); //$NON-NLS-1$
 				}
 				// read the file
 				InputStream optionsFileInStream = null;
 				try {
 					optionsFileInStream = optionsFile.openStream();
 					optionsProperties.load(optionsFileInStream);
-				}
-				catch (IOException ioEx) {
+				} catch (IOException ioEx) {
 					// couldn't read the .options file - can't do anything other than to log the exception
 					if (TracingUIActivator.DEBUG) {
-						TRACE.trace(TracingConstants.TRACE_DEBUG_STRING,
-								"IOException while processing the .options file for bundle " + bundle, ioEx); //$NON-NLS-1$
+						TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "IOException while processing the .options file for bundle " + bundle, ioEx); //$NON-NLS-1$
 					}
 					TracingUIActivator.getDefault().logException(ioEx);
-				}
-				finally {
+				} finally {
 					if (optionsFileInStream != null) {
 						try {
 							optionsFileInStream.close();
-						}
-						catch (IOException ioEx) {
+						} catch (IOException ioEx) {
 							// can't do anything other than to log the exception
 							TracingUIActivator.getDefault().logException(ioEx);
 						}

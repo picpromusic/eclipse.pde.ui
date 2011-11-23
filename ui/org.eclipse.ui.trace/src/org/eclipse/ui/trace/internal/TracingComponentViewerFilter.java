@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -76,21 +76,18 @@ public class TracingComponentViewerFilter extends PatternFilter {
 				this.visibleTracingComponentsCache.put(component, Boolean.TRUE);
 				// show all children
 				this.forceVisibleDebugOptions(component.getChildren());
-			}
-			else {
+			} else {
 				// show only if has 1 child that matches
 				isVisible = super.isElementVisible(viewer, element);
 				this.visibleTracingComponentsCache.put(component, Boolean.valueOf(isVisible));
 			}
-		}
-		else if (element instanceof TracingComponentDebugOption) {
+		} else if (element instanceof TracingComponentDebugOption) {
 			// check to see if this debug option is forced to be visible
 			Boolean enabled = this.visibleTracingDebugOptions.get(element);
 			if (enabled != null) {
 				// it should be enabled because the parent is enabled and forced it to be enabled
 				isVisible = enabled.booleanValue();
-			}
-			else {
+			} else {
 				// make it visible only if it matches
 				isVisible = super.isLeafMatch(viewer, element);
 				if (!isVisible) {

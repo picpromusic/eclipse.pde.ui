@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -116,8 +116,7 @@ public abstract class AbstractTracingNode implements TracingNode {
 		}
 		if (!this.childrenInitialized) {
 			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING,
-						"First time population of the child nodes for '" + this); //$NON-NLS-1$
+				TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, "First time population of the child nodes for '" + this); //$NON-NLS-1$
 			}
 			this.populateChildren();
 			this.childrenInitialized = true;
@@ -148,8 +147,7 @@ public abstract class AbstractTracingNode implements TracingNode {
 			if (this.parent != null) {
 				// since a parent is being set then it should also be added as a child
 				if (TracingUIActivator.DEBUG_MODEL) {
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING,
-							"Adding '" + this + "' to the parent node '" + this.parent + "'."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding '" + this + "' to the parent node '" + this.parent + "'."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				}
 				this.parent.addChild(this);
 			}

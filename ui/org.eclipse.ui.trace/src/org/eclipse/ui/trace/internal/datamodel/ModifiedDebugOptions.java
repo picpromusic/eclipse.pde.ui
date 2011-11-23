@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010 IBM Corporation and others.
+ * Copyright (c) 2011 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -66,8 +66,7 @@ public class ModifiedDebugOptions {
 			if (isBeingRemoved) {
 				// remove it from the list of debug options to remove
 				this.debugOptionsToRemove.remove(option);
-			}
-			else {
+			} else {
 				// add it to the list of debug options to add
 				this.debugOptionsToAdd.add(option);
 			}
@@ -87,8 +86,7 @@ public class ModifiedDebugOptions {
 			if (isBeingAdded) {
 				// remove it from the list of debug options to add
 				this.debugOptionsToAdd.remove(option);
-			}
-			else {
+			} else {
 				// add it to the list of debug options to remove
 				this.debugOptionsToRemove.add(option);
 			}
