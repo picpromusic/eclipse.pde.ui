@@ -569,6 +569,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.getViewer().setInput(null);
 		// set the UI back to the default (tracing off, etc).
 		PreferenceHandler.setDefaultPreferences();
+		TracingCollections.getInstance().getModifiedDebugOptions().clear();
 		this.setUIValuesFromPreferences();
 		if (TracingUIActivator.DEBUG_UI) {
 			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
@@ -596,7 +597,6 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			final Map<String, String> currentOptions = DebugOptionsHandler.getDebugOptions().getOptions();
 			newOptions.putAll(currentOptions);
 			// iterate over the list of added debug options and add them
-//			final TracingComponentDebugOption[] optionsToAdd = this.checkStateListener.getModifiedDebugOptions().getDebugOptionsToAdd();
 			final TracingComponentDebugOption[] optionsToAdd = TracingCollections.getInstance().getModifiedDebugOptions().getDebugOptionsToAdd();
 			for (int i = 0; i < optionsToAdd.length; i++) {
 				if (TracingUIActivator.DEBUG_UI) {
@@ -605,7 +605,6 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 				newOptions.put(optionsToAdd[i].getOptionPath(), optionsToAdd[i].getOptionPathValue());
 			}
 			// iterate over the list of removed debug options and remove them
-//			final TracingComponentDebugOption[] optionsToRemove = this.checkStateListener.getModifiedDebugOptions().getDebugOptionsToRemove();
 			final TracingComponentDebugOption[] optionsToRemove = TracingCollections.getInstance().getModifiedDebugOptions().getDebugOptionsToRemove();
 			for (int i = 0; i < optionsToRemove.length; i++) {
 				if (TracingUIActivator.DEBUG_UI) {
