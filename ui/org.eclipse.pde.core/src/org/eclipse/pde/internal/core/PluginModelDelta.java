@@ -11,10 +11,10 @@
 package org.eclipse.pde.internal.core;
 
 import java.util.ArrayList;
-
 import org.eclipse.pde.core.plugin.ModelEntry;
 
 public class PluginModelDelta {
+
 	public static final int ADDED = 1;
 	public static final int REMOVED = 2;
 	public static final int CHANGED = 4;
@@ -22,8 +22,7 @@ public class PluginModelDelta {
 	private ArrayList added;
 	private ArrayList removed;
 	private ArrayList changed;
-
-	private int kind = 0;
+	private int kind;
 
 	public PluginModelDelta() {
 	}

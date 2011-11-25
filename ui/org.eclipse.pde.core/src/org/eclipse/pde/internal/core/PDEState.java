@@ -34,14 +34,20 @@ public class PDEState extends MinimalState {
 	private PDEAuxiliaryState fAuxiliaryState;
 
 	/**
-	 * Table mapping plugin ID to a {@link ModelEntry}.  Each model entry contains all
-	 * workspace and external plugin models with that ID that belong to this state.  A
+	 * Table mapping plug-in ID to a {@link ModelEntry}.  Each model entry contains all
+	 * workspace and external plug-in models with that ID that belong to this state.  A
 	 * subset of the models will be part of the OSGi state at any given time.
 	 * <p>
 	 * In the future this may be replaced with a smarter caching scheme
 	 * </p>
 	 */
 	private Map fEntries;
+
+	/**
+	 * Map of {@link IProject} to {@link IPluginModelBase}. Improves performance of model lookups
+	 * for the workspace.
+	 */
+	private Map fWorkspaceModels;
 
 	/**
 	 * Creates a new PDE state containing the given workspace and target models
@@ -304,6 +310,9 @@ public class PDEState extends MinimalState {
 	/**
 	 * Creates a new workspace model using data from the auxiliary state. Will
 	 * return <code>null</code> if the project the bundle describes does not exist.
+	 * If a model is returned, it will also be added to the map of workspace models.
+	 * If the returned model has been added to the state, the model should be added
+	 * to the model entry table using {@link #addModelToTable(IPluginModelBase)}.
 	 * 
 	 * @param desc bundle description to create a model for
 	 * @return the creates workspace model or <code>null</code>
@@ -339,6 +348,7 @@ public class PDEState extends MinimalState {
 				extensions.load(desc, this);
 				model.setExtensionsModel(extensions);
 			}
+			fWorkspaceModels.put(project, model);
 			return model;
 		}
 
@@ -349,6 +359,7 @@ public class PDEState extends MinimalState {
 			model = new WorkspaceFragmentModel(fragmentXml, true);
 		model.load(desc, this);
 		model.setBundleDescription(desc);
+		fWorkspaceModels.put(project, model);
 		return model;
 	}
 
@@ -394,6 +405,17 @@ public class PDEState extends MinimalState {
 	 */
 	public Map getModelEntryTable() {
 		return fEntries;
+	}
+
+	/**
+	 * Returns the {@link IPluginModelBase} associated with the given project or
+	 * <code>null</code> if a model for that project does not exist in this state.
+	 * 
+	 * @param project project to get the model for
+	 * @return model for the given project from this state or <code>null</code>
+	 */
+	public IPluginModelBase getModel(IProject project) {
+		return (IPluginModelBase) fWorkspaceModels.get(project);
 	}
 
 	/**
@@ -578,6 +600,112 @@ public class PDEState extends MinimalState {
 	 */
 	private File getWorkspaceCacheDirectory(long timestamp) {
 		return new File(DIR, Long.toString(timestamp) + ".workspace"); //$NON-NLS-1$
+	}
+
+	public IPluginModelBase addWorkspaceBundle(IProject next, PluginModelDelta delta) {
+		// TODO Must handle cases where the project is not actually a plug-in project anymore
+
+		LocalModelEntry entry = (LocalModelEntry) getEntryTable().get(id);
+
+		// add model to the corresponding ModelEntry.  Create a new entry if necessary
+		if (entry == null) {
+			entry = new LocalModelEntry(id);
+			getEntryTable().put(id, entry);
+			delta.addEntry(entry, PluginModelDelta.ADDED);
+		} else {
+			delta.addEntry(entry, PluginModelDelta.CHANGED);
+		}
+		entry.addModel(model);
+
+		// if the model added is a workspace model, add it to the state and
+		// remove all its external counterparts
+		if (model.getUnderlyingResource() != null) {
+			addWorkspaceBundleToState(model);
+		} else if (model.isEnabled() && !entry.hasWorkspaceModels()) {
+			// if a target model has went from an unchecked state to a checked state
+			// on the target platform preference page, re-add its bundle description
+			// to the state
+			BundleDescription desc = model.getBundleDescription();
+			if (desc.getContainingState().equals(fState))
+				fState.addBundleDescription(desc);
+		}
+	}
+
+	public IPluginModelBase removeWorkspaceBundle(IProject next, PluginModelDelta delta) {
+		LocalModelEntry entry = (LocalModelEntry) getEntryTable().get(id);
+		if (entry != null) {
+			// remove model from the entry
+			entry.removeModel(model);
+			// remove corresponding bundle description from the state
+			fState.removeBundleDescription(model.getBundleDescription());
+			if (!entry.hasExternalModels() && !entry.hasWorkspaceModels()) {
+				// remove entire entry if it has no models left
+				getEntryTable().remove(id);
+				delta.addEntry(entry, PluginModelDelta.REMOVED);
+				return;
+			} else if (model.getUnderlyingResource() != null && !entry.hasWorkspaceModels()) {
+				// re-add enabled external counterparts to the state, if the last workspace
+				// plug-in with a particular symbolic name is removed
+				IPluginModelBase[] external = entry.getExternalModels();
+				for (int i = 0; i < external.length; i++) {
+					if (external[i].isEnabled())
+						fState.addBundleDescription(external[i].getBundleDescription());
+				}
+			}
+			delta.addEntry(entry, PluginModelDelta.CHANGED);
+		}
+	}
+
+	public void updateWorkspaceBundle(IProject project, PluginModelDelta delta) {
+		BundleDescription desc = model.getBundleDescription();
+		String oldID = desc == null ? null : desc.getSymbolicName();
+		String newID = model.getPluginBase().getId();
+
+		// if the model still has no symbolic name (ie. a MANIFEST.MF without the
+		// Bundle-SymbolicName header), keep ignoring it
+		if (oldID == null && newID == null)
+			return;
+
+		// if the model used to lack a Bundle-SymbolicName header and now it has one,
+		// treat it as a regular model addition
+		if (oldID == null && newID != null) {
+			handleAdd(newID, model, delta);
+		} else if (oldID != null && newID == null) {
+			// if the model used to have a Bundle-SymbolicName header and now it lost it,
+			// treat it as a regular model removal
+			handleRemove(oldID, model, delta);
+			model.setBundleDescription(null);
+		} else if (oldID.equals(newID)) {
+			// if the workspace bundle's MANIFEST.MF was touched or
+			// if the a target plug-in has now become enabled/checked, update the model
+			// in the state
+			if (model.isEnabled()) {
+				// if the state of an inactive bundle changes (external model un/checked that has an 
+				// equivalent workspace bundle), then take no action.  We don't want to add the external
+				// model to the state when it is enabled if we have a workspace bundle already in the state.
+				ModelEntry entry = (ModelEntry) getEntryTable().get(oldID);
+				IPluginModelBase[] activeModels = entry.getActiveModels();
+				boolean isActive = false;
+				for (int i = 0; i < activeModels.length; i++) {
+					if (activeModels[i] == model) {
+						isActive = true;
+						break;
+					}
+				}
+				if (isActive)
+					fState.addBundle(model, true);
+			} else
+				// if the target plug-in has become disabled/unchecked, remove its bundle
+				// description from the state
+				fState.removeBundleDescription(model.getBundleDescription());
+			delta.addEntry(findEntry(oldID), PluginModelDelta.CHANGED);
+		} else {
+			// if the symbolic name of the bundle has completely changed,
+			// remove the model from the old entry, and add the model to the new entry
+			handleRemove(oldID, model, delta);
+			handleAdd(newID, model, delta);
+		}
+
 	}
 
 }

@@ -1,8 +1,5 @@
 package org.eclipse.pde.internal.core.platform;
 
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.pde.internal.core.PDECore;
-
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -13,7 +10,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.equinox.frameworkadmin.BundleInfo;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.pde.internal.core.*;
-import org.eclipse.pde.internal.core.ibundle.IBundle;
 import org.eclipse.pde.internal.core.ifeature.IFeatureModel;
 import org.eclipse.pde.internal.core.target.TargetPlatformService;
 import org.eclipse.pde.internal.core.target.provisional.*;
@@ -25,15 +21,11 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 	private FeatureModelManager fFeatureModelManager;
 	private ITargetDefinition fTargetDefinition;
 
-//	public static IPluginModelBase[] createModels(URL[] bundleFiles){
-//		
-//	}
-
 	public DevelopmentPlatform(ITargetDefinition targetDefinition) {
 		fTargetDefinition = targetDefinition;
 	}
 
-	public void initialize(IProgressMonitor monitor) throws CoreException {
+	public void resolve(IProgressMonitor monitor) throws CoreException {
 		// TODO Should we return a multi status instead of handling it ourselves
 		// TODO Support tracing statements here
 		SubMonitor subMon = SubMonitor.convert(monitor, "Resolving development platform", 1000);
@@ -62,8 +54,8 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 			status = fTargetDefinition.resolve(subMon.newChild(100));
 		}
 		subMon.setWorkRemaining(900);
-		
-		if (status != null && status.getSeverity() == IStatus.ERROR){
+
+		if (status != null && status.getSeverity() == IStatus.ERROR) {
 			// Log the status and assume there are no target bundles
 			PDECore.log(status);
 		} else {
@@ -87,8 +79,9 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 //			} catch (BundleException e) {
 //				PDECore.log(e);
 //			}
+			}
 		}
-			
+
 		// Resolve workspace bundles
 		ArrayList workspaceURLs = new ArrayList();
 		IProject[] projects = PDECore.getWorkspace().getRoot().getProjects();
@@ -109,15 +102,12 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 		// If a workspace bundle has the same symbolic name as a target bundle,
 		// the target counterpart is subsequently removed from the state.
 
-		fState = new PDEState(getPluginPaths(), (URL[]) targetURLs.toArray(new URL[targetURLs.size()]), true, true, subMon.newChild(100));
-
-		fState.getWorkspaceModels();
-		fState.getTargetModels();
+		fState = new PDEState(getPluginPaths(), (URL[]) targetURLs.toArray(new URL[targetURLs.size()]), subMon.newChild(100));
 
 		// Create plug-in models
 
 		// Handle feature models
-		IFeatureModel[] targetFeatures = target.getAllFeatures();
+		IFeatureModel[] targetFeatures = fTargetDefinition.getAllFeatures();
 
 	}
 
@@ -144,16 +134,6 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 		return fState;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.pde.internal.core.platform.IDevelopmentPlatform#findBundle(java.lang.String, java.lang.String)
-	 */
-	public IBundle findBundle(String name, String version) {
-		if (fAllBundles == null || fAllBundles.length == 0) {
-			return null;
-		}
-		return fAllBundles[0];
-	}
-
 	/**
 	 * Return URLs to projects in the workspace that have a manifest file (MANIFEST.MF
 	 * or plugin.xml)
@@ -177,4 +157,17 @@ public class DevelopmentPlatform implements IDevelopmentPlatform {
 		return (URL[]) list.toArray(new URL[list.size()]);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.internal.core.platform.IDevelopmentPlatform#getPluginModelManager()
+	 */
+	public PluginModelManager getPluginModelManager() {
+		return fPluginModelManager;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.internal.core.platform.IDevelopmentPlatform#getFeatureModelManager()
+	 */
+	public FeatureModelManager getFeatureModelManager() {
+		return fFeatureModelManager;
+	}
 }

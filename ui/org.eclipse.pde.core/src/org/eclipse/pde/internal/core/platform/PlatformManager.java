@@ -13,7 +13,6 @@ package org.eclipse.pde.internal.core.platform;
 import java.util.HashMap;
 import java.util.Map;
 import org.eclipse.pde.internal.core.PDEState;
-import org.eclipse.pde.internal.core.PluginModelManager;
 
 /**
  * Internal singleton manager to keep track of all {@link IDevelopmentPlatform}s
