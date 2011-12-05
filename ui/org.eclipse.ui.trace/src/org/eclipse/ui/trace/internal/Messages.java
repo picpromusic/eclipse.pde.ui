@@ -25,6 +25,11 @@ public class Messages extends NLS {
 	public static String missingLabelValue = "missingLabelValue"; //$NON-NLS-1$
 
 	/**
+	 * Title of the tracing tree
+	 */
+	public static String tracingTreeTile = "tracingTreeTitle"; //$NON-NLS-1$
+
+	/**
 	 * Description text for the preference page.
 	 */
 	public static String preferencePageDescription = "preferencePageDescription"; //$NON-NLS-1$

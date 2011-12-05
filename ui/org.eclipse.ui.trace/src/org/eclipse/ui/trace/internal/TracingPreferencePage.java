@@ -45,6 +45,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	/** Enabling Tracing button */
 	protected Button enableTracingButton = null;
 
+	/** Tracing tree title*/
+	protected Label tracingTreeTitleLabel = null;
+
 	/** A tree that can be filtered based on user input */
 	protected FilteredTree filterTree = null;
 
@@ -92,6 +95,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		}
 		super.dispose();
 		this.disposeWidget(this.enableTracingButton);
+		this.disposeWidget(this.tracingTreeTitleLabel);
 		this.disposeWidget(this.filterTree);
 		this.disposeWidget(this.tracingOptionsGroup);
 		this.disposeWidget(this.tracingFileLabel);
@@ -152,7 +156,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		// add the widgets
 		this.addEnableTracingSection(pageComposite);
 		this.addBundleViewerSection(pageComposite);
-		this.addTracingFileOptionsSection(pageComposite);
+		this.addTracingOptionsSection(pageComposite);
 		// set the initial values in the widgets
 		this.setUIValuesFromPreferences();
 		this.enableTracingButtonSelected(true);
@@ -204,6 +208,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	protected void addBundleViewerSection(final Composite parent) {
 
+		this.tracingTreeTitleLabel = new Label(parent, SWT.NONE);
+		this.tracingTreeTitleLabel.setText(Messages.tracingTreeTile);
+
 		if (TracingUIActivator.DEBUG_UI) {
 			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
 		}
@@ -248,14 +255,13 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 * @param parent
 	 *            The parent composite
 	 */
-	protected void addTracingFileOptionsSection(final Composite parent) {
+	protected void addTracingOptionsSection(final Composite parent) {
 
 		if (TracingUIActivator.DEBUG_UI) {
 			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
 		}
 		this.tracingOptionsGroup = new Group(parent, SWT.NONE);
 		this.tracingOptionsGroup.setText(Messages.tracingOptionsGroup);
-		// final Composite tracingFileComposite = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().margins(5, 5).numColumns(5).equalWidth(false).applyTo(this.tracingOptionsGroup);
 		GridDataFactory.fillDefaults().applyTo(this.tracingOptionsGroup);
 		// add the 'tracing file' label
@@ -292,15 +298,14 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 				TracingPreferencePage.this.tracingFileText.setText(result);
 			}
 		});
-		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).applyTo(this.tracingFileBrowseButton);
+		GridDataFactory.fillDefaults().span(1, 1).applyTo(this.tracingFileBrowseButton);
 		// add the 'max count' label
 		this.tracingFileMaxCountLabel = new Label(this.tracingOptionsGroup, SWT.NONE);
 		this.tracingFileMaxCountLabel.setText(Messages.tracingFileMaxCountLabel);
 		GridDataFactory.fillDefaults().span(2, 1).applyTo(this.tracingFileMaxCountLabel);
 		// add the 'max count' input field
 		this.maximumFileCountSpinner = new Spinner(this.tracingOptionsGroup, SWT.SINGLE | SWT.BORDER);
-		this.maximumFileCountSpinner.setValues(10, 10, 1000, 0, 10, 100);
-		GridDataFactory.fillDefaults().span(1, 1).applyTo(this.maximumFileCountSpinner);
+		this.maximumFileCountSpinner.setValues(10, 10, 100, 0, 5, 10);
 		this.maximumFileCountSpinner.addListener(SWT.Verify, new Listener() {
 
 			public void handleEvent(final Event e) {
@@ -312,10 +317,11 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		// add the 'max size' label
 		this.tracingFileMaxSizeLabel = new Label(this.tracingOptionsGroup, SWT.NONE);
 		this.tracingFileMaxSizeLabel.setText(Messages.tracingFileMaxSizeLabel);
-		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).applyTo(this.tracingFileMaxSizeLabel);
+		GridDataFactory.fillDefaults().span(1, 1).applyTo(this.tracingFileMaxSizeLabel);
+//		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).applyTo(this.tracingFileMaxSizeLabel);
 		// add the 'max size' input field
 		this.maximumFileSizeSpinner = new Spinner(this.tracingOptionsGroup, SWT.SINGLE | SWT.BORDER);
-		this.maximumFileSizeSpinner.setValues(1000, 1000, 10000, 0, 100, 1000);
+		this.maximumFileSizeSpinner.setValues(100, 100, 10000, 0, 100, 1000);
 		this.maximumFileSizeSpinner.addListener(SWT.Verify, new Listener() {
 
 			public void handleEvent(final Event e) {
@@ -441,6 +447,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 				this.getViewer().setInput(null);
 			}
 		}
+		this.tracingTreeTitleLabel.setEnabled(enableTracing);
 		this.filterTree.setEnabled(enableTracing);
 		// only enable the tracing options if tracing is enabled
 		this.tracingOptionsGroup.setEnabled(enableTracing);
@@ -630,14 +637,14 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			// maximum file size
 			final int newMaxSize = this.maximumFileSizeSpinner.getSelection();
 			// property defined in org.eclipse.osgi.framework.debug.EclipseDebugTrace#PROP_TRACE_SIZE_MAX
-			System.setProperty("eclipse.trace.size.max", String.valueOf(newMaxSize)); //$NON-NLS-1$
+			System.setProperty(TracingConstants.PROP_TRACE_SIZE_MAX, String.valueOf(newMaxSize));
 			if (TracingUIActivator.DEBUG_UI) {
 				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the maximum file size to: " + newMaxSize); //$NON-NLS-1$
 			}
 			// maximum file count
 			final int newMaxCount = this.maximumFileCountSpinner.getSelection();
 			// property defined in org.eclipse.osgi.framework.debug.EclipseDebugTrace#PROP_TRACE_FILE_MAX
-			System.setProperty("eclipse.trace.backup.max", String.valueOf(newMaxCount)); //$NON-NLS-1$
+			System.setProperty(TracingConstants.PROP_TRACE_FILE_MAX, String.valueOf(newMaxCount));
 			if (TracingUIActivator.DEBUG_UI) {
 				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the maximum number of backup files to: " + newMaxCount); //$NON-NLS-1$
 			}

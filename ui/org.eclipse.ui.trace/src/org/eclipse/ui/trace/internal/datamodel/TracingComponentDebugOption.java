@@ -57,8 +57,8 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 		}
 		assert (path != null);
 		assert (value != null);
-		this.optionPath = path;
-		this.optionPathValue = value;
+		this.fOptionPath = path;
+		this.fOptionPathValue = value;
 		this.setParent(parentNode);
 		this.setLabel(path);
 		if (TracingUIActivator.DEBUG_MODEL) {
@@ -70,10 +70,10 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public String toString() {
 
 		final StringBuilder builder = new StringBuilder();
-		builder.append("TracingComponentDebugOption [optionPath="); //$NON-NLS-1$
-		builder.append(this.optionPath);
-		builder.append(", optionPathValue="); //$NON-NLS-1$
-		builder.append(this.optionPathValue);
+		builder.append("TracingComponentDebugOption [fOptionPath="); //$NON-NLS-1$
+		builder.append(this.fOptionPath);
+		builder.append(", fOptionPathValue="); //$NON-NLS-1$
+		builder.append(this.fOptionPathValue);
 		builder.append(", parent="); //$NON-NLS-1$
 		if (this.getParent() != null) {
 			builder.append(this.getParent());
@@ -94,7 +94,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((this.optionPath == null) ? 0 : this.optionPath.hashCode());
+		result = prime * result + ((this.fOptionPath == null) ? 0 : this.fOptionPath.hashCode());
 		result = prime * result + ((this.getParent() == null) ? 0 : this.getParent().hashCode());
 		return result;
 	}
@@ -117,11 +117,11 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 			return false;
 		}
 		TracingComponentDebugOption other = (TracingComponentDebugOption) obj;
-		if (this.optionPath == null) {
-			if (other.optionPath != null) {
+		if (this.fOptionPath == null) {
+			if (other.fOptionPath != null) {
 				return false;
 			}
-		} else if (!this.optionPath.equals(other.optionPath)) {
+		} else if (!this.fOptionPath.equals(other.fOptionPath)) {
 			return false;
 		}
 		if (this.getParent() == null) {
@@ -137,11 +137,11 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public boolean isEnabled() {
 
 		boolean isEnabled = false;
-		if (TracingUtils.isValueBoolean(this.optionPathValue)) {
-			isEnabled = Boolean.parseBoolean(this.optionPathValue);
+		if (TracingUtils.isValueBoolean(this.fOptionPathValue)) {
+			isEnabled = Boolean.parseBoolean(this.fOptionPathValue);
 		} else {
 			// a non-boolean debug option - enable it only if it exists in the DebugOptions
-			String value = DebugOptionsHandler.getDebugOptions().getOption(this.optionPath);
+			String value = DebugOptionsHandler.getDebugOptions().getOption(this.fOptionPath);
 			isEnabled = (value != null);
 		}
 		if (TracingUIActivator.DEBUG_MODEL) {
@@ -156,10 +156,12 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 		// empty implementation - all work is done in TracingComponent#populateChildren()
 	}
 
+	/**
+	 * A {@link TracingComponentDebugOption} has no children
+	 */
 	@Override
 	public final TracingComponentDebugOption[] getChildren() {
-
-		return TracingComponentDebugOption.CHILDREN;
+		return new TracingComponentDebugOption[0];
 	}
 
 	/**
@@ -170,9 +172,9 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public final String getOptionPath() {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.optionPath);
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.fOptionPath);
 		}
-		return this.optionPath;
+		return this.fOptionPath;
 	}
 
 	/**
@@ -183,9 +185,9 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public final String getOptionPathValue() {
 
 		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.optionPathValue);
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.fOptionPathValue);
 		}
-		return this.optionPathValue;
+		return this.fOptionPathValue;
 	}
 
 	/**
@@ -200,7 +202,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, newValue);
 		}
 		assert (newValue != null);
-		this.optionPathValue = newValue;
+		this.fOptionPathValue = newValue;
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 		}
@@ -218,24 +220,25 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, valueAsString);
 		}
-		this.optionPathValue = valueAsString;
+		this.fOptionPathValue = valueAsString;
 		if (TracingUIActivator.DEBUG_MODEL) {
 			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 		}
 	}
 
+	@Override
+	public TracingComponentDebugOption clone() {
+		return new TracingComponentDebugOption(getParent(), fOptionPath, fOptionPathValue);
+	}
+
 	/**
 	 * The option-path - this value cannot change
 	 */
-	private final String optionPath;
+	private final String fOptionPath;
 
 	/**
 	 * The value of the option-path - this value can change
 	 */
-	private String optionPathValue;
+	private String fOptionPathValue;
 
-	/**
-	 * A {@link TracingComponentDebugOption} has no children
-	 */
-	private final static TracingComponentDebugOption[] CHILDREN = new TracingComponentDebugOption[0];
 }

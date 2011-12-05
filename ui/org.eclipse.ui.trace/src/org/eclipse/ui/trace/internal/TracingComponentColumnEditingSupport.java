@@ -40,12 +40,13 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 		this.columnIndex = index;
 		switch (this.columnIndex) {
 			case TracingConstants.VALUE_COLUMN_INDEX :
-				this.editor = new TextCellEditor((Composite) viewer.getControl(), SWT.NONE);
-//				this.editor = new ComboBoxCellEditor((Composite) viewer.getControl(), new String[] {String.valueOf(true), String.valueOf(false)});
+				this.textEditor = new TextCellEditor((Composite) viewer.getControl(), SWT.NONE);
+				this.comboEditor = new ComboBoxCellEditor((Composite) viewer.getControl(), new String[] {String.valueOf(true), String.valueOf(false)});
 				break;
 			default :
 				// do nothing - no other columns provide editing support
-				this.editor = null;
+				this.textEditor = null;
+				this.comboEditor = null;
 		}
 	}
 
@@ -56,13 +57,6 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 		switch (this.columnIndex) {
 			case TracingConstants.VALUE_COLUMN_INDEX :
 				return true;
-//				if (element instanceof TracingComponentDebugOption) {
-//					String optionPathValue = ((TracingComponentDebugOption) element).getOptionPathValue();
-//					canEdit = !TracingUtils.isValueBoolean(optionPathValue);
-//				} else {
-//					canEdit = true;
-//				}
-//				break;
 			default :
 				// do nothing - no other columns provide editing support
 				canEdit = false;
@@ -73,7 +67,14 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 	@Override
 	protected CellEditor getCellEditor(final Object element) {
 
-		return this.editor;
+		if (element instanceof TracingComponentDebugOption) {
+			TracingComponentDebugOption option = (TracingComponentDebugOption) element;
+			if (TracingUtils.isValueBoolean(option.getOptionPathValue())) {
+				return this.comboEditor;
+			}
+			return this.textEditor;
+		}
+		return null;
 	}
 
 	@Override
@@ -85,7 +86,7 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 				if (element instanceof TracingComponentDebugOption) {
 					String optionPathValue = ((TracingComponentDebugOption) element).getOptionPathValue();
 					if (TracingUtils.isValueBoolean(optionPathValue)) {
-						value = String.valueOf(Boolean.valueOf(optionPathValue));
+						value = Boolean.parseBoolean(optionPathValue) ? 0 : 1;
 					} else {
 						value = optionPathValue;
 					}
@@ -106,17 +107,21 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 			case 1 :
 				if (element instanceof TracingComponentDebugOption) {
 					TracingComponentDebugOption option = (TracingComponentDebugOption) element;
+					String updatedValue = String.valueOf(value);
+					if (value instanceof Integer) {
+						updatedValue = String.valueOf((Integer) value == 0);
+					}
+					if (option.getOptionPathValue().equals(updatedValue)) {
+						return; // nothing changed nothing to do
+					}
 					// find identical debug options and update them (this will include 'this' debug option that was
 					// modified)
 					TracingComponentDebugOption[] identicalOptions = TracingCollections.getInstance().getTracingDebugOptions(option.getOptionPath());
 					for (int identicalOptionsIndex = 0; identicalOptionsIndex < identicalOptions.length; identicalOptionsIndex++) {
-						identicalOptions[identicalOptionsIndex].setOptionPathValue(String.valueOf(value));
+						TracingCollections.getInstance().getModifiedDebugOptions().removeDebugOption(identicalOptions[identicalOptionsIndex].clone());
+						identicalOptions[identicalOptionsIndex].setOptionPathValue(updatedValue);
+						TracingCollections.getInstance().getModifiedDebugOptions().addDebugOption(identicalOptions[identicalOptionsIndex]);
 						this.getViewer().update(identicalOptions[identicalOptionsIndex], null);
-					}
-					if (!Boolean.parseBoolean(String.valueOf(value))) {
-						TracingCollections.getInstance().getModifiedDebugOptions().removeDebugOption(option);
-					} else {
-						TracingCollections.getInstance().getModifiedDebugOptions().addDebugOption(option);
 					}
 				}
 				break;
@@ -134,6 +139,7 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 	/**
 	 * The {@link CellEditor} for the value column
 	 */
-	private CellEditor editor;
+	private CellEditor textEditor;
+	private CellEditor comboEditor;
 
 }

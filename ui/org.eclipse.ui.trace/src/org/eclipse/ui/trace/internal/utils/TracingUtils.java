@@ -61,7 +61,7 @@ public class TracingUtils {
 			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, value);
 		}
 		boolean isBoolean = false;
-		if ((value != null) && (value.equals(TracingConstants.DEBUG_OPTION_VALUE_FALSE) || value.equals(TracingConstants.DEBUG_OPTION_VALUE_TRUE))) {
+		if ((value != null) && (value.toLowerCase().equals(TracingConstants.DEBUG_OPTION_VALUE_FALSE) || value.toLowerCase().equals(TracingConstants.DEBUG_OPTION_VALUE_TRUE))) {
 			isBoolean = true;
 		}
 		if (TracingUIActivator.DEBUG) {

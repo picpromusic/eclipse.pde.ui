@@ -82,6 +82,12 @@ public class TracingConstants {
 	/** The original System.err {@link PrintStream} */
 	public final static PrintStream ORIGINAL_SYSTEM_ERR_STREAM = System.err;
 
+	/** The system property used to specify size a trace file can grow before it is rotated */
+	public static final String PROP_TRACE_SIZE_MAX = "eclipse.trace.size.max"; //$NON-NLS-1$
+
+	/** The system property used to specify the maximum number of backup trace files to use */
+	public static final String PROP_TRACE_FILE_MAX = "eclipse.trace.backup.max"; //$NON-NLS-1$
+
 	/** The separator character for a debug option represented as a string, i.e. key1=value1;key2=value2;key3=value3; */
 	public final static String DEBUG_OPTION_PREFERENCE_SEPARATOR = ";"; //$NON-NLS-1$
 
