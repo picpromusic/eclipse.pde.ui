@@ -16,8 +16,6 @@ import org.eclipse.ui.trace.internal.utils.*;
 /**
  * A debug option tracing component is a tree node that contains the option-path and value for a single debug option. A
  * debug option can have a {@link TracingComponent} or another {@link TracingComponentDebugOption} as a parent.
- * 
- * @since 3.6
  */
 public class TracingComponentDebugOption extends AbstractTracingNode {
 

@@ -15,8 +15,6 @@ import org.eclipse.ui.IStartup;
 
 /**
  * Reads the preferences and initialises the {@link DebugOptions} options
- * 
- * @since 3.6
  */
 public class TracingInitializer implements IStartup {
 

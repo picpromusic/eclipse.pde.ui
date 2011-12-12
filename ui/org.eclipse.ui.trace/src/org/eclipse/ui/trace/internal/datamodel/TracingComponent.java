@@ -20,8 +20,6 @@ import org.osgi.framework.Bundle;
 
 /**
  * A tracing component contains all of the information retrieved via the 'tracingComponent' extension point.
- * 
- * @since 3.6
  */
 public class TracingComponent extends AbstractTracingNode {
 

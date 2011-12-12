@@ -17,8 +17,6 @@ import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * Utility API for handling {@link DebugOptions} operations
- * 
- * @since 3.6
  */
 public class DebugOptionsHandler {
 

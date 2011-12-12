@@ -15,8 +15,6 @@ import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
 /**
  * A label provide object for the tracing UI viewers columns.
- * 
- * @since 3.6
  */
 public class TracingComponentColumnLabelProvider extends ColumnLabelProvider {
 

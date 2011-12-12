@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
-   <extension-point id="traceComponent" name="%traceComponent.label" schema="schema/traceComponent.exsd"/>
+   <extension-point id="traceComponents" name="%traceComponentExtension.name" schema="schema/traceComponents.exsd"/>
    <extension
          point="org.eclipse.ui.preferencePages">
       <page
@@ -49,7 +49,7 @@
       </initializer>
    </extension>
    <extension
-         point="org.eclipse.ui.trace.traceComponent">
+         point="org.eclipse.ui.trace.traceComponents">
       <component
             id="org.eclipse.ui.trace.tracingPrefPage"
             label="%traceComponent.label">

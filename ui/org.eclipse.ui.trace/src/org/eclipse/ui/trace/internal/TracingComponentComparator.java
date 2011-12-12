@@ -16,8 +16,6 @@ import org.eclipse.ui.trace.internal.datamodel.TracingNode;
 
 /**
  * A Comparator for ordering the list of traceable bundles visible in a viewer in alphabetical order
- * 
- * @since 3.6
  */
 public class TracingComponentComparator extends ViewerComparator {
 

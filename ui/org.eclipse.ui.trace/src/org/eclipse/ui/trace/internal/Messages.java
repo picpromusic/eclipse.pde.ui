@@ -14,8 +14,6 @@ import org.eclipse.osgi.util.NLS;
 
 /**
  * NLS messages for the Tracing preference page
- * 
- * @since 3.6
  */
 public class Messages extends NLS {
 

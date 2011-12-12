@@ -18,8 +18,6 @@ import org.eclipse.ui.trace.internal.utils.TracingConstants;
  * A label provider created specifically for the view filter. This label provider is not used to populate the labels on
  * the trace view. See the class {@link TracingComponentColumnLabelProvider} for the logic for populating the labels of
  * the trace viewer.
- * 
- * @since 3.6
  */
 public class TracingComponentLabelProvider extends LabelProvider {
 

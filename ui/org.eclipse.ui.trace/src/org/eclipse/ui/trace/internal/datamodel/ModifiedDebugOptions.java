@@ -15,8 +15,6 @@ import java.util.List;
 
 /**
  * Utility handler for storing the options that were changed
- * 
- * @since 8.0
  */
 public class ModifiedDebugOptions {
 

@@ -19,8 +19,6 @@ import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Tracing preference handler.
- * 
- * @since 3.6
  */
 @SuppressWarnings("deprecation")
 public class PreferenceHandler extends AbstractPreferenceInitializer {

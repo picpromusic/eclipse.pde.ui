@@ -14,8 +14,6 @@ import java.io.PrintStream;
 
 /**
  * A collection of constant values used by the tracing UI
- * 
- * @since 3.6
  */
 public class TracingConstants {
 
@@ -35,7 +33,7 @@ public class TracingConstants {
 	public final static String DEBUG_OPTION_VALUE_TRUE = "true"; //$NON-NLS-1$
 
 	/** Tracing Component extension point name */
-	public final static String TRACING_EXTENSION_POINT_NAME = "traceComponent"; //$NON-NLS-1$
+	public final static String TRACING_EXTENSION_POINT_NAME = "traceComponents"; //$NON-NLS-1$
 
 	/** The name of the 'id' attribute for a Tracing Component */
 	public final static String TRACING_EXTENSION_ID_ATTRIBUTE = "id"; //$NON-NLS-1$

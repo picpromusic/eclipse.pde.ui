@@ -20,8 +20,6 @@ import org.eclipse.ui.trace.internal.datamodel.TracingComponentDebugOption;
 
 /**
  * A {@link ViewerFilter} for filtering the contents of the trace component tree viewer.
- * 
- * @since 3.6
  */
 public class TracingComponentViewerFilter extends PatternFilter {
 

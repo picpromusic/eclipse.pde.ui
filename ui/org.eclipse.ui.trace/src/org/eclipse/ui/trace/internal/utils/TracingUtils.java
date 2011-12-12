@@ -21,8 +21,6 @@ import org.osgi.framework.Bundle;
 
 /**
  * Utility APIs for the Product Tracing UI.
- * 
- * @since 3.6
  */
 public class TracingUtils {
 

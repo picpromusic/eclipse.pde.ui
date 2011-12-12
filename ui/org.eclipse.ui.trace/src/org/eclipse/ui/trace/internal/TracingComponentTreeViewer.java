@@ -19,8 +19,6 @@ import org.eclipse.ui.dialogs.FilteredTree;
 /**
  * A {@link TracingComponentTreeViewer} provides a tree viewer with support for filtering the content based on user
  * input in a {@link Text} field. Filtering is done via {@link TracingComponentViewerFilter}.
- * 
- * @since 3.6
  */
 public class TracingComponentTreeViewer extends FilteredTree {
 

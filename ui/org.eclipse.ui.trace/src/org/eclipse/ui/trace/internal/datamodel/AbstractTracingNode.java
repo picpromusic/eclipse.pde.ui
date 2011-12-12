@@ -18,8 +18,6 @@ import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
 /**
  * A abstract base class implementation of the {@link TracingNode} interface.
- * 
- * @since 3.6
  */
 public abstract class AbstractTracingNode implements TracingNode {
 

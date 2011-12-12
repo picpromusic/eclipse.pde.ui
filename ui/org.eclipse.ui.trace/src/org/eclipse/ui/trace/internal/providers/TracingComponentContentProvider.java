@@ -17,8 +17,6 @@ import org.eclipse.ui.trace.internal.datamodel.TracingNode;
 
 /**
  * An {@link ITreeContentProvider} implementation for providing the content to display in the tracing viewer
- * 
- * @since 3.6
  */
 public class TracingComponentContentProvider implements ITreeContentProvider {
 

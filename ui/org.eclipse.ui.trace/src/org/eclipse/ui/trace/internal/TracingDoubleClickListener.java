@@ -17,8 +17,6 @@ import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
 /**
  * A double-click listener to expand/collapse a root node in the trace component viewer
- * 
- * @since 3.6
  */
 public class TracingDoubleClickListener implements IDoubleClickListener {
 

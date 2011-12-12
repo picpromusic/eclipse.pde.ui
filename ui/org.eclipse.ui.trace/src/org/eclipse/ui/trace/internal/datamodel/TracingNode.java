@@ -15,8 +15,6 @@ import org.eclipse.osgi.service.debug.DebugOptions;
 /**
  * The 'Product Tracing' page will display the tracing components as a tree. Each element in the tree will be
  * represented by a tracing node.
- * 
- * @since 3.6
  */
 public interface TracingNode {
 

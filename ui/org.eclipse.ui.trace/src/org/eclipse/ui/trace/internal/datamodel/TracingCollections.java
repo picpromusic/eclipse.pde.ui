@@ -20,8 +20,6 @@ import org.osgi.framework.Bundle;
 
 /**
  * A utility class for handling the various collections of the product tracing UI.
- * 
- * @since 3.6
  */
 public class TracingCollections {
 

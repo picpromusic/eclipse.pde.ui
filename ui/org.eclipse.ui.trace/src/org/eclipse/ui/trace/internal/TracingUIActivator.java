@@ -22,8 +22,6 @@ import org.osgi.framework.BundleContext;
 
 /**
  * The activator class controls the plug-in life cycle
- * 
- * @since 3.6
  */
 public class TracingUIActivator extends AbstractUIPlugin implements DebugOptionsListener {
 
@@ -101,6 +99,9 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.osgi.service.debug.DebugOptionsListener#optionsChanged(org.eclipse.osgi.service.debug.DebugOptions)
+	 */
 	public void optionsChanged(final DebugOptions options) {
 
 		// refresh the trace with new options

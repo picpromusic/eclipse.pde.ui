@@ -20,8 +20,6 @@ import org.eclipse.ui.trace.internal.utils.TracingUtils;
 
 /**
  * An editing support object for the tracing UI viewer.
- * 
- * @since 3.6
  */
 public class TracingComponentColumnEditingSupport extends EditingSupport {
 
@@ -41,7 +39,7 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 		switch (this.columnIndex) {
 			case TracingConstants.VALUE_COLUMN_INDEX :
 				this.textEditor = new TextCellEditor((Composite) viewer.getControl(), SWT.NONE);
-				this.comboEditor = new ComboBoxCellEditor((Composite) viewer.getControl(), new String[] {String.valueOf(true), String.valueOf(false)});
+				this.comboEditor = new ComboBoxCellEditor((Composite) viewer.getControl(), new String[] {String.valueOf(true), String.valueOf(false)}, SWT.READ_ONLY | SWT.SIMPLE);
 				break;
 			default :
 				// do nothing - no other columns provide editing support
