@@ -26,11 +26,13 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		PreferenceHandler.setDefaultPreferences();
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING);
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 	}
 
 	/**
@@ -41,12 +43,13 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static IEclipsePreferences getPreferences() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		IEclipsePreferences node = new InstanceScope().getNode(TracingConstants.BUNDLE_ID);
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, node);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, node);
+		}
 		return node;
 	}
 
@@ -75,8 +78,9 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static void setDefaultPreferences() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		final Map<String, String> prefValues = new HashMap<String, String>(5);
 		// tracing is off by default
 		prefValues.put(TracingConstants.PREFERENCE_ENABLEMENT_IDENTIFIER, Boolean.toString(false));
@@ -87,8 +91,9 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 		// no trace entries
 		prefValues.put(TracingConstants.PREFERENCE_ENTRIES_IDENTIFIER, TracingConstants.EMPTY_STRING);
 		PreferenceHandler.savePreferences(prefValues);
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING);
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 	}
 
 	/**
@@ -100,8 +105,9 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static void savePreferences(final Map<String, String> entries) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING, entries);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING, entries);
+		}
 		final IEclipsePreferences preferences = PreferenceHandler.getPreferences();
 		if (entries != null) {
 			// persist each entry
@@ -109,18 +115,22 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 			while (entriesIterator.hasNext()) {
 				Map.Entry<String, String> entry = entriesIterator.next();
 				preferences.put(entry.getKey(), entry.getValue());
-
-				TRACE.trace(TracingConstants.TRACE_PREFERENCES_STRING, "Set preference '" + entry.getKey() + "' to the value: " + entry.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
+				if (TracingUIActivator.DEBUG_PREFERENCES) {
+					TRACE.trace(TracingConstants.TRACE_PREFERENCES_STRING, "Set preference '" + entry.getKey() + "' to the value: " + entry.getValue()); //$NON-NLS-1$ //$NON-NLS-2$
+				}
 			}
 		}
 		try {
 			preferences.flush();
 		} catch (BackingStoreException backingStoreEx) {
-			TRACE.trace(TracingConstants.TRACE_PREFERENCES_STRING, "Failed to save the preferences", backingStoreEx); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_PREFERENCES) {
+				TRACE.trace(TracingConstants.TRACE_PREFERENCES_STRING, "Failed to save the preferences", backingStoreEx); //$NON-NLS-1$
+			}
 			TracingUIActivator.getDefault().logException(backingStoreEx);
 		}
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING);
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 	}
 
 	/**
@@ -130,14 +140,16 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static boolean isTracingEnabled() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		final IScopeContext[] lookupOrder = new IScopeContext[] {new InstanceScope()};
 		IPreferencesService prefService = Platform.getPreferencesService();
 		prefService.setDefaultLookupOrder(TracingConstants.BUNDLE_ID, null, new String[] {InstanceScope.SCOPE});
 		boolean tracingEnabled = prefService.getBoolean(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_ENABLEMENT_IDENTIFIER, false, lookupOrder);
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Boolean.valueOf(tracingEnabled));
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Boolean.valueOf(tracingEnabled));
+		}
 		return tracingEnabled;
 	}
 
@@ -148,15 +160,16 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static int getMaxFileCount() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		final IScopeContext[] lookupOrder = new IScopeContext[] {new InstanceScope()};
 		IPreferencesService prefService = Platform.getPreferencesService();
 		prefService.setDefaultLookupOrder(TracingConstants.BUNDLE_ID, null, new String[] {InstanceScope.SCOPE});
 		int maxCount = prefService.getInt(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_MAX_FILE_COUNT_IDENTIFIER, 10, lookupOrder);
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(maxCount));
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(maxCount));
+		}
 		return maxCount;
 	}
 
@@ -167,15 +180,16 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static int getMaxFileSize() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		final IScopeContext[] lookupOrder = new IScopeContext[] {new InstanceScope()};
 		IPreferencesService prefService = Platform.getPreferencesService();
 		prefService.setDefaultLookupOrder(TracingConstants.BUNDLE_ID, null, new String[] {InstanceScope.SCOPE});
 		int maxSize = prefService.getInt(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_MAX_FILE_SIZE_IDENTIFIER, 1000, lookupOrder);
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(maxSize));
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(maxSize));
+		}
 		return maxSize;
 	}
 
@@ -186,14 +200,16 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 	 */
 	public final static String getFilePath() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
-
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceEntry(TracingConstants.TRACE_PREFERENCES_STRING);
+		}
 		final IScopeContext[] lookupOrder = new IScopeContext[] {new InstanceScope()};
 		IPreferencesService prefService = Platform.getPreferencesService();
 		prefService.setDefaultLookupOrder(TracingConstants.BUNDLE_ID, null, new String[] {InstanceScope.SCOPE});
 		String filePath = prefService.getString(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_FILE_PATH, DebugOptionsHandler.getDebugOptions().getFile().getAbsolutePath(), lookupOrder);
-
-		TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, filePath);
+		if (TracingUIActivator.DEBUG_PREFERENCES) {
+			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(filePath));
+		}
 		return filePath;
 	}
 

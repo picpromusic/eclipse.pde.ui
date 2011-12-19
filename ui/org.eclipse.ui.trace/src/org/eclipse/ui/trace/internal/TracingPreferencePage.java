@@ -88,8 +88,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 
 	public void dispose() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		super.dispose();
 		this.disposeWidget(this.enableTracingButton);
 		this.disposeWidget(this.tracingTreeTitleLabel);
@@ -103,9 +104,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.disposeWidget(this.tracingFileMaxSizeLabel);
 		this.disposeWidget(this.maximumFileSizeSpinner);
 		this.purgeModel();
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	/**
@@ -132,9 +133,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	private void disposeWidget(final Widget widget) {
 
 		if (widget != null) {
-
-			TRACE.trace(TracingConstants.TRACE_UI_STRING, "Disposing widget: " + widget); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_UI) {
+				TRACE.trace(TracingConstants.TRACE_UI_STRING, "Disposing widget: " + widget); //$NON-NLS-1$
+			}
 			if (!widget.isDisposed()) {
 				widget.dispose();
 			}
@@ -144,8 +145,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	@Override
 	protected Control createContents(final Composite parent) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
+		}
 		final Composite pageComposite = new Composite(parent, SWT.NONE);
 		GridLayoutFactory.fillDefaults().applyTo(pageComposite);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(pageComposite);
@@ -160,8 +162,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.applyDialogFont(pageComposite);
 		// set focus on the enablement button
 		this.enableTracingButton.setFocus();
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING, parent);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING, parent);
+		}
 		return pageComposite;
 	}
 
@@ -173,8 +176,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	protected void addEnableTracingSection(final Composite parent) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
+		}
 		this.enableTracingButton = new Button(parent, SWT.CHECK);
 		this.enableTracingButton.setText(Messages.enableTracingButtonLabel);
 		GridDataFactory.fillDefaults().align(SWT.BEGINNING, SWT.BEGINNING).grab(true, false).applyTo(this.enableTracingButton);
@@ -183,13 +187,15 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			@Override
 			public void widgetSelected(final SelectionEvent e) {
 
-				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "'Enable Tracing' button was selected"); //$NON-NLS-1$
-
+				if (TracingUIActivator.DEBUG_UI_LISTENERS) {
+					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "'Enable Tracing' button was selected"); //$NON-NLS-1$
+				}
 				enableTracingButtonSelected(true);
 			}
 		});
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING, parent);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING, parent);
+		}
 	}
 
 	/**
@@ -203,8 +209,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.tracingTreeTitleLabel = new Label(parent, SWT.NONE);
 		this.tracingTreeTitleLabel.setText(Messages.tracingTreeTile);
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
+		}
 		this.filterTree = new TracingComponentTreeViewer(parent);
 		GridDataFactory.fillDefaults().grab(true, true).applyTo(this.getViewerTree());
 		this.getViewer().setUseHashlookup(true);
@@ -234,8 +241,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		valueColumn.setLabelProvider(new TracingComponentColumnLabelProvider(TracingConstants.VALUE_COLUMN_INDEX));
 		valueColumn.setEditingSupport(new TracingComponentColumnEditingSupport(this.getViewer(), TracingConstants.VALUE_COLUMN_INDEX));
 		treeViewerCompositeLayout.setColumnData(this.getViewerTree().getColumn(1), new ColumnWeightData(25));
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	/**
@@ -247,8 +255,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	protected void addTracingOptionsSection(final Composite parent) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, parent);
+		}
 		this.tracingOptionsGroup = new Group(parent, SWT.NONE);
 		this.tracingOptionsGroup.setText(Messages.tracingOptionsGroup);
 		GridDataFactory.fillDefaults().grab(true, false).applyTo(this.tracingOptionsGroup);
@@ -333,8 +342,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			}
 		});
 		GridDataFactory.fillDefaults().applyTo(this.maximumFileSizeSpinner);
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING, parent);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING, parent);
+		}
 	}
 
 	/**
@@ -343,8 +353,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	protected void setUIValuesFromPreferences() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		// acquire the preferences service
 		boolean tracingEnabled = PreferenceHandler.isTracingEnabled();
 		// HACK: because there is no way for me to enable tracing during preference import (??) - I am doing it here.
@@ -362,8 +373,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.maximumFileSizeSpinner.setSelection(PreferenceHandler.getMaxFileSize());
 		// update the enablement state of all the UI elements
 		this.enableTracingButtonSelected(false);
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	/**
@@ -427,8 +439,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	protected void enableTracingButtonSelected(final boolean updateModel) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		boolean enableTracing = this.enableTracingButton.getSelection();
 		if (updateModel) {
 			// populate the table
@@ -457,8 +470,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.tracingFileLabel.setEnabled(enableTracing);
 		this.tracingFileMaxCountLabel.setEnabled(enableTracing);
 		this.tracingFileMaxSizeLabel.setEnabled(enableTracing);
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	/**
@@ -466,8 +480,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	private void buildDisplayableComponents() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		// ensure the model is destroyed (start from scratch)
 		if (this.displayableTracingComponents != null) {
 			this.purgeModel();
@@ -475,25 +490,25 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		this.displayableTracingComponents = new HashMap<String, TracingComponent>();
 		// look for extension points
 		IExtensionRegistry registry = Platform.getExtensionRegistry();
-
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Extension registry :" + registry); //$NON-NLS-1$ 
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Extension registry :" + registry); //$NON-NLS-1$ 
+		}
 		IConfigurationElement[] cf = registry.getConfigurationElementsFor(TracingConstants.BUNDLE_ID, TracingConstants.TRACING_EXTENSION_POINT_NAME);
-
-		TracingUIActivator.getDefault().getTrace().trace(TracingConstants.TRACE_UI_STRING, "Found " + cf.length + " extensions in namespace '" + TracingConstants.BUNDLE_ID + "' with the extension point name '" + TracingConstants.TRACING_EXTENSION_POINT_NAME + "'."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TracingUIActivator.getDefault().getTrace().trace(TracingConstants.TRACE_UI_STRING, "Found " + cf.length + " extensions in namespace '" + TracingConstants.BUNDLE_ID + "' with the extension point name '" + TracingConstants.TRACING_EXTENSION_POINT_NAME + "'."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		}
 		TracingComponent[] components = new TracingComponent[cf.length];
 		// populate the full list of tracing components
 		for (int i = 0; i < cf.length; i++) {
 			components[i] = TracingCollections.getInstance().getTracingComponent(cf[i]);
-
-			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Built a TracingComponent for traceComponent with id " + components[i].getId()); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_UI) {
+				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Built a TracingComponent for traceComponent with id " + components[i].getId()); //$NON-NLS-1$
+			}
 			// if this component already exists or consumed then do not add it to the displayable list
 			if (!this.displayableTracingComponents.containsKey(components[i].getId()) && !components[i].isConsumed()) {
-
-				TRACE.trace(TracingConstants.TRACE_UI_STRING, "Adding component '" + components[i] + "' to the list of displayable components."); //$NON-NLS-1$ //$NON-NLS-2$
-
+				if (TracingUIActivator.DEBUG_UI) {
+					TRACE.trace(TracingConstants.TRACE_UI_STRING, "Adding component '" + components[i] + "' to the list of displayable components."); //$NON-NLS-1$ //$NON-NLS-2$
+				}
 				this.displayableTracingComponents.put(components[i].getId(), components[i]);
 			}
 		}
@@ -504,8 +519,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		}
 		// update any TracingComponentDebugOption entries if their value differs from the preference value
 		this.mergePrefsWithDebugOptions();
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	/**
@@ -513,8 +529,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	private void mergePrefsWithDebugOptions() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		final Map<String, String> prefDebugOptions = PreferenceHandler.getPreferenceProperties();
 		// get all debug options (this ensures that the disabled debug options are used when populating)
 		final Map<String, String> debugOptions = DebugOptionsHandler.getDebugOptions().getOptions();
@@ -543,11 +560,11 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			if (updateDebugOption) {
 				// find identical debug options and update them (this will include 'this' debug option that
 				// was modified)
-
-				TRACE.trace(TracingConstants.TRACE_UI_STRING, "Changing the value of option '" //$NON-NLS-1$ 
-						+ prefDebugOption.getKey() + "' from '" + debugOptionsValue + "' to '" //$NON-NLS-1$ //$NON-NLS-2$
-						+ prefDebugOption.getValue() + "'."); //$NON-NLS-1$
-
+				if (TracingUIActivator.DEBUG_UI) {
+					TRACE.trace(TracingConstants.TRACE_UI_STRING, "Changing the value of option '" //$NON-NLS-1$ 
+							+ prefDebugOption.getKey() + "' from '" + debugOptionsValue + "' to '" //$NON-NLS-1$ //$NON-NLS-2$
+							+ prefDebugOption.getValue() + "'."); //$NON-NLS-1$
+				}
 				TracingComponentDebugOption[] identicalOptions = TracingCollections.getInstance().getTracingDebugOptions(prefDebugOption.getKey());
 				for (int identicalOptionsIndex = 0; identicalOptionsIndex < identicalOptions.length; identicalOptionsIndex++) {
 					identicalOptions[identicalOptionsIndex].setOptionPathValue(prefDebugOption.getValue());
@@ -559,8 +576,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	@Override
 	protected void performDefaults() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		super.performDefaults();
 		// set the options to be an empty set
 		DebugOptionsHandler.getDebugOptions().setOptions(new HashMap<String, String>());
@@ -572,23 +590,25 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		PreferenceHandler.setDefaultPreferences();
 		TracingCollections.getInstance().getModifiedDebugOptions().clear();
 		this.setUIValuesFromPreferences();
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	@Override
 	public boolean performOk() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		boolean result = super.performOk();
 		// get the enablement state
 		boolean enableTracing = this.enableTracingButton.getSelection();
 		// save the preferences
 		this.savePreferences(enableTracing);
-
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting tracing enablement state: " + enableTracing); //$NON-NLS-1$
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting tracing enablement state: " + enableTracing); //$NON-NLS-1$
+		}
 		DebugOptionsHandler.setDebugEnabled(enableTracing);
 		if (enableTracing) {
 			final Map<String, String> newOptions = new HashMap<String, String>();
@@ -598,9 +618,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			// iterate over the list of modified debug options and add them
 			final TracingComponentDebugOption[] modifiedOptions = TracingCollections.getInstance().getModifiedDebugOptions().getModifiedDebugOptions();
 			for (int i = 0; i < modifiedOptions.length; i++) {
-
-				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Adding debug option: " + modifiedOptions[i]); //$NON-NLS-1$
-
+				if (TracingUIActivator.DEBUG_UI) {
+					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Adding debug option: " + modifiedOptions[i]); //$NON-NLS-1$
+				}
 				newOptions.put(modifiedOptions[i].getOptionPath(), modifiedOptions[i].getOptionPathValue());
 			}
 			// update the debug options
@@ -608,32 +628,35 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			TracingCollections.getInstance().getModifiedDebugOptions().clear();
 			// save the tracing file options
 			final String defaultFile = DebugOptionsHandler.getDebugOptions().getFile().getAbsolutePath();
-
-			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Current tracing file: " + defaultFile); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_UI) {
+				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Current tracing file: " + defaultFile); //$NON-NLS-1$
+			}
 			final String newFile = this.tracingFileText.getText();
 			if (!defaultFile.equals(newFile)) {
-
-				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the tracing file to: " + newFile); //$NON-NLS-1$
-
+				if (TracingUIActivator.DEBUG_UI) {
+					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the tracing file to: " + newFile); //$NON-NLS-1$
+				}
 				DebugOptionsHandler.getDebugOptions().setFile(new File(newFile));
 			}
 			// maximum file size
 			final int newMaxSize = this.maximumFileSizeSpinner.getSelection();
 			// property defined in org.eclipse.osgi.framework.debug.EclipseDebugTrace#PROP_TRACE_SIZE_MAX
 			System.setProperty(TracingConstants.PROP_TRACE_SIZE_MAX, String.valueOf(newMaxSize));
-
-			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the maximum file size to: " + newMaxSize); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_UI) {
+				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the maximum file size to: " + newMaxSize); //$NON-NLS-1$
+			}
 			// maximum file count
 			final int newMaxCount = this.maximumFileCountSpinner.getSelection();
 			// property defined in org.eclipse.osgi.framework.debug.EclipseDebugTrace#PROP_TRACE_FILE_MAX
 			System.setProperty(TracingConstants.PROP_TRACE_FILE_MAX, String.valueOf(newMaxCount));
-
-			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the maximum number of backup files to: " + newMaxCount); //$NON-NLS-1$
+			if (TracingUIActivator.DEBUG_UI) {
+				TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Setting the maximum number of backup files to: " + newMaxCount); //$NON-NLS-1$
+			}
 		}
 		// done
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING, Boolean.valueOf(result));
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING, Boolean.valueOf(result));
+		}
 		return result;
 	}
 
@@ -642,8 +665,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 	 */
 	protected void savePreferences(final boolean tracingEnabled) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
-
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_STRING);
+		}
 		final Map<String, String> prefValues = new HashMap<String, String>(5);
 		prefValues.put(TracingConstants.PREFERENCE_ENABLEMENT_IDENTIFIER, Boolean.toString(tracingEnabled));
 		prefValues.put(TracingConstants.PREFERENCE_MAX_FILE_COUNT_IDENTIFIER, Integer.toString(this.maximumFileCountSpinner.getSelection()));
@@ -667,8 +691,9 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		}
 		prefValues.put(TracingConstants.PREFERENCE_ENTRIES_IDENTIFIER, optionsAsString.toString());
 		PreferenceHandler.savePreferences(prefValues);
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		if (TracingUIActivator.DEBUG_UI) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_STRING);
+		}
 	}
 
 	private final StringBuffer getAllUniqueDebugOptions(final TracingNode node) {

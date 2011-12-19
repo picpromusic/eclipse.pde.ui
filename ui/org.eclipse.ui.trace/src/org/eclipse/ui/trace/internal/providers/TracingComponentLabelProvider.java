@@ -11,8 +11,6 @@
 package org.eclipse.ui.trace.internal.providers;
 
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.osgi.service.debug.DebugTrace;
-import org.eclipse.ui.trace.internal.TracingUIActivator;
 import org.eclipse.ui.trace.internal.datamodel.*;
 import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
@@ -23,17 +21,10 @@ import org.eclipse.ui.trace.internal.utils.TracingConstants;
  */
 public class TracingComponentLabelProvider extends LabelProvider {
 
-	/** Trace object for this bundle */
-	protected final static DebugTrace TRACE = TracingUIActivator.getDefault().getTrace();
-
 	@Override
 	public String getText(final Object element) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, element);
-
-		String label = TracingComponentLabelProvider.getLabel(TracingConstants.LABEL_COLUMN_INDEX, element);
-		TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, label);
-		return label;
+		return TracingComponentLabelProvider.getLabel(TracingConstants.LABEL_COLUMN_INDEX, element);
 	}
 
 	/**
@@ -57,8 +48,6 @@ public class TracingComponentLabelProvider extends LabelProvider {
 	 */
 	public final static String getLabel(final int columnIndex, final Object element) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, new Object[] {new Integer(columnIndex), element});
-
 		String result = null;
 		switch (columnIndex) {
 			case TracingConstants.LABEL_COLUMN_INDEX :
@@ -72,7 +61,9 @@ public class TracingComponentLabelProvider extends LabelProvider {
 				// if the element does not have a boolean value then it is modifiable - the value is the option-path
 				// value.
 				if (element instanceof TracingComponentDebugOption) {
+//					if (!TracingUtils.isValueBoolean((TracingComponentDebugOption) element)) {
 					result = ((TracingComponentDebugOption) element).getOptionPathValue();
+//					}
 				} else if (element instanceof String) {
 					result = (String) element;
 				}
@@ -80,8 +71,6 @@ public class TracingComponentLabelProvider extends LabelProvider {
 			default : // do nothing
 				break;
 		}
-
-		TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, result);
 		return result;
 	}
 }

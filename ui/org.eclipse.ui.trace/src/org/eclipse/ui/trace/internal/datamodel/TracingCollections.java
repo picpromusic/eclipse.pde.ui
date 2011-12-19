@@ -66,13 +66,15 @@ public class TracingCollections {
 	 */
 	public final void storeTracingDebugOption(final TracingComponentDebugOption newDebugOption) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, newDebugOption);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, newDebugOption);
+		}
 		if (newDebugOption != null) {
 			List<TracingComponentDebugOption> debugOptions = this.fDebugOptionCollection.get(newDebugOption.getOptionPath());
-
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing debug options for '" //$NON-NLS-1$
-					+ newDebugOption.getOptionPath() + "': " + debugOptions); //$NON-NLS-1$
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing debug options for '" //$NON-NLS-1$
+						+ newDebugOption.getOptionPath() + "': " + debugOptions); //$NON-NLS-1$
+			}
 			if (debugOptions == null) {
 				// create the list of {@link TracingComponentDebugOption} elements
 				debugOptions = new ArrayList<TracingComponentDebugOption>();
@@ -80,11 +82,15 @@ public class TracingCollections {
 			}
 			// add the newly created {@link TracingComponentDebugOption}
 			if (!debugOptions.contains(newDebugOption)) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Caching '" + newDebugOption + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				if (TracingUIActivator.DEBUG_MODEL) {
+					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Caching '" + newDebugOption + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				}
 				debugOptions.add(newDebugOption);
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		}
 	}
 
 	/**
@@ -96,19 +102,22 @@ public class TracingCollections {
 	 */
 	public final TracingComponentDebugOption[] getTracingDebugOptions(final String optionPath) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, optionPath);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, optionPath);
+		}
 		List<TracingComponentDebugOption> debugOptions = null;
 		if (optionPath != null) {
 			debugOptions = this.fDebugOptionCollection.get(optionPath);
 		}
 		if (debugOptions == null) {
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no debug options for '" + optionPath + "' so returning an empty list."); //$NON-NLS-1$ //$NON-NLS-2$
-
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no debug options for '" + optionPath + "' so returning an empty list."); //$NON-NLS-1$ //$NON-NLS-2$
+			}
 			debugOptions = Collections.emptyList();
 		}
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, debugOptions);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, debugOptions);
+		}
 		return debugOptions.toArray(new TracingComponentDebugOption[debugOptions.size()]);
 	}
 
@@ -123,26 +132,30 @@ public class TracingCollections {
 	 */
 	public final TracingComponent getTracingComponent(final IConfigurationElement element) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, element);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, element);
+		}
 		TracingComponent component = null;
 		if (element != null) {
 			String id = element.getAttribute(TracingConstants.TRACING_EXTENSION_ID_ATTRIBUTE);
-
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "tracing component id: " + id); //$NON-NLS-1$
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "tracing component id: " + id); //$NON-NLS-1$
+			}
 			if (id != null) {
 				component = this.fComponentCollection.get(id);
 				if (component == null) {
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Creating a new tracing component for id: " + id); //$NON-NLS-1$
-
+					if (TracingUIActivator.DEBUG_MODEL) {
+						TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Creating a new tracing component for id: " + id); //$NON-NLS-1$
+					}
 					// create a new tracing component since one doesn't exist with this id
 					component = new TracingComponent(element);
 					this.fComponentCollection.put(id, component);
 				} else {
 					// A tracing component already exists with this id. Add the bundles provided by
 					// the new component to the existing one.
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "The tracing component for id '" + id + "' already exists.  The bundles for this new component are added to the existing component."); //$NON-NLS-1$ //$NON-NLS-2$
-
+					if (TracingUIActivator.DEBUG_MODEL) {
+						TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "The tracing component for id '" + id + "' already exists.  The bundles for this new component are added to the existing component."); //$NON-NLS-1$ //$NON-NLS-2$
+					}
 					component.addBundles(element);
 					// update the label (if necessary)
 					final String newComponentLabel = element.getAttribute(TracingConstants.TRACING_EXTENSION_LABEL_ATTRIBUTE);
@@ -152,7 +165,9 @@ public class TracingCollections {
 				}
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, component);
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, component);
+		}
 		return component;
 	}
 
@@ -169,20 +184,25 @@ public class TracingCollections {
 	 */
 	public final Properties getDebugOptions(final Bundle bundle) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, bundle);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, bundle);
+		}
 		Properties results = null;
 		if (bundle != null) {
 			results = this.fBundleOptionsCollection.get(bundle);
 			if (results == null) {
 				// this bundle has not been processed yet - so do it now.
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "The options for bundle '" + bundle + "' have not been processed."); //$NON-NLS-1$ //$NON-NLS-2$
+				if (TracingUIActivator.DEBUG_MODEL) {
+					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "The options for bundle '" + bundle + "' have not been processed."); //$NON-NLS-1$ //$NON-NLS-2$
+				}
 				results = TracingUtils.loadOptionsFromBundle(bundle);
 				// and store the results
 				this.fBundleOptionsCollection.put(bundle, results);
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, results);
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, results);
+		}
 		return results;
 	}
 
@@ -196,13 +216,15 @@ public class TracingCollections {
 	 */
 	public final void setBundleIsConsumed(final Bundle bundle, final boolean consumed) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {bundle, Boolean.valueOf(consumed)});
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {bundle, Boolean.valueOf(consumed)});
+		}
 		if (bundle != null) {
 			this.fBundleConsumedCollection.put(bundle, Boolean.valueOf(consumed));
 		}
-
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		}
 	}
 
 	/**
@@ -215,19 +237,22 @@ public class TracingCollections {
 	 */
 	public final boolean isBundleConsumed(final Bundle bundle) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, bundle);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, bundle);
+		}
 		boolean result = false;
 		if (bundle != null) {
 			Boolean isConsumed = this.fBundleConsumedCollection.get(bundle);
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Checking the collection if the bundle '" + bundle.getSymbolicName() + "' is consumed... result: " + isConsumed); //$NON-NLS-1$ //$NON-NLS-2$
-
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Checking the collection if the bundle '" + bundle.getSymbolicName() + "' is consumed... result: " + isConsumed); //$NON-NLS-1$ //$NON-NLS-2$
+			}
 			if (isConsumed != null) {
 				result = isConsumed.booleanValue();
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, Boolean.valueOf(result));
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, Boolean.valueOf(result));
+		}
 		return result;
 	}
 
@@ -241,22 +266,26 @@ public class TracingCollections {
 	 */
 	public final void storeBundleInComponent(final TracingComponent component, final Bundle bundle) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {component, bundle});
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {component, bundle});
+		}
 		if ((bundle != null) && (component != null)) {
 			List<TracingComponent> components = this.fBundleComponentCollection.get(bundle);
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in collection: " + components); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in collection: " + components); //$NON-NLS-1$
+			}
 			if (components == null) {
 				components = new ArrayList<TracingComponent>();
 				this.fBundleComponentCollection.put(bundle, components);
 			}
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding component to collection: " + component); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding component to collection: " + component); //$NON-NLS-1$
+			}
 			components.add(component);
 		}
-
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		}
 	}
 
 	/**
@@ -268,21 +297,25 @@ public class TracingCollections {
 	 */
 	public final TracingComponent[] getComponentsContainingBundle(final Bundle bundle) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, bundle);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, bundle);
+		}
 		List<TracingComponent> components = null;
 		if (bundle != null) {
 			components = this.fBundleComponentCollection.get(bundle);
-
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in collection: " + components); //$NON-NLS-1$
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Existing components in collection: " + components); //$NON-NLS-1$
+			}
 		}
 		if (components == null) {
-
-			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no components in the collection so creating an empty list."); //$NON-NLS-1$
+			if (TracingUIActivator.DEBUG_MODEL) {
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no components in the collection so creating an empty list."); //$NON-NLS-1$
+			}
 			components = Collections.emptyList();
 		}
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, components);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, components);
+		}
 		return components.toArray(new TracingComponent[components.size()]);
 	}
 
@@ -291,15 +324,17 @@ public class TracingCollections {
 	 */
 	public final void clear() {
 
-		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
-
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
+		}
 		this.fComponentCollection.clear();
 		this.fDebugOptionCollection.clear();
 		this.fBundleOptionsCollection.clear();
 		this.fBundleConsumedCollection.clear();
 		this.fBundleComponentCollection.clear();
-
-		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		if (TracingUIActivator.DEBUG_MODEL) {
+			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
+		}
 	}
 
 	/** The debug options {@link ModifiedDebugOptions} added or removed */

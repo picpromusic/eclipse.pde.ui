@@ -22,19 +22,23 @@ public class TracingDoubleClickListener implements IDoubleClickListener {
 
 	public void doubleClick(final DoubleClickEvent event) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_UI_LISTENERS_STRING, event);
-
+		if (TracingUIActivator.DEBUG_UI_LISTENERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_LISTENERS_STRING, event);
+		}
 		// auto-expand or collapse the selected node
 		TreeViewer traceComponentViewer = (TreeViewer) event.getViewer();
 		final Object selectedItem = ((IStructuredSelection) traceComponentViewer.getSelection()).getFirstElement();
 		final boolean expandedState = traceComponentViewer.getExpandedState(selectedItem);
 		if (selectedItem instanceof TracingNode) {
 			traceComponentViewer.setExpandedState(selectedItem, !expandedState);
-
-			TRACE.trace(TracingConstants.TRACE_UI_LISTENERS_STRING, "Setting the expanded state of node '" //$NON-NLS-1$
-					+ selectedItem + "' to: " + !expandedState); //$NON-NLS-1$
+			if (TracingUIActivator.DEBUG_UI_LISTENERS) {
+				TRACE.trace(TracingConstants.TRACE_UI_LISTENERS_STRING, "Setting the expanded state of node '" //$NON-NLS-1$
+						+ selectedItem + "' to: " + !expandedState); //$NON-NLS-1$
+			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_UI_LISTENERS_STRING, event);
+		if (TracingUIActivator.DEBUG_UI_LISTENERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_LISTENERS_STRING, event);
+		}
 	}
 
 	/** Trace object for this bundle */

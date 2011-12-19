@@ -35,12 +35,14 @@ public class TracingUtils {
 	 */
 	public final static boolean isValueBoolean(final TracingComponentDebugOption debugOption) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOption);
-
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOption);
+		}
 		assert (debugOption != null);
 		boolean result = TracingUtils.isValueBoolean(debugOption.getOptionPathValue());
-
-		TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, Boolean.valueOf(result));
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, Boolean.valueOf(result));
+		}
 		return result;
 	}
 
@@ -53,14 +55,16 @@ public class TracingUtils {
 	 */
 	public final static boolean isValueBoolean(final String value) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, value);
-
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, value);
+		}
 		boolean isBoolean = false;
 		if ((value != null) && (value.toLowerCase().equals(TracingConstants.DEBUG_OPTION_VALUE_FALSE) || value.toLowerCase().equals(TracingConstants.DEBUG_OPTION_VALUE_TRUE))) {
 			isBoolean = true;
 		}
-
-		TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, String.valueOf(isBoolean));
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, String.valueOf(isBoolean));
+		}
 		return isBoolean;
 	}
 
@@ -73,8 +77,9 @@ public class TracingUtils {
 	 */
 	public final static String convertToString(final TracingComponentDebugOption debugOption) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOption);
-
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOption);
+		}
 		final StringBuffer buffer = new StringBuffer();
 		if (debugOption != null) {
 			// return an option as "key=value;"
@@ -83,8 +88,9 @@ public class TracingUtils {
 			buffer.append(debugOption.getOptionPathValue());
 			buffer.append(TracingConstants.DEBUG_OPTION_PREFERENCE_SEPARATOR);
 		}
-
-		TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, buffer.toString());
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, buffer.toString());
+		}
 		return buffer.toString();
 	}
 
@@ -98,25 +104,29 @@ public class TracingUtils {
 	 */
 	public final static TracingComponentDebugOption convertToDebugOption(final String debugOptionAsString) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOptionAsString);
-
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOptionAsString);
+		}
 		TracingComponentDebugOption debugOption = null;
 		if (debugOptionAsString != null) {
 			int separatorIndex = debugOptionAsString.indexOf(TracingConstants.DEBUG_OPTION_PATH_SEPARATOR);
-			TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "separatorIndex: " + separatorIndex); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG) {
+				TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "separatorIndex: " + separatorIndex); //$NON-NLS-1$
+			}
 			if (separatorIndex != -1) {
 				String key = debugOptionAsString.substring(0, separatorIndex);
 				String value = debugOptionAsString.substring(separatorIndex + 1, debugOptionAsString.length());
-
-				TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "key: " + key); //$NON-NLS-1$
-				TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "value: " + value); //$NON-NLS-1$
-
+				if (TracingUIActivator.DEBUG) {
+					TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "key: " + key); //$NON-NLS-1$
+					TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "value: " + value); //$NON-NLS-1$
+				}
 				// the debug option does not need a parent at this point
 				debugOption = new TracingComponentDebugOption(key, value);
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, debugOption);
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, debugOption);
+		}
 		return debugOption;
 	}
 
@@ -129,13 +139,15 @@ public class TracingUtils {
 	 */
 	public final static Map<String, String> convertToMap(final String debugOptions) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOptions);
-
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, debugOptions);
+		}
 		final Map<String, String> result = new HashMap<String, String>();
 		if (debugOptions != null) {
 			StringTokenizer optionTokens = new StringTokenizer(debugOptions, TracingConstants.DEBUG_OPTION_PREFERENCE_SEPARATOR);
-			TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "debug options found: " + optionTokens.countTokens()); //$NON-NLS-1$
-
+			if (TracingUIActivator.DEBUG) {
+				TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "debug options found: " + optionTokens.countTokens()); //$NON-NLS-1$
+			}
 			while (optionTokens.hasMoreTokens()) {
 				TracingComponentDebugOption newOption = TracingUtils.convertToDebugOption(optionTokens.nextToken());
 				if (newOption != null) {
@@ -143,7 +155,9 @@ public class TracingUtils {
 				}
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, result);
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, result);
+		}
 		return result;
 	}
 
@@ -157,14 +171,16 @@ public class TracingUtils {
 	 */
 	public final static Properties loadOptionsFromBundle(final Bundle bundle) {
 
-		TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, bundle);
-
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceEntry(TracingConstants.TRACE_DEBUG_STRING, bundle);
+		}
 		final Properties optionsProperties = new Properties();
 		if (bundle != null) {
 			URL optionsFile = bundle.getEntry(TracingConstants.OPTIONS_FILENAME);
 			if (optionsFile != null) {
-				TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "Reading in .options file found in: " + optionsFile.getPath()); //$NON-NLS-1$
-
+				if (TracingUIActivator.DEBUG) {
+					TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "Reading in .options file found in: " + optionsFile.getPath()); //$NON-NLS-1$
+				}
 				// read the file
 				InputStream optionsFileInStream = null;
 				try {
@@ -172,8 +188,9 @@ public class TracingUtils {
 					optionsProperties.load(optionsFileInStream);
 				} catch (IOException ioEx) {
 					// couldn't read the .options file - can't do anything other than to log the exception
-					TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "IOException while processing the .options file for bundle " + bundle, ioEx); //$NON-NLS-1$
-
+					if (TracingUIActivator.DEBUG) {
+						TRACE.trace(TracingConstants.TRACE_DEBUG_STRING, "IOException while processing the .options file for bundle " + bundle, ioEx); //$NON-NLS-1$
+					}
 					TracingUIActivator.getDefault().logException(ioEx);
 				} finally {
 					if (optionsFileInStream != null) {
@@ -187,7 +204,9 @@ public class TracingUtils {
 				}
 			}
 		}
-		TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, optionsProperties);
+		if (TracingUIActivator.DEBUG) {
+			TRACE.traceExit(TracingConstants.TRACE_DEBUG_STRING, optionsProperties);
+		}
 		return optionsProperties;
 	}
 
