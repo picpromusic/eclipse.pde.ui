@@ -23,6 +23,9 @@ import org.osgi.service.prefs.BackingStoreException;
 @SuppressWarnings("deprecation")
 public class PreferenceHandler extends AbstractPreferenceInitializer {
 
+	public static final int DEFAULT_FILE_COUNT = 10;
+	public static final int DEFAULT_FILE_SIZE = 100;
+
 	@Override
 	public void initializeDefaultPreferences() {
 
@@ -166,7 +169,7 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 		final IScopeContext[] lookupOrder = new IScopeContext[] {new InstanceScope()};
 		IPreferencesService prefService = Platform.getPreferencesService();
 		prefService.setDefaultLookupOrder(TracingConstants.BUNDLE_ID, null, new String[] {InstanceScope.SCOPE});
-		int maxCount = prefService.getInt(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_MAX_FILE_COUNT_IDENTIFIER, 10, lookupOrder);
+		int maxCount = prefService.getInt(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_MAX_FILE_COUNT_IDENTIFIER, DEFAULT_FILE_COUNT, lookupOrder);
 		if (TracingUIActivator.DEBUG_PREFERENCES) {
 			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(maxCount));
 		}
@@ -186,7 +189,7 @@ public class PreferenceHandler extends AbstractPreferenceInitializer {
 		final IScopeContext[] lookupOrder = new IScopeContext[] {new InstanceScope()};
 		IPreferencesService prefService = Platform.getPreferencesService();
 		prefService.setDefaultLookupOrder(TracingConstants.BUNDLE_ID, null, new String[] {InstanceScope.SCOPE});
-		int maxSize = prefService.getInt(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_MAX_FILE_SIZE_IDENTIFIER, 1000, lookupOrder);
+		int maxSize = prefService.getInt(TracingConstants.BUNDLE_ID, TracingConstants.PREFERENCE_MAX_FILE_SIZE_IDENTIFIER, DEFAULT_FILE_SIZE, lookupOrder);
 		if (TracingUIActivator.DEBUG_PREFERENCES) {
 			TRACE.traceExit(TracingConstants.TRACE_PREFERENCES_STRING, Integer.valueOf(maxSize));
 		}

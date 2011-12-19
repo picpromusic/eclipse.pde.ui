@@ -313,7 +313,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 		GridDataFactory.fillDefaults().applyTo(this.tracingFileMaxCountLabel);
 		// add the 'max count' input field
 		this.maximumFileCountSpinner = new Spinner(detailsComp, SWT.SINGLE | SWT.BORDER);
-		this.maximumFileCountSpinner.setValues(10, 10, 100, 0, 5, 10);
+		this.maximumFileCountSpinner.setValues(PreferenceHandler.DEFAULT_FILE_COUNT, 1, 100, 0, 5, 10);
 		this.maximumFileCountSpinner.addListener(SWT.Verify, new Listener() {
 
 			public void handleEvent(final Event e) {
@@ -333,7 +333,7 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 //		GridDataFactory.fillDefaults().align(SWT.END, SWT.BEGINNING).applyTo(this.tracingFileMaxSizeLabel);
 		// add the 'max size' input field
 		this.maximumFileSizeSpinner = new Spinner(detailsComp, SWT.SINGLE | SWT.BORDER);
-		this.maximumFileSizeSpinner.setValues(100, 100, 10000, 0, 100, 1000);
+		this.maximumFileSizeSpinner.setValues(PreferenceHandler.DEFAULT_FILE_SIZE, 0, 10000, 0, 100, 1000);
 		this.maximumFileSizeSpinner.addListener(SWT.Verify, new Listener() {
 
 			public void handleEvent(final Event e) {
