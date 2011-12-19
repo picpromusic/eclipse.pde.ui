@@ -116,9 +116,8 @@ public class TracingComponentColumnEditingSupport extends EditingSupport {
 					// modified)
 					TracingComponentDebugOption[] identicalOptions = TracingCollections.getInstance().getTracingDebugOptions(option.getOptionPath());
 					for (int identicalOptionsIndex = 0; identicalOptionsIndex < identicalOptions.length; identicalOptionsIndex++) {
-						TracingCollections.getInstance().getModifiedDebugOptions().removeDebugOption(identicalOptions[identicalOptionsIndex].clone());
 						identicalOptions[identicalOptionsIndex].setOptionPathValue(updatedValue);
-						TracingCollections.getInstance().getModifiedDebugOptions().addDebugOption(identicalOptions[identicalOptionsIndex]);
+						TracingCollections.getInstance().getModifiedDebugOptions().addModifiedDebugOption(identicalOptions[identicalOptionsIndex]);
 						this.getViewer().update(identicalOptions[identicalOptionsIndex], null);
 					}
 				}

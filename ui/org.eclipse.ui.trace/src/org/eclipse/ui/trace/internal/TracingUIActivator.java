@@ -69,7 +69,9 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 			System.setProperty(TracingConstants.PROP_TRACE_FILE_MAX, String.valueOf(PreferenceHandler.getMaxFileCount()));
 
 			Map<String, String> prefs = PreferenceHandler.getPreferenceProperties();
-			DebugOptionsHandler.getDebugOptions().setOptions(prefs);
+			Map<String, String> options = DebugOptionsHandler.getDebugOptions().getOptions();
+			options.putAll(prefs);
+			DebugOptionsHandler.getDebugOptions().setOptions(options);
 		}
 
 		final Hashtable<String, String> props = new Hashtable<String, String>(4);

@@ -615,21 +615,13 @@ public class TracingPreferencePage extends PreferencePage implements IWorkbenchP
 			// get the set of options available
 			final Map<String, String> currentOptions = DebugOptionsHandler.getDebugOptions().getOptions();
 			newOptions.putAll(currentOptions);
-			// iterate over the list of added debug options and add them
-			final TracingComponentDebugOption[] optionsToAdd = TracingCollections.getInstance().getModifiedDebugOptions().getDebugOptionsToAdd();
-			for (int i = 0; i < optionsToAdd.length; i++) {
+			// iterate over the list of modified debug options and add them
+			final TracingComponentDebugOption[] modifiedOptions = TracingCollections.getInstance().getModifiedDebugOptions().getModifiedDebugOptions();
+			for (int i = 0; i < modifiedOptions.length; i++) {
 				if (TracingUIActivator.DEBUG_UI) {
-					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Adding debug option: " + optionsToAdd[i]); //$NON-NLS-1$
+					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Adding debug option: " + modifiedOptions[i]); //$NON-NLS-1$
 				}
-				newOptions.put(optionsToAdd[i].getOptionPath(), optionsToAdd[i].getOptionPathValue());
-			}
-			// iterate over the list of removed debug options and remove them
-			final TracingComponentDebugOption[] optionsToRemove = TracingCollections.getInstance().getModifiedDebugOptions().getDebugOptionsToRemove();
-			for (int i = 0; i < optionsToRemove.length; i++) {
-				if (TracingUIActivator.DEBUG_UI) {
-					TRACE.traceEntry(TracingConstants.TRACE_UI_STRING, "Removing debug option: " + optionsToRemove[i]); //$NON-NLS-1$
-				}
-				newOptions.remove(optionsToRemove[i].getOptionPath());
+				newOptions.put(modifiedOptions[i].getOptionPath(), modifiedOptions[i].getOptionPathValue());
 			}
 			// update the debug options
 			DebugOptionsHandler.getDebugOptions().setOptions(newOptions);

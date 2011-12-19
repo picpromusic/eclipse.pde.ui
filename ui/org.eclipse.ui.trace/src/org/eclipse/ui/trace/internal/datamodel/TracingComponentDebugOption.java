@@ -224,11 +224,6 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 		}
 	}
 
-	@Override
-	public TracingComponentDebugOption clone() {
-		return new TracingComponentDebugOption(getParent(), fOptionPath, fOptionPathValue);
-	}
-
 	/**
 	 * The option-path - this value cannot change
 	 */

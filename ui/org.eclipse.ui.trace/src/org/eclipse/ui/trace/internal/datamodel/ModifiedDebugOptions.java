@@ -23,71 +23,31 @@ public class ModifiedDebugOptions {
 	 */
 	public ModifiedDebugOptions() {
 
-		this.debugOptionsToAdd = new ArrayList<TracingComponentDebugOption>();
-		this.debugOptionsToRemove = new ArrayList<TracingComponentDebugOption>();
+		this.modifiedDebugOptions = new ArrayList<TracingComponentDebugOption>();
 	}
 
 	/**
-	 * Accessor for an array of the {@link TracingComponentDebugOption} items that were selected to be added on the
+	 * Accessor for an array of the {@link TracingComponentDebugOption} items that were modified on the
 	 * tracing preference page.
 	 * 
-	 * @return An array of the {@link TracingComponentDebugOption} items that were selected to be added on the tracing
+	 * @return An array of the {@link TracingComponentDebugOption} items that were modified on the tracing
 	 *         preference page
 	 */
-	public final TracingComponentDebugOption[] getDebugOptionsToAdd() {
+	public final TracingComponentDebugOption[] getModifiedDebugOptions() {
 
-		return this.debugOptionsToAdd.toArray(new TracingComponentDebugOption[this.debugOptionsToAdd.size()]);
+		return this.modifiedDebugOptions.toArray(new TracingComponentDebugOption[this.modifiedDebugOptions.size()]);
 	}
 
 	/**
-	 * Accessor for an array of the {@link TracingComponentDebugOption} items that were selected to be removed on the
-	 * tracing preference page.
-	 * 
-	 * @return An array of the {@link TracingComponentDebugOption} items that were selected to be removed on the tracing
-	 *         preference page
-	 */
-	public final TracingComponentDebugOption[] getDebugOptionsToRemove() {
-
-		return this.debugOptionsToRemove.toArray(new TracingComponentDebugOption[this.debugOptionsToRemove.size()]);
-	}
-
-	/**
-	 * Adds a new {@link TracingComponentDebugOption} to the list of debug options to add
+	 * Adds a {@link TracingComponentDebugOption} to the list of modified debug options
 	 * 
 	 * @param option
-	 *            The {@link TracingComponentDebugOption} option to add
+	 *            The {@link TracingComponentDebugOption} option that got modified
 	 */
-	public final void addDebugOption(final TracingComponentDebugOption option) {
+	public final void addModifiedDebugOption(final TracingComponentDebugOption option) {
 
 		if (option != null) {
-			boolean isBeingRemoved = this.debugOptionsToRemove.contains(option);
-			if (isBeingRemoved) {
-				// remove it from the list of debug options to remove
-				this.debugOptionsToRemove.remove(option);
-			} else {
-				// add it to the list of debug options to add
-				this.debugOptionsToAdd.add(option);
-			}
-		}
-	}
-
-	/**
-	 * Adds a new {@link TracingComponentDebugOption} to the list of debug options to remove
-	 * 
-	 * @param option
-	 *            The {@link TracingComponentDebugOption} option to add
-	 */
-	public final void removeDebugOption(final TracingComponentDebugOption option) {
-
-		if (option != null) {
-			boolean isBeingAdded = this.debugOptionsToAdd.contains(option);
-			if (isBeingAdded) {
-				// remove it from the list of debug options to add
-				this.debugOptionsToAdd.remove(option);
-			} else {
-				// add it to the list of debug options to remove
-				this.debugOptionsToRemove.add(option);
-			}
+			this.modifiedDebugOptions.add(option);
 		}
 	}
 
@@ -96,17 +56,12 @@ public class ModifiedDebugOptions {
 	 */
 	public final void clear() {
 
-		this.debugOptionsToAdd.clear();
-		this.debugOptionsToRemove.clear();
+		this.modifiedDebugOptions.clear();
 	}
 
 	/**
-	 * A list of the {@link TracingComponentDebugOption} instances to be added.
+	 * A list of the {@link TracingComponentDebugOption} instances that got modified.
 	 */
-	private List<TracingComponentDebugOption> debugOptionsToAdd = null;
+	private List<TracingComponentDebugOption> modifiedDebugOptions = null;
 
-	/**
-	 * A list of the {@link TracingComponentDebugOption} instances to be removed.
-	 */
-	private List<TracingComponentDebugOption> debugOptionsToRemove = null;
 }
