@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.ui.trace.internal.datamodel;
 
-import org.eclipse.ui.trace.internal.TracingUIActivator;
 import org.eclipse.ui.trace.internal.utils.*;
 
 /**
@@ -32,9 +31,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public TracingComponentDebugOption(final String path, final String value) {
 
 		this(null, path, value);
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	/**
@@ -50,18 +47,16 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public TracingComponentDebugOption(final TracingNode parentNode, final String path, final String value) {
 
 		super();
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {parentNode, path, value});
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, new Object[] {parentNode, path, value});
+
 		assert (path != null);
 		assert (value != null);
 		this.fOptionPath = path;
 		this.fOptionPathValue = value;
 		this.setParent(parentNode);
 		this.setLabel(path);
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	@Override
@@ -142,9 +137,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 			String value = DebugOptionsHandler.getDebugOptions().getOption(this.fOptionPath);
 			isEnabled = (value != null);
 		}
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, String.valueOf(isEnabled));
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, String.valueOf(isEnabled));
 		return isEnabled;
 	}
 
@@ -169,9 +162,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	 */
 	public final String getOptionPath() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.fOptionPath);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.fOptionPath);
 		return this.fOptionPath;
 	}
 
@@ -182,9 +173,7 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	 */
 	public final String getOptionPathValue() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.fOptionPathValue);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.fOptionPathValue);
 		return this.fOptionPathValue;
 	}
 
@@ -196,14 +185,10 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	 */
 	public final void setOptionPathValue(final String newValue) {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, newValue);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, newValue);
 		assert (newValue != null);
 		this.fOptionPathValue = newValue;
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	/**
@@ -215,13 +200,9 @@ public class TracingComponentDebugOption extends AbstractTracingNode {
 	public final void setOptionPathValue(final boolean newValue) {
 
 		String valueAsString = Boolean.toString(newValue);
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, valueAsString);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, valueAsString);
 		this.fOptionPathValue = valueAsString;
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	/**

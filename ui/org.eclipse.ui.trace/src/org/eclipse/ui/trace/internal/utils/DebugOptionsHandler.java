@@ -27,17 +27,12 @@ public class DebugOptionsHandler {
 	 */
 	public final static DebugOptions getDebugOptions() {
 
-		if (TracingUIActivator.DEBUG) {
-			TRACE.traceEntry(null);
-		}
 		if (DebugOptionsHandler.debugTracker == null) {
 			DebugOptionsHandler.debugTracker = new ServiceTracker<Object, Object>(TracingUIActivator.getDefault().getBundle().getBundleContext(), DebugOptions.class.getName(), null);
 			DebugOptionsHandler.debugTracker.open();
 		}
 		final DebugOptions debugOptions = (DebugOptions) DebugOptionsHandler.debugTracker.getService();
-		if (TracingUIActivator.DEBUG) {
-			TRACE.traceExit(null, debugOptions);
-		}
+
 		return debugOptions;
 	}
 
@@ -48,13 +43,7 @@ public class DebugOptionsHandler {
 	 */
 	public final static boolean isTracingEnabled() {
 
-		if (TracingUIActivator.DEBUG) {
-			TRACE.traceEntry(null);
-		}
 		boolean result = DebugOptionsHandler.getDebugOptions().isDebugEnabled();
-		if (TracingUIActivator.DEBUG) {
-			TRACE.traceExit(null, Boolean.valueOf(result));
-		}
 		return result;
 	}
 
@@ -67,13 +56,7 @@ public class DebugOptionsHandler {
 	 */
 	public final static void setDebugEnabled(final boolean value) {
 
-		if (TracingUIActivator.DEBUG) {
-			TRACE.traceEntry(null);
-		}
 		DebugOptionsHandler.getDebugOptions().setDebugEnabled(value);
-		if (TracingUIActivator.DEBUG) {
-			TRACE.traceExit(null);
-		}
 	}
 
 	/** The debug service for this product */

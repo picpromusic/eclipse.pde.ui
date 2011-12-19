@@ -108,7 +108,7 @@ public class TracingConstants {
 	public final static String TRACE_DEBUG_STRING = "/debug"; //$NON-NLS-1$
 
 	/** The tracing identifier for tracing the preference handling of this bundle */
-	public final static String TRACE_PREFERENCES_STRING = "/debug/preference"; //$NON-NLS-1$
+	public final static String TRACE_PREFERENCES_STRING = "/debug/preferences"; //$NON-NLS-1$
 
 	/** The tracing identifier for tracing model operations used in this bundle */
 	public final static String TRACE_MODEL_STRING = "/debug/model"; //$NON-NLS-1$

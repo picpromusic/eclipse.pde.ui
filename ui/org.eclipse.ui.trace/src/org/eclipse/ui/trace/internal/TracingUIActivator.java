@@ -108,32 +108,7 @@ public class TracingUIActivator extends AbstractUIPlugin implements DebugOptions
 
 		// refresh the trace with new options
 		((Trace) trace).setDebugTrace(options.newDebugTrace(TracingConstants.BUNDLE_ID));
-
-		DEBUG = options.getBooleanOption(TracingConstants.BUNDLE_ID + TracingConstants.TRACE_DEBUG_STRING, false);
-		DEBUG_PREFERENCES = options.getBooleanOption(TracingConstants.BUNDLE_ID + TracingConstants.TRACE_PREFERENCES_STRING, false);
-		DEBUG_MODEL = options.getBooleanOption(TracingConstants.BUNDLE_ID + TracingConstants.TRACE_MODEL_STRING, false);
-		DEBUG_UI = options.getBooleanOption(TracingConstants.BUNDLE_ID + TracingConstants.TRACE_UI_STRING, false);
-		DEBUG_UI_LISTENERS = options.getBooleanOption(TracingConstants.BUNDLE_ID + TracingConstants.TRACE_UI_LISTENERS_STRING, false);
-		DEBUG_UI_PROVIDERS = options.getBooleanOption(TracingConstants.BUNDLE_ID + TracingConstants.TRACE_UI_PROVIDERS_STRING, false);
 	}
-
-	/** Is generic tracing enabled for this bundle? */
-	public static boolean DEBUG = false;
-
-	/** Is tracing enable for this bundles preference handling? */
-	public static boolean DEBUG_PREFERENCES = false;
-
-	/** Is tracing enabled for this bundles model handling usage? */
-	public static boolean DEBUG_MODEL = false;
-
-	/** Is tracing enabled for this bundles model handling usage? */
-	public static boolean DEBUG_UI = false;
-
-	/** Is tracing enabled for this bundles model handling usage? */
-	public static boolean DEBUG_UI_LISTENERS = false;
-
-	/** Is tracing enabled for this bundles model handling usage? */
-	public static boolean DEBUG_UI_PROVIDERS = false;
 
 	/** The shared instance */
 	private static TracingUIActivator plugin = null;

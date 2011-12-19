@@ -26,13 +26,11 @@ public abstract class AbstractTracingNode implements TracingNode {
 	 */
 	public AbstractTracingNode() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
+
 		this.children = new ArrayList<TracingNode>();
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	/**
@@ -42,66 +40,58 @@ public abstract class AbstractTracingNode implements TracingNode {
 
 	public String getLabel() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.label);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.label);
+
 		return this.label;
 	}
 
 	public TracingNode getParent() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.parent);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.parent);
+
 		return this.parent;
 	}
 
 	public TracingNode[] getChildren() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
+
 		this.initialize();
 		TracingNode[] results = this.children.toArray(new TracingNode[this.children.size()]);
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.children);
-		}
+
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, this.children);
+
 		return results;
 	}
 
 	public boolean hasChildren() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
+
 		boolean hasChildren = false;
 		this.initialize();
 		if (this.children != null) {
-			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no children for this node: " + this); //$NON-NLS-1$
-			}
+
+			TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "There are no children for this node: " + this); //$NON-NLS-1$
+
 			hasChildren = this.children.size() > 0;
 		}
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, String.valueOf(hasChildren));
-		}
+
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING, String.valueOf(hasChildren));
+
 		return hasChildren;
 	}
 
 	public void addChild(final TracingNode childNode) {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, childNode);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, childNode);
+
 		if (!this.children.contains(childNode)) {
-			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, "Adding child node: " + childNode); //$NON-NLS-1$
-			}
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, "Adding child node: " + childNode); //$NON-NLS-1$
+
 			this.children.add(childNode);
 		}
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	/**
@@ -109,50 +99,40 @@ public abstract class AbstractTracingNode implements TracingNode {
 	 */
 	public void initialize() {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING);
+
 		if (!this.childrenInitialized) {
-			if (TracingUIActivator.DEBUG_MODEL) {
-				TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, "First time population of the child nodes for '" + this); //$NON-NLS-1$
-			}
+
+			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, "First time population of the child nodes for '" + this); //$NON-NLS-1$
+
 			this.populateChildren();
 			this.childrenInitialized = true;
 		}
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	public void setLabel(final String label) {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, label);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, label);
 		this.label = label;
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	public void setParent(final TracingNode parent) {
 
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, parent);
-		}
+		TRACE.traceEntry(TracingConstants.TRACE_MODEL_STRING, parent);
+
 		if (this.parent == null) {
 			this.parent = parent;
 			if (this.parent != null) {
 				// since a parent is being set then it should also be added as a child
-				if (TracingUIActivator.DEBUG_MODEL) {
-					TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding '" + this + "' to the parent node '" + this.parent + "'."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				}
+				TRACE.trace(TracingConstants.TRACE_MODEL_STRING, "Adding '" + this + "' to the parent node '" + this.parent + "'."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
 				this.parent.addChild(this);
 			}
 		}
-		if (TracingUIActivator.DEBUG_MODEL) {
-			TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
-		}
+		TRACE.traceExit(TracingConstants.TRACE_MODEL_STRING);
 	}
 
 	/** This nodes parent node */
