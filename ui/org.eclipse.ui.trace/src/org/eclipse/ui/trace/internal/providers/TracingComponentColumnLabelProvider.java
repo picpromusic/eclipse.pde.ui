@@ -11,12 +11,17 @@
 package org.eclipse.ui.trace.internal.providers;
 
 import org.eclipse.jface.viewers.ColumnLabelProvider;
+import org.eclipse.osgi.service.debug.DebugTrace;
+import org.eclipse.ui.trace.internal.TracingUIActivator;
 import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
 /**
  * A label provide object for the tracing UI viewers columns.
  */
 public class TracingComponentColumnLabelProvider extends ColumnLabelProvider {
+
+	/** Trace object for this bundle */
+	protected final static DebugTrace TRACE = TracingUIActivator.getDefault().getTrace();
 
 	/**
 	 * Construct a new {@link TracingComponentColumnLabelProvider} for the specified index.
@@ -34,7 +39,16 @@ public class TracingComponentColumnLabelProvider extends ColumnLabelProvider {
 	@Override
 	public String getText(final Object element) {
 
-		return TracingComponentLabelProvider.getLabel(this.columnIndex, element);
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, element);
+		}
+
+		String label = TracingComponentLabelProvider.getLabel(this.columnIndex, element);
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, label);
+		}
+		return label;
 	}
 
 	/**

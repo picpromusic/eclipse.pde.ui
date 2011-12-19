@@ -13,33 +13,59 @@ package org.eclipse.ui.trace.internal.providers;
 import java.util.Collection;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.osgi.service.debug.DebugTrace;
+import org.eclipse.ui.trace.internal.TracingUIActivator;
 import org.eclipse.ui.trace.internal.datamodel.TracingNode;
+import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
 /**
  * An {@link ITreeContentProvider} implementation for providing the content to display in the tracing viewer
  */
 public class TracingComponentContentProvider implements ITreeContentProvider {
 
+	/** Trace object for this bundle */
+	protected final static DebugTrace TRACE = TracingUIActivator.getDefault().getTrace();
+
 	public TracingNode[] getChildren(final Object parentElement) {
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, parentElement);
+		}
 
 		TracingNode[] children = null;
 		if (parentElement instanceof TracingNode) {
 			final TracingNode node = (TracingNode) parentElement;
 			children = node.getChildren();
 		}
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, children);
+		}
 		return children;
 	}
 
 	public boolean hasChildren(final Object element) {
 
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, element);
+		}
+
 		boolean hasChildren = false;
 		if ((element != null) && (element instanceof TracingNode)) {
 			hasChildren = ((TracingNode) element).hasChildren();
+		}
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, hasChildren);
 		}
 		return hasChildren;
 	}
 
 	public Object[] getElements(final Object inputElement) {
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, inputElement);
+		}
 
 		TracingNode results[] = null;
 		if (inputElement instanceof TracingNode) {
@@ -50,14 +76,25 @@ public class TracingComponentContentProvider implements ITreeContentProvider {
 			Collection<?> collectionElement = (Collection<?>) inputElement;
 			results = collectionElement.toArray(new TracingNode[collectionElement.size()]);
 		}
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, results);
+		}
 		return results;
 	}
 
 	public Object getParent(final Object element) {
 
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, element);
+		}
+
 		TracingNode node = null;
 		if ((element != null) && (element instanceof TracingNode)) {
 			node = ((TracingNode) element).getParent();
+		}
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, node);
 		}
 		return node;
 	}

@@ -11,6 +11,8 @@
 package org.eclipse.ui.trace.internal.providers;
 
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.osgi.service.debug.DebugTrace;
+import org.eclipse.ui.trace.internal.TracingUIActivator;
 import org.eclipse.ui.trace.internal.datamodel.*;
 import org.eclipse.ui.trace.internal.utils.TracingConstants;
 
@@ -21,10 +23,21 @@ import org.eclipse.ui.trace.internal.utils.TracingConstants;
  */
 public class TracingComponentLabelProvider extends LabelProvider {
 
+	/** Trace object for this bundle */
+	protected final static DebugTrace TRACE = TracingUIActivator.getDefault().getTrace();
+
 	@Override
 	public String getText(final Object element) {
 
-		return TracingComponentLabelProvider.getLabel(TracingConstants.LABEL_COLUMN_INDEX, element);
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, element);
+		}
+		String label = TracingComponentLabelProvider.getLabel(TracingConstants.LABEL_COLUMN_INDEX, element);
+
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, label);
+		}
+		return label;
 	}
 
 	/**
@@ -48,6 +61,10 @@ public class TracingComponentLabelProvider extends LabelProvider {
 	 */
 	public final static String getLabel(final int columnIndex, final Object element) {
 
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceEntry(TracingConstants.TRACE_UI_PROVIDERS_STRING, new Object[] {new Integer(columnIndex), element});
+		}
+
 		String result = null;
 		switch (columnIndex) {
 			case TracingConstants.LABEL_COLUMN_INDEX :
@@ -70,6 +87,9 @@ public class TracingComponentLabelProvider extends LabelProvider {
 				break;
 			default : // do nothing
 				break;
+		}
+		if (TracingUIActivator.DEBUG_UI_PROVIDERS) {
+			TRACE.traceExit(TracingConstants.TRACE_UI_PROVIDERS_STRING, result);
 		}
 		return result;
 	}
