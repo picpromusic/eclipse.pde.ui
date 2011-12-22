@@ -11,13 +11,17 @@
 package org.eclipse.pde.internal.core;
 
 import org.eclipse.core.runtime.preferences.*;
+import org.eclipse.pde.internal.core.platform.DevelopmentPlatform;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
  * Disallows importing of target platform preferences. Target platform should not
  * be modified by preference import.
  * 
+ * TODO 159072 Delete?
+ * 
  * @since 3.5
+ * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}, not preferences anymore
  */
 public class TargetPreferenceModifyListener extends PreferenceModifyListener {
 
@@ -40,15 +44,8 @@ public class TargetPreferenceModifyListener extends PreferenceModifyListener {
 				node.remove(ICoreConstants.POOLED_URLS);
 				node.remove(ICoreConstants.PROGRAM_ARGS);
 				node.remove(ICoreConstants.OS);
-				for (int i = 0; i < 4; i++) {
-					StringBuffer key = new StringBuffer();
-					key.append(ICoreConstants.SAVED_PLATFORM);
-					key.append(i);
-					node.remove(key.toString());
-				}
 				node.remove(ICoreConstants.TARGET_MODE);
 				node.remove(ICoreConstants.TARGET_PLATFORM_REALIZATION);
-				node.remove(ICoreConstants.TARGET_PROFILE);
 				node.remove(ICoreConstants.VM_ARGS);
 				node.remove(ICoreConstants.WORKSPACE_TARGET_HANDLE);
 				node.remove(ICoreConstants.WS);

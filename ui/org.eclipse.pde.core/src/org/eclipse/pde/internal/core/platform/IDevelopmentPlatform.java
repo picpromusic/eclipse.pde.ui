@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.platform;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.pde.internal.core.FeatureModelManager;
-import org.eclipse.pde.internal.core.PDEState;
-import org.eclipse.pde.internal.core.target.provisional.ITargetDefinition;
+import org.eclipse.pde.core.target.ITargetDefinition;
+import org.eclipse.pde.internal.core.*;
+import org.eclipse.pde.internal.core.schema.SchemaRegistry;
 
 /**
  * Central location for all bundles, features and models required to develop, build 
@@ -23,14 +21,24 @@ import org.eclipse.pde.internal.core.target.provisional.ITargetDefinition;
  */
 public interface IDevelopmentPlatform {
 
-	public void resolve(IProgressMonitor monitor) throws CoreException;
+	public SourceLocationManager getSourceLocationManager();
 
-	public ITargetDefinition getTargetDefinition();
+	public JavadocLocationManager getJavadocLocationManager();
 
-	public PDEState getState();
+	public TracingOptionsManager getTracingOptionsManager();
+
+	public PDEExtensionRegistry getExtensionRegistry();
+
+	public SchemaRegistry getSchemaRegistry();
 
 	public PluginModelManager getPluginModelManager();
 
 	public FeatureModelManager getFeatureModelManager();
+
+	public PDEState getState();
+
+	public ITargetDefinition getTargetDefinition();
+
+	public boolean isInitialized();
 
 }

@@ -19,6 +19,7 @@ import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.osgi.service.resolver.HostSpecification;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.core.plugin.PluginRegistry;
+import org.eclipse.pde.internal.core.platform.IDevelopmentPlatform;
 import org.eclipse.pde.internal.core.util.CoreUtility;
 
 public class JavadocLocationManager {
@@ -26,6 +27,21 @@ public class JavadocLocationManager {
 	public static final String JAVADOC_ID = "org.eclipse.pde.core.javadoc"; //$NON-NLS-1$
 
 	private HashMap fLocations;
+
+	/**
+	 * Development platform to initialize javadoc locations from
+	 */
+	private IDevelopmentPlatform fDevelopmentPlatform;
+
+	/**
+	 * Constructor for a javadoc location manager.  Requires a development platform to collect
+	 * extension entries. The entries are not initialized until required to lookup javadoc.
+	 * 
+	 * @param developmentPlatform development platform to access extensions from
+	 */
+	public JavadocLocationManager(IDevelopmentPlatform developmentPlatform) {
+		fDevelopmentPlatform = developmentPlatform;
+	}
 
 	public String getJavadocLocation(IPluginModelBase model) {
 		try {
@@ -67,14 +83,15 @@ public class JavadocLocationManager {
 		if (fLocations != null)
 			return;
 		fLocations = new HashMap();
-
-		IExtension[] extensions = PDECore.getDefault().getExtensionsRegistry().findExtensions(JAVADOC_ID, false);
-		for (int i = 0; i < extensions.length; i++) {
-			IPluginModelBase base = PluginRegistry.findModel(extensions[i].getContributor().getName());
-			// only search external models
-			if (base == null || base.getUnderlyingResource() != null)
-				continue;
-			processExtension(extensions[i], base);
+		if (fDevelopmentPlatform != null && fDevelopmentPlatform.isInitialized()) {
+			IExtension[] extensions = fDevelopmentPlatform.getExtensionRegistry().findExtensions(JAVADOC_ID, false);
+			for (int i = 0; i < extensions.length; i++) {
+				IPluginModelBase base = PluginRegistry.findModel(extensions[i].getContributor().getName());
+				// only search external models
+				if (base == null || base.getUnderlyingResource() != null)
+					continue;
+				processExtension(extensions[i], base);
+			}
 		}
 	}
 
@@ -134,10 +151,6 @@ public class JavadocLocationManager {
 				set.add(id);
 			}
 		}
-	}
-
-	public synchronized void reset() {
-		fLocations = null;
 	}
 
 }

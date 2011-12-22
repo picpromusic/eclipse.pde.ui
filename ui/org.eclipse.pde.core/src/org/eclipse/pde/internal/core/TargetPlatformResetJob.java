@@ -17,6 +17,10 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.internal.core.platform.ExternalLibraryCache;
 
+/**
+ * TODO 159072 Delete?
+ *
+ */
 public class TargetPlatformResetJob extends Job {
 
 	private PDEState fState;

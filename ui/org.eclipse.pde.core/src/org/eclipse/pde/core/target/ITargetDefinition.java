@@ -80,6 +80,17 @@ public interface ITargetDefinition {
 	public TargetBundle[] getAllBundles();
 
 	/**
+	 * Returns all features included in this target definition or <code>null</code>
+	 * if this container is not resolved. Takes all the features available from the
+	 * set target locations (returned by {@link #getAllFeatures()} and applies
+	 * any feature filters (returned by {@link #getIncluded()}) to determine the 
+	 * final list of features in this target. Any bundle filters will be ignored.
+	 * 
+	 * @return resolved features or <code>null</code>
+	 */
+	public TargetFeature[] getFeatures();
+
+	/**
 	 * Returns the list of feature models available in this target or <code>null</code> if
 	 * this target has not been resolved.
 	 * 

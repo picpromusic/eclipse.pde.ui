@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.pde.core.build.IBuildModel;
 import org.eclipse.pde.internal.core.*;
-import org.eclipse.pde.internal.core.platform.PDEStateStandin;
 
 public abstract class ExternalPluginModelBase extends AbstractPluginModelBase {
 
@@ -64,7 +63,7 @@ public abstract class ExternalPluginModelBase extends AbstractPluginModelBase {
 	public void load() {
 	}
 
-	public void load(BundleDescription description, PDEStateStandin state) {
+	public void load(BundleDescription description, PDEState state) {
 		IPath path = new Path(description.getLocation());
 		String device = path.getDevice();
 		if (device != null)

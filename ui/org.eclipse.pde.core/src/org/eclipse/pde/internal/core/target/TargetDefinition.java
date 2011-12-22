@@ -866,6 +866,60 @@ public class TargetDefinition implements ITargetDefinition {
 	}
 
 	/* (non-Javadoc)
+	 * @see org.eclipse.pde.core.target.ITargetDefinition#getFeatures()
+	 */
+	public TargetFeature[] getFeatures() {
+		TargetFeature[] allFeatures = getAllFeatures();
+		List included = new ArrayList();
+
+		// If the target has includes, but only plug-ins are specified, just include all features
+		// If the target has feature includes, only add features that are included (bug 308693)
+		NameVersionDescriptor[] includes = getIncluded();
+		boolean featuresFound = false; // If only plug-ins are specified, include all features
+		if (includes != null) {
+			for (int i = 0; i < includes.length; i++) {
+				if (includes[i].getType() == NameVersionDescriptor.TYPE_FEATURE) {
+					featuresFound = true;
+					TargetFeature bestMatch = null;
+					for (int j = 0; j < allFeatures.length; j++) {
+						TargetFeature feature = allFeatures[j];
+						if (feature.getId().equals(includes[i].getId())) {
+							if (includes[i].getVersion() != null) {
+								// Try to find an exact feature match
+								if (includes[i].getVersion().equals(feature.getVersion())) {
+									// Exact match
+									bestMatch = feature;
+									break;
+								}
+							} else if (bestMatch != null) {
+								// If no version specified take the highest version
+								Version v1 = Version.parseVersion(feature.getVersion());
+								Version v2 = Version.parseVersion(feature.getVersion());
+								if (v1.compareTo(v2) > 0) {
+									bestMatch = feature;
+								}
+							}
+
+							if (bestMatch == null) {
+								// If we can't find a version match, just take any name match
+								bestMatch = feature;
+							}
+						}
+					}
+					if (bestMatch != null) {
+						included.add(bestMatch);
+					}
+				}
+			}
+		}
+
+		if (includes == null || !featuresFound) {
+			return allFeatures;
+		}
+		return (TargetFeature[]) included.toArray(new TargetFeature[included.size()]);
+	}
+
+	/* (non-Javadoc)
 	 * @see org.eclipse.pde.core.target.ITargetDefinition#getAllFeatures()
 	 */
 	public TargetFeature[] getAllFeatures() {

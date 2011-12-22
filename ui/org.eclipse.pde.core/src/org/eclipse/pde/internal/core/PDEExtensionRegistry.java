@@ -42,15 +42,6 @@ public class PDEExtensionRegistry {
 		}
 	}
 
-	public PDEExtensionRegistry(IPluginModelBase[] models) {
-		fModels = models;
-		if (fStrategy == null) {
-			File extensionsDir = new File(PDECore.getDefault().getStateLocation().toFile(), EXTENSION_DIR);
-			// Use TargetPDERegistryStrategy so we don't connect listeners to PluginModelManager.  This is used only in target so we don't need change events.
-			fStrategy = new TargetPDERegistryStrategy(new File[] {extensionsDir}, new boolean[] {false}, fMasterKey, this);
-		}
-	}
-
 	// Methods used to control information/status of Extension Registry
 
 	protected IPluginModelBase[] getModels() {

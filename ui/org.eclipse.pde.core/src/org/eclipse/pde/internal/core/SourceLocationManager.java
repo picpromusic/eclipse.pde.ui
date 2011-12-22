@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.spi.RegistryContributor;
 import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.pde.core.plugin.*;
+import org.eclipse.pde.internal.core.platform.IDevelopmentPlatform;
 import org.osgi.framework.Version;
 
 /**
@@ -29,12 +30,28 @@ public class SourceLocationManager implements ICoreConstants {
 	/**
 	 * List of source locations that have been discovered using extension points
 	 */
-	private List fExtensionLocations = null;
+	private List fExtensionLocations;
 
 	/**
 	 * Manages locations of individual source bundles
 	 */
-	private BundleManifestSourceLocationManager fBundleManifestLocator = null;
+	private BundleManifestSourceLocationManager fBundleManifestLocator;
+
+	/**
+	 * Development platform to initialize source locations from
+	 */
+	private IDevelopmentPlatform fDevelopmentPlatform;
+
+	/**
+	 * Constructor for a source location manager.  Requires a development platform to collect
+	 * source bundles and extension source entries. The entries are not initialized until required
+	 * to lookup source.
+	 * 
+	 * @param developmentPlatform development platform to access source from
+	 */
+	public SourceLocationManager(IDevelopmentPlatform developmentPlatform) {
+		fDevelopmentPlatform = developmentPlatform;
+	}
 
 	/**
 	 * Searches source locations for one that provides source for the given pluginBase.
@@ -165,14 +182,6 @@ public class SourceLocationManager implements ICoreConstants {
 	}
 
 	/**
-	 * Clears the cache of all known extension and bundle manifest locations.
-	 */
-	public void reset() {
-		fExtensionLocations = null;
-		fBundleManifestLocator = null;
-	}
-
-	/**
 	 * @return array of source locations that have been specified by the user
 	 */
 	public List getUserLocations() {
@@ -189,7 +198,7 @@ public class SourceLocationManager implements ICoreConstants {
 	 */
 	public List getExtensionLocations() {
 		if (fExtensionLocations == null) {
-			fExtensionLocations = processExtensions();
+			fExtensionLocations = initializeExtensionLocations();
 		}
 		return fExtensionLocations;
 	}
@@ -337,38 +346,45 @@ public class SourceLocationManager implements ICoreConstants {
 	/**
 	 * @return array of source locations that were added via extension point
 	 */
-	private static List processExtensions() {
+	private List initializeExtensionLocations() {
 		ArrayList result = new ArrayList();
-		IExtension[] extensions = PDECore.getDefault().getExtensionsRegistry().findExtensions(PDECore.PLUGIN_ID + ".source", false); //$NON-NLS-1$
-		for (int i = 0; i < extensions.length; i++) {
-			IConfigurationElement[] children = extensions[i].getConfigurationElements();
-			RegistryContributor contributor = (RegistryContributor) extensions[i].getContributor();
-			long bundleId = Long.parseLong(contributor.getActualId());
-			BundleDescription desc = PDECore.getDefault().getModelManager().getState().getState().getBundle(Long.parseLong(contributor.getActualId()));
-			IPluginModelBase base = null;
-			if (desc != null)
-				base = PluginRegistry.findModel(desc);
-			// desc might be null if the workspace contains a plug-in with the same Bundle-SymbolicName
-			else {
-				ModelEntry entry = PluginRegistry.findEntry(contributor.getActualName());
-				IPluginModelBase externalModels[] = entry.getExternalModels();
-				for (int j = 0; j < externalModels.length; j++) {
-					BundleDescription extDesc = externalModels[j].getBundleDescription();
-					if (extDesc != null && extDesc.getBundleId() == bundleId)
-						base = externalModels[j];
+		if (fDevelopmentPlatform != null && fDevelopmentPlatform.isInitialized()) {
+			IExtension[] extensions = fDevelopmentPlatform.getExtensionRegistry().findExtensions(PDECore.PLUGIN_ID + ".source", false); //$NON-NLS-1$
+			for (int i = 0; i < extensions.length; i++) {
+				IConfigurationElement[] children = extensions[i].getConfigurationElements();
+				RegistryContributor contributor = (RegistryContributor) extensions[i].getContributor();
+				long bundleId = Long.parseLong(contributor.getActualId());
+				BundleDescription desc = fDevelopmentPlatform.getState().getState().getBundle(Long.parseLong(contributor.getActualId()));
+				IPluginModelBase base = null;
+				
+				// TODO Need the development platform specific plugin registry
+				fDevelopmentPlatform.getPluginModelManager().
+				
+				
+				if (desc != null)
+					base = PluginRegistry.findModel(desc);
+				// desc might be null if the workspace contains a plug-in with the same Bundle-SymbolicName
+				else {
+					ModelEntry entry = PluginRegistry.findEntry(contributor.getActualName());
+					IPluginModelBase externalModels[] = entry.getExternalModels();
+					for (int j = 0; j < externalModels.length; j++) {
+						BundleDescription extDesc = externalModels[j].getBundleDescription();
+						if (extDesc != null && extDesc.getBundleId() == bundleId)
+							base = externalModels[j];
+					}
 				}
-			}
-			if (base == null)
-				continue;
-			for (int j = 0; j < children.length; j++) {
-				if (children[j].getName().equals("location")) { //$NON-NLS-1$
-					String pathValue = children[j].getAttribute("path"); //$NON-NLS-1$
-					IPath path = new Path(base.getInstallLocation()).append(pathValue);
-					if (path.toFile().exists()) {
-						SourceLocation location = new SourceLocation(path);
-						location.setUserDefined(false);
-						if (!result.contains(location))
-							result.add(location);
+				if (base == null)
+					continue;
+				for (int j = 0; j < children.length; j++) {
+					if (children[j].getName().equals("location")) { //$NON-NLS-1$
+						String pathValue = children[j].getAttribute("path"); //$NON-NLS-1$
+						IPath path = new Path(base.getInstallLocation()).append(pathValue);
+						if (path.toFile().exists()) {
+							SourceLocation location = new SourceLocation(path);
+							location.setUserDefined(false);
+							if (!result.contains(location))
+								result.add(location);
+						}
 					}
 				}
 			}
@@ -381,9 +397,11 @@ public class SourceLocationManager implements ICoreConstants {
 	 * platform.
 	 * @return bundle manifest source location manager
 	 */
-	protected BundleManifestSourceLocationManager initializeBundleManifestLocations() {
+	private BundleManifestSourceLocationManager initializeBundleManifestLocations() {
 		BundleManifestSourceLocationManager manager = new BundleManifestSourceLocationManager();
-		manager.setPlugins(PDECore.getDefault().getModelManager().getExternalModels());
+		if (fDevelopmentPlatform != null && fDevelopmentPlatform.isInitialized()) {
+			manager.setPlugins(fDevelopmentPlatform.getPluginModelManager().getExternalModels());
+		}
 		return manager;
 	}
 

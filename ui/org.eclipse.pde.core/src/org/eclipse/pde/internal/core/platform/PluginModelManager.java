@@ -70,7 +70,7 @@ public class PluginModelManager {
 	/**
 	 * Perform cleanup upon shutting down
 	 */
-	public void shutdown() {
+	public void dispose() {
 		if (fListeners != null) {
 			fListeners.clear();
 			fListeners = null;

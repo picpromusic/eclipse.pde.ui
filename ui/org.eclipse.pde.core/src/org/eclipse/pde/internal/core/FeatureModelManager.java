@@ -55,7 +55,7 @@ public class FeatureModelManager {
 		fListeners = new ArrayList();
 	}
 
-	public synchronized void shutdown() {
+	public synchronized void dispose() {
 		if (fWorkspaceManager != null)
 			fWorkspaceManager.removeModelProviderListener(fProviderListener);
 		if (fExternalManager != null) {

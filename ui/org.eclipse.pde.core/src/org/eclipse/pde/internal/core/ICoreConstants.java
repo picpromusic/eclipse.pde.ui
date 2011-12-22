@@ -14,30 +14,69 @@ package org.eclipse.pde.internal.core;
 import java.util.Locale;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.pde.internal.core.platform.DevelopmentPlatform;
 import org.osgi.framework.Constants;
 
 public interface ICoreConstants {
 
-	// Target Platform
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String PLATFORM_PATH = "platform_path"; //$NON-NLS-1$
-	String SAVED_PLATFORM = "saved_platform"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String TARGET_MODE = "target_mode"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String VALUE_USE_THIS = "useThis"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String VALUE_USE_OTHER = "useOther"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String CHECKED_PLUGINS = "checkedPlugins"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String VALUE_SAVED_NONE = "[savedNone]"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String VALUE_SAVED_ALL = "[savedAll]"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String VALUE_SAVED_SOME = "savedSome"; //$NON-NLS-1$
+	/**
+	 * Internal preference allowing additional source locations to be added to the source location manager
+	 */
 	String P_SOURCE_LOCATIONS = "source_locations"; //$NON-NLS-1$
-	String P_EXT_LOCATIONS = "ext_locations"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String PROGRAM_ARGS = "program_args"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String VM_ARGS = "vm_args"; //$NON-NLS-1$
+	/**
+	 * @deprecated Outdated preference that when set, would add vm arguments from eclipse.ini to the target platform. This
+	 * is now handled directly on the preference page/editor, allowing the user to select a subset of arguments.
+	 */
 	String VM_LAUNCHER_INI = "vm_launcher_ini"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String IMPLICIT_DEPENDENCIES = "implicit_dependencies"; //$NON-NLS-1$
-	String GROUP_PLUGINS_VIEW = "group_plugins"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String ADDITIONAL_LOCATIONS = "additional_locations"; //$NON-NLS-1$
 	String TARGET_PLATFORM_REALIZATION = "target_platform_realization"; //$NON-NLS-1$
-
 	/**
 	 * This preference was only used during 3.5, it has been replaced in 3.6
 	 * with POOLED_URLS.
@@ -48,6 +87,7 @@ public interface ICoreConstants {
 	/**
 	 * Comma separated list of bundle URLs used from the bundle pool.
 	 * @since 3.6
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
 	 */
 	String POOLED_URLS = "pooled_urls"; //$NON-NLS-1$
 	/**
@@ -55,26 +95,49 @@ public interface ICoreConstants {
 	 * are comma separated, with each entry taking the form of [id]@[version]
 	 * 
 	 * @since 3.6
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
 	 */
 	String EXTERNAL_FEATURES = "external_features"; //$NON-NLS-1$
 	/**
 	 * @since 3.6 - Bug 282708: [target] issues with two versions of the same bundle 
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
 	 */
 	String CHECKED_VERSION_PLUGINS = "checkedVersionPlugins"; //$NON-NLS-1$
 
 	// Target Environment
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String OS = "org.eclipse.pde.ui.os"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String WS = "org.eclipse.pde.ui.ws"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String NL = "org.eclipse.pde.ui.nl"; //$NON-NLS-1$
+	/**
+	 * @deprecated Target platform data must be accessed through the {@link DevelopmentPlatform}
+	 */
 	String ARCH = "org.eclipse.pde.ui.arch"; //$NON-NLS-1$
 
+	/**
+	 * Internal preference that can be used to provide additional OS choices when editing a target platform
+	 */
 	String OS_EXTRA = "org.eclipse.pde.os.extra"; //$NON-NLS-1$
+	/**
+	 * Internal preference that can be used to provide additional WS choices when editing a target platform
+	 */
 	String WS_EXTRA = "org.eclipse.pde.ws.extra"; //$NON-NLS-1$
+	/**
+	 * Internal preference that can be used to provide additional NL choices when editing a target platform
+	 */
 	String NL_EXTRA = "org.eclipse.pde.nl.extra"; //$NON-NLS-1$
+	/**
+	 * Internal preference that can be used to provide additional ARCH choices when editing a target platform
+	 */
 	String ARCH_EXTRA = "org.eclipse.pde.arch.extra"; //$NON-NLS-1$
-
-	// Target JRE
-	String TARGET_JRE = "targetJRE"; //$NON-NLS-1$
 
 	/** Constant for the string <code>extension</code> */
 	public final static String EXTENSION_NAME = "extension"; //$NON-NLS-1$	
@@ -120,7 +183,6 @@ public interface ICoreConstants {
 	public static final String EQUINOX_PROPERTY = "pluginProject.equinox"; //$NON-NLS-1$
 	public static final String EXTENSIONS_PROPERTY = "pluginProject.extensions"; //$NON-NLS-1$
 	public static final String RESOLVE_WITH_REQUIRE_BUNDLE = "resolve.requirebundle"; //$NON-NLS-1$
-	public static final String TARGET_PROFILE = "target.profile"; //$NON-NLS-1$
 	/**
 	 * Configures launch shortcuts visible in the manifest editor for a project.
 	 * Value is a comma separated list of <code>org.eclipse.pde.ui.launchShortcuts</code>
@@ -229,7 +291,7 @@ public interface ICoreConstants {
 	public static final String WORKSPACE_TARGET_HANDLE = "workspace_target_handle"; //$NON-NLS-1$
 
 	/**
-	 * Explicit setting when the user chooses no target for the workspace.
+	 * Explicit setting when the user chooses no target for the workspace.  Value is set on {@link #WORKSPACE_TARGET_HANDLE} preference.
 	 */
 	public static final String NO_TARGET = "NO_TARGET"; //$NON-NLS-1$
 

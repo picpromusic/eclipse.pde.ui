@@ -32,6 +32,8 @@ import org.eclipse.pde.internal.core.target.*;
 /**
  * Sets the current target platform based on a target definition.
  * 
+ * TODO 159072 Delete? Move to part of the service?
+ * 
  * @since 3.8
  */
 public class LoadTargetDefinitionJob extends WorkspaceJob {
