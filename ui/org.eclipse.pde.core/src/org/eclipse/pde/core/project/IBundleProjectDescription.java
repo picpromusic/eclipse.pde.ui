@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -56,13 +56,16 @@ public interface IBundleProjectDescription {
 	public static final String VERSION_3_5 = ICoreConstants.TARGET35;
 	/**
 	 * Identifies bundles developed for Eclipse 3.6, value is <code>"3.6"</code>.
+	 * @deprecated Project structure did not change for this release. Use {@link #VERSION_3_5} instead.
 	 */
 	public static final String VERSION_3_6 = ICoreConstants.TARGET36;
 	/**
 	 * Identifies bundles developed for Eclipse 3.7, value is <code>"3.7"</code>.
+	 * @deprecated Project structure did not change for this release. Use {@link #VERSION_3_5} instead.
 	 * @since 3.7
 	 */
 	public static final String VERSION_3_7 = ICoreConstants.TARGET37;
+
 	/**
 	 * Constant for the PDE Plug-in project nature, value is <code>"org.eclipse.pde.PluginNature"</code>.
 	 */
@@ -344,8 +347,8 @@ public interface IBundleProjectDescription {
 	 * This affects the values generated for Equinox specific headers.
 	 * Has no effect when {@link #isEquinox()} is <code>false</code>.
 	 * When {@link #isEquinox()} is <code>true</code>, and a target version
-	 * is unspecified, the newest available target version of Eclipse is
-	 * used.
+	 * is unspecified or set to <code>null</code>, the newest available 
+	 * target version of Eclipse is used.
 	 * 
 	 * @param version one of the version constant values defined by this class or <code>null</code>
 	 * @see #setEquinox(boolean)
