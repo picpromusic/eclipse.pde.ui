@@ -56,15 +56,18 @@ public interface IBundleProjectDescription {
 	public static final String VERSION_3_5 = ICoreConstants.TARGET35;
 	/**
 	 * Identifies bundles developed for Eclipse 3.6, value is <code>"3.6"</code>.
-	 * @deprecated Project structure did not change for this release. Use {@link #VERSION_3_5} instead.
 	 */
 	public static final String VERSION_3_6 = ICoreConstants.TARGET36;
 	/**
 	 * Identifies bundles developed for Eclipse 3.7, value is <code>"3.7"</code>.
-	 * @deprecated Project structure did not change for this release. Use {@link #VERSION_3_5} instead.
 	 * @since 3.7
 	 */
 	public static final String VERSION_3_7 = ICoreConstants.TARGET37;
+	/**
+	 * Identifies bundles developed for Eclipse 3.8, value is <code>"3.8"</code>.
+	 * @since 3.8
+	 */
+	public static final String VERSION_3_8 = ICoreConstants.TARGET37;
 
 	/**
 	 * Constant for the PDE Plug-in project nature, value is <code>"org.eclipse.pde.PluginNature"</code>.
