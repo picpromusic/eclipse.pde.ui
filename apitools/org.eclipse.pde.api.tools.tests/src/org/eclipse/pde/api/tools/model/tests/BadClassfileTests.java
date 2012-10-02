@@ -81,8 +81,14 @@ public class BadClassfileTests extends TestCase {
 	public void testClassfileScanner() throws Exception {
 		writePreamble("testClassfileScanner()");
 		IApiTypeRoot root = container.findTypeRoot(CLASSFILE);
-		IApiType type = root.getStructure();
-		assertNull("The type must be null", type);
+		try {
+			IApiType type = root.getStructure();
+			assertNull("The type must be null", type);
+		}
+		catch(IllegalArgumentException iae) {
+			return;
+		}
+		fail("SHould have gotten an IllegalArgumentException");
 	}
 	
 	/**

@@ -14,8 +14,6 @@ package org.eclipse.pde.api.tools.internal.model;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,21 +25,18 @@ import org.eclipse.pde.api.tools.internal.provisional.model.IApiComponent;
 import org.eclipse.pde.api.tools.internal.provisional.model.IApiType;
 import org.eclipse.pde.api.tools.internal.provisional.model.IApiTypeRoot;
 import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.util.TraceAnnotationVisitor;
 
 /**
  * Class adapter used to create an API type structure
  */
-public class TypeStructureBuilder extends ClassAdapter {
+public class TypeStructureBuilder extends ClassVisitor {
 	ApiType fType;
 	IApiComponent fComponent;
 	IApiTypeRoot fFile;
@@ -56,7 +51,7 @@ public class TypeStructureBuilder extends ClassAdapter {
 	 * @param component originating API component or <code>null</code> if unknown
 	 */
 	TypeStructureBuilder(ClassVisitor cv, IApiComponent component, IApiTypeRoot file) {
-		super(cv);
+		super(Opcodes.ASM4, cv);
 		fComponent = component;
 		fFile = file;
 	}
@@ -160,7 +155,7 @@ public class TypeStructureBuilder extends ClassAdapter {
 			}
 		}
 		final ApiMethod method = fType.addMethod(name, desc, signature, laccess, names);
-		return new MethodAdapter(super.visitMethod(laccess, name, desc, signature, exceptions)) {
+		return new MethodVisitor(Opcodes.ASM4, super.visitMethod(laccess, name, desc, signature, exceptions)) {
 			public AnnotationVisitor visitAnnotation(String sig, boolean visible) {
 				if (visible && "Ljava/lang/invoke/MethodHandle$PolymorphicSignature;".equals(sig)) { //$NON-NLS-1$
 					method.isPolymorphic();
@@ -168,17 +163,11 @@ public class TypeStructureBuilder extends ClassAdapter {
 				return super.visitAnnotation(sig, visible);
 			}
 			public AnnotationVisitor visitAnnotationDefault() {
-				return new TraceAnnotationVisitor() {
+				return new AnnotationVisitor(Opcodes.ASM4) {
 					public void visitEnd() {
-						super.visitEnd();
-						StringWriter stringWriter = new StringWriter();
-						PrintWriter writer = new PrintWriter(stringWriter);
-						print(writer);
-						writer.flush();
-						writer.close();
-						String def = String.valueOf(stringWriter.getBuffer());
-						method.setDefaultValue(def);
-					}
+						//TODO need to figure out how to get the default value
+						//method.setDefaultValue(def);
+					};
 				};
 			}
 		};
@@ -200,6 +189,10 @@ public class TypeStructureBuilder extends ClassAdapter {
 			classReader.accept(visitor, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES);
 		} catch (ArrayIndexOutOfBoundsException e) {
 			ApiPlugin.log(e);
+		}
+		catch(IllegalArgumentException iae) {
+			ApiPlugin.log(iae);
+			return null;
 		}
 		return visitor.fType;
 	}
@@ -231,14 +224,14 @@ public class TypeStructureBuilder extends ClassAdapter {
 			}
 		}
 	}
-	static class EnclosingMethodSetter extends ClassAdapter {
+	static class EnclosingMethodSetter extends ClassVisitor {
 		String name;
 		String signature;
 		boolean found = false;
 		String typeName;
 
 		public EnclosingMethodSetter(ClassVisitor cv, String typeName) {
-			super(cv);
+			super(Opcodes.ASM4, cv);
 			this.typeName = typeName.replace('.', '/');
 		}
 		public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
@@ -264,11 +257,11 @@ public class TypeStructureBuilder extends ClassAdapter {
 			return null;
 		}
 	}
-	static class TypeNameFinder extends MethodAdapter {
+	static class TypeNameFinder extends MethodVisitor {
 		protected EnclosingMethodSetter setter;
 		
 		public TypeNameFinder(MethodVisitor mv, EnclosingMethodSetter enclosingMethodSetter) {
-			super(mv);
+			super(Opcodes.ASM4, mv);
 			this.setter = enclosingMethodSetter;
 		}
 		public void visitTypeInsn(int opcode, String type) {

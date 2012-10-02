@@ -153,6 +153,7 @@ public class TagScanner {
 						}
 						break;
 					}
+					default: break;
 				}
 			}
 			return false;
@@ -299,6 +300,7 @@ public class TagScanner {
 					}
 					break;
 				}
+				default: break;
 			}
 			return pruned;
 		}
@@ -517,7 +519,15 @@ public class TagScanner {
 			}
 			throw new CoreException(new Status(IStatus.ERROR, ApiPlugin.PLUGIN_ID,
 					MessageFormat.format("Error reading compilation unit: {0}", new String[]{source.getName()}), e)); //$NON-NLS-1$
-		} finally {
+		} 
+		catch(IllegalArgumentException iae) {
+			if (ApiPlugin.DEBUG_TAG_SCANNER) {
+				System.err.println(source.getName());
+			}
+			throw new CoreException(new Status(IStatus.ERROR, ApiPlugin.PLUGIN_ID,
+					MessageFormat.format("Error reading compilation unit: {0}", new String[]{source.getName()}), iae)); //$NON-NLS-1$
+		}
+		finally {	
 			if (inputStream != null) {
 				try {
 					inputStream.close();

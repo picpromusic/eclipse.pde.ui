@@ -992,6 +992,7 @@ public class ClassFileComparator {
 				buffer = new StringBuffer();
 				buffer.append(type.getName()).append('.').append(member.getName());
 				return String.valueOf(buffer);
+			default: break;
 		}
 		return null;
 	}
@@ -3335,10 +3336,11 @@ public class ClassFileComparator {
 	 */
 	private int getElementType(IApiMember member) {
 		switch (member.getType()) {
-		case IApiElement.TYPE:
-			return getElementType((IApiType)member);
-		case IApiElement.METHOD:
-			return getElementType((IApiMethod)member);
+			case IApiElement.TYPE:
+				return getElementType((IApiType)member);
+			case IApiElement.METHOD:
+				return getElementType((IApiMethod)member);
+			default: break;
 		}
 		return IDelta.FIELD_ELEMENT_TYPE;
 	}

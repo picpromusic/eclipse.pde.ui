@@ -664,6 +664,7 @@ public final class Util {
 				return "CLASS_ELEMENT_TYPE"; //$NON-NLS-1$
 			case IDelta.TYPE_PARAMETER_ELEMENT_TYPE :
 				return "TYPE_PARAMETER_ELEMENT_TYPE"; //$NON-NLS-1$
+			default: break;
 		}
 		return UNKNOWN_ELEMENT_KIND;
 	}

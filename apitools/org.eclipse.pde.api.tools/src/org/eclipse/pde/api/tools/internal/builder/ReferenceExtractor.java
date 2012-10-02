@@ -34,11 +34,10 @@ import org.eclipse.pde.api.tools.internal.provisional.model.IApiMethod;
 import org.eclipse.pde.api.tools.internal.provisional.model.IApiType;
 import org.eclipse.pde.api.tools.internal.util.Signatures;
 import org.eclipse.pde.api.tools.internal.util.Util;
-import org.objectweb.asm.ClassAdapter;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
-import org.objectweb.asm.MethodAdapter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -51,7 +50,7 @@ import org.objectweb.asm.tree.ClassNode;
  *
  * @since 1.0.0
  */
-public class ReferenceExtractor extends ClassAdapter {
+public class ReferenceExtractor extends ClassVisitor {
 
 	/**
 	 * A visitor for visiting java 5+ signatures
@@ -61,7 +60,7 @@ public class ReferenceExtractor extends ClassAdapter {
 	 * MethodSignature = (visitFormalTypeParameter visitClassBound? visitInterfaceBound* )* (visitParameterType visitReturnType visitExceptionType* )
 	 * TypeSignature = visitBaseType | visitTypeVariable | visitArrayType | (visitClassType visitTypeArgument* (visitInnerClassType visitTypeArgument* )* visitEnd</tt> ) )
 	 */
-	class ClassFileSignatureVisitor implements SignatureVisitor {
+	class ClassFileSignatureVisitor extends SignatureVisitor {
 
 		protected int kind = -1;
 		protected int originalkind = -1;
@@ -72,6 +71,7 @@ public class ReferenceExtractor extends ClassAdapter {
 		protected List references;
 
 		public ClassFileSignatureVisitor() {
+			super(Opcodes.ASM4);
 			this.references = new ArrayList();
 		}
 
@@ -222,7 +222,7 @@ public class ReferenceExtractor extends ClassAdapter {
 	 * Visitor used to visit the methods of a type
 	 * [ visitCode ( visitFrame | visit<i>X</i>Insn | visitLabel | visitTryCatchBlock | visitLocalVariable | visitLineNumber)* visitMaxs ] visitEnd
 	 */
-	class ClassFileMethodVisitor extends MethodAdapter {
+	class ClassFileMethodVisitor extends MethodVisitor {
 		int argumentcount = 0;
 		LinePositionTracker linePositionTracker;
 		/**
@@ -241,7 +241,7 @@ public class ReferenceExtractor extends ClassAdapter {
 		 * @param mv
 		 */
 		public ClassFileMethodVisitor(MethodVisitor mv, String name, int argumentcount) {
-			super(mv);
+			super(Opcodes.ASM4, mv);
 			this.argumentcount = argumentcount;
 			this.linePositionTracker = new LinePositionTracker();
 			this.lastLineNumber = -1;
@@ -264,10 +264,13 @@ public class ReferenceExtractor extends ClassAdapter {
 		 */
 		public void visitVarInsn(int opcode, int var) {
 			switch(opcode) {
-				case Opcodes.ASTORE :
+				case Opcodes.ASTORE : {
 					if (this.lastLineNumber != -1) {
 						this.localVariableMarker = new LocalLineNumberMarker(this.lastLineNumber, var);
 					}
+					break;
+				}
+				default: return;
 			}
 		}
 		
@@ -277,19 +280,21 @@ public class ReferenceExtractor extends ClassAdapter {
 		public void visitFieldInsn(int opcode, String owner, String name, String desc) {
 			int refType = -1;
 			switch (opcode) {
-			case Opcodes.PUTSTATIC:
-				refType = IReference.REF_PUTSTATIC;
-				break;
-			case Opcodes.PUTFIELD:
-				refType = IReference.REF_PUTFIELD;
-				break;
-			case Opcodes.GETSTATIC:
-				refType = IReference.REF_GETSTATIC;
-				break;
-			case Opcodes.GETFIELD:
-				refType = IReference.REF_GETFIELD;
-				break;
+				case Opcodes.PUTSTATIC:
+					refType = IReference.REF_PUTSTATIC;
+					break;
+				case Opcodes.PUTFIELD:
+					refType = IReference.REF_PUTFIELD;
+					break;
+				case Opcodes.GETSTATIC:
+					refType = IReference.REF_GETSTATIC;
+					break;
+				case Opcodes.GETFIELD:
+					refType = IReference.REF_GETFIELD;
+					break;
+				default: break;
 			}
+			
 			if (refType != -1) {
 				Reference reference = ReferenceExtractor.this.addFieldReference(Type.getObjectType(owner), name, refType);
 				if (reference != null) {
@@ -386,6 +391,7 @@ public class ReferenceExtractor extends ClassAdapter {
 					kind = IReference.REF_INTERFACEMETHOD;
 					break;
 				}
+				default: break;
 			}
 			if(kind != -1) {
 				Reference reference = ReferenceExtractor.this.addMethodReference(declaringType, name, desc, kind);
@@ -482,7 +488,9 @@ public class ReferenceExtractor extends ClassAdapter {
 							this.linePositionTracker.addLocation((Reference) iterator.next());
 						}
 					}
+					break;
 				}
+				default: break;
 			}
 			if(kind != -1) {
 				Reference reference = ReferenceExtractor.this.addTypeReference(type, kind);
@@ -883,7 +891,7 @@ public class ReferenceExtractor extends ClassAdapter {
 	 * @param referenceKinds kinds of references to extract as defined by {@link ReferenceModifiers}
 	 */
 	public ReferenceExtractor(IApiType type, Set collector, int referenceKinds) {
-		super(new ClassNode());
+		super(Opcodes.ASM4, new ClassNode());
 		fType = type;
 		this.collector = collector;
 		fReferenceKinds = referenceKinds;
@@ -899,7 +907,7 @@ public class ReferenceExtractor extends ClassAdapter {
 	 * @param tracker
 	 */
 	protected ReferenceExtractor(IApiType type, Set collector, int referenceKinds, FieldTracker tracker) {
-		super(new ClassNode());
+		super(Opcodes.ASM4, new ClassNode());
 		fType = type;
 		this.collector = collector;
 		fReferenceKinds = referenceKinds;
