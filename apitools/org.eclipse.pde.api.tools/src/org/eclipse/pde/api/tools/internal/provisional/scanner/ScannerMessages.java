@@ -23,6 +23,7 @@ public class ScannerMessages extends NLS {
 	public static String ComponentXMLScanner_1;
 	public static String ComponentXMLScanner_2;
 	public static String ComponentXMLScanner_3;
+	public static String TagScanner_0;
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, ScannerMessages.class);

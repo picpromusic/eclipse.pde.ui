@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2008 IBM Corporation and others.
+ * Copyright (c) 2007, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -100,25 +100,40 @@ public final class JavadocTagManager {
 					RestrictionModifiers.NO_REFERENCE);
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_CLASS, 
 					IApiJavadocTag.MEMBER_METHOD, 
-					"This method is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_0); 
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_INTERFACE, 
 					IApiJavadocTag.MEMBER_METHOD, 
-					"This method is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_1); 
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_CLASS, 
 					IApiJavadocTag.MEMBER_FIELD, 
-					"This field is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_2); 
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_INTERFACE, 
 					IApiJavadocTag.MEMBER_FIELD, 
-					"This field is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_3); 
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_CLASS, 
 					IApiJavadocTag.MEMBER_CONSTRUCTOR, 
-					"This constructor is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_4); 
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_ENUM, 
 					IApiJavadocTag.MEMBER_FIELD, 
-					"This enum field is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_5); 
 			newtag.setApplicableTo(IApiJavadocTag.TYPE_ENUM, 
 					IApiJavadocTag.MEMBER_METHOD, 
-					"This enum method is not intended to be referenced by clients."); //$NON-NLS-1$
+					CoreMessages.JavadocTagManager_6); 
+			
+			//allow @noreference on types
+			//https://bugs.eclipse.org/bugs/show_bug.cgi?id=235618
+			newtag.setApplicableTo(IApiJavadocTag.TYPE_CLASS, 
+					IApiJavadocTag.MEMBER_NONE, 
+					CoreMessages.JavadocTagManager_7);
+			newtag.setApplicableTo(IApiJavadocTag.TYPE_ANNOTATION, 
+					IApiJavadocTag.MEMBER_NONE, 
+					CoreMessages.JavadocTagManager_8);
+			newtag.setApplicableTo(IApiJavadocTag.TYPE_ENUM, 
+					IApiJavadocTag.MEMBER_NONE, 
+					CoreMessages.JavadocTagManager_9);
+			newtag.setApplicableTo(IApiJavadocTag.TYPE_INTERFACE, 
+					IApiJavadocTag.MEMBER_NONE, 
+					CoreMessages.JavadocTagManager_10);
 			tagcache.put(newtag.getTagId(), newtag);
 			list.add(newtag);
 			tags = (IApiJavadocTag[]) list.toArray(new IApiJavadocTag[list.size()]);

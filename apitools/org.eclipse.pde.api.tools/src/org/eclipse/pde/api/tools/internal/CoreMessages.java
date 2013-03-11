@@ -24,6 +24,17 @@ public class CoreMessages extends NLS {
 	public static String ApiBaseline_5;
 	public static String ApiBaseline_6;
 	public static String FilterStore_0;
+	public static String JavadocTagManager_0;
+	public static String JavadocTagManager_1;
+	public static String JavadocTagManager_10;
+	public static String JavadocTagManager_2;
+	public static String JavadocTagManager_3;
+	public static String JavadocTagManager_4;
+	public static String JavadocTagManager_5;
+	public static String JavadocTagManager_6;
+	public static String JavadocTagManager_7;
+	public static String JavadocTagManager_8;
+	public static String JavadocTagManager_9;
 	public static String ProjectComponent_could_not_locate_model;
 	static {
 		// initialize resource bundle

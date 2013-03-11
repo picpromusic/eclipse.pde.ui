@@ -154,6 +154,8 @@ public class TagScanner {
 						}
 						break;
 					}
+					default:
+						break;
 				}
 			}
 			return false;
@@ -216,7 +218,7 @@ public class TagScanner {
 						ldesc = resolveMethod((IMethodDescriptor)ldesc);
 					} catch (CoreException e) {
 						if (fProblems == null){
-							fProblems = new MultiStatus(ApiPlugin.PLUGIN_ID, 0, "Problems encountered while scanning tags", null);
+							fProblems = new MultiStatus(ApiPlugin.PLUGIN_ID, 0, ScannerMessages.TagScanner_0, null);
 						}
 						fProblems.add(e.getStatus());
 					}
@@ -258,6 +260,10 @@ public class TagScanner {
 									pruned.add(tag);
 									continue;
 								}
+							}
+							if("@noreference".equals(tagname)) { //$NON-NLS-1$
+								pruned.add(tag);
+								continue;
 							}
 						}
 					}
@@ -303,6 +309,8 @@ public class TagScanner {
 					}
 					break;
 				}
+				default:
+					break;
 			}
 			return pruned;
 		}
