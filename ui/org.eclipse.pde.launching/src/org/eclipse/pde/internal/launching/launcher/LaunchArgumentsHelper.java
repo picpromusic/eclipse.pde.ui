@@ -24,7 +24,6 @@ import org.eclipse.jdt.core.*;
 import org.eclipse.jdt.launching.ExecutionArguments;
 import org.eclipse.jdt.launching.IJavaLaunchConfigurationConstants;
 import org.eclipse.pde.core.plugin.*;
-import org.eclipse.pde.core.target.ITargetHandle;
 import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.eclipse.pde.internal.build.IPDEBuildConstants;
 import org.eclipse.pde.internal.core.*;
@@ -128,14 +127,13 @@ public class LaunchArgumentsHelper {
 		try {
 			ITargetPlatformService service = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
 			if (service != null) {
-				ITargetHandle target = service.getWorkspaceTargetHandle();
-				if (target != null) {
-					String result = target.getTargetDefinition().getVMArguments();
-					result = result != null ? result : ""; //$NON-NLS-1$
-					return result;
-				}
+				String result = service.getWorkspaceTargetDefinition().getVMArguments();
+				result = result != null ? result : ""; //$NON-NLS-1$
+				return result;
 			}
 		} catch (CoreException e) {
+			PDECore.log(e);
+			return ""; //$NON-NLS-1$
 		}
 
 		// TODO: Generally, once the new preference target platform preference page is in use,

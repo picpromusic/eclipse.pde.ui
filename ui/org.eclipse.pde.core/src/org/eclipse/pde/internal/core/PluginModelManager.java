@@ -11,6 +11,9 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core;
 
+import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 import java.util.Map.Entry;
 import org.eclipse.core.resources.*;
@@ -23,7 +26,7 @@ import org.eclipse.pde.core.build.IBuild;
 import org.eclipse.pde.core.build.IBuildEntry;
 import org.eclipse.pde.core.plugin.*;
 import org.eclipse.pde.core.target.*;
-import org.eclipse.pde.internal.core.target.*;
+import org.eclipse.pde.internal.core.target.IUBundleContainer;
 
 public class PluginModelManager implements IModelProviderListener {
 
@@ -203,7 +206,7 @@ public class PluginModelManager implements IModelProviderListener {
 
 		// Removes from the master table and the state all workspace plug-ins that have been
 		// removed (project closed/deleted) from the workspace.
-		// Also if the taget location changes, all models from the old target are removed
+		// Also if the target location changes, all models from the old target are removed
 		if ((e.getEventTypes() & IModelProviderEvent.MODELS_REMOVED) != 0) {
 			IModel[] removed = e.getRemovedModels();
 			for (int i = 0; i < removed.length; i++) {
@@ -504,10 +507,72 @@ public class PluginModelManager implements IModelProviderListener {
 		if (fEntries != null)
 			return;
 
+		// Compare the performance by performing both the old and the new way
+
+		// TODO Cannot access init from here, which could be adding some performance hit
+//		initDefaultTargetPlatformDefinition(); // Init here outside of the performance checking
+
+		// New way
 		long startTime = System.currentTimeMillis();
 
 		// Cannot assign to fEntries here - will create a race condition with isInitialized()
-		Map<String, LocalModelEntry> entries = Collections.synchronizedMap(new TreeMap<String, LocalModelEntry>());
+		Map<String, LocalModelEntry> entries1 = Collections.synchronizedMap(new TreeMap<String, LocalModelEntry>());
+
+		// Create a state that contains all bundles from the target and workspace
+		// If a workspace bundle has the same symbolic name as a target bundle,
+		// the target counterpart is subsequently removed from the state.
+		fState = new PDEState(fWorkspaceManager.getPluginPaths(), getExternalBundles(), true, true, new NullProgressMonitor());
+
+		// initialize the enabled/disabled state of target models
+		// based on whether the bundle is checked/unchecked on the Target Platform
+		// preference page.
+		fExternalManager.initializeModels(fState.getTargetModels());
+
+		// add target models to the master table
+		boolean statechanged = addToTable(entries1, fExternalManager.getAllModels());
+
+		// a state is combined only if the workspace plug-ins have not changed
+		// since the last shutdown of the workbench
+		if (fState.isCombined()) {
+			IPluginModelBase[] models = fState.getWorkspaceModels();
+			// initialize the workspace models from the cached state
+			fWorkspaceManager.initializeModels(models);
+			// add workspace models to the master table
+			addToTable(entries1, models);
+			// resolve the state incrementally if some target models
+			// were removed
+			if (statechanged)
+				fState.resolveState(true);
+		} else {
+			// if we have no good cached state of workspace plug-ins,
+			// re-parse all/any workspace plug-ins
+			IPluginModelBase[] models = fWorkspaceManager.getPluginModels();
+
+			// add workspace plug-ins to the master table
+			addToTable(entries1, models);
+
+			// add workspace plug-ins to the state
+			// and remove their target counterparts from the state.
+			for (int i = 0; i < models.length; i++) {
+				addWorkspaceBundleToState(entries1, models[i]);
+			}
+
+			// resolve the state incrementally if any workspace plug-ins were found
+			if (models.length > 0)
+				fState.resolveState(true);
+
+			// flush the extension registry cache since workspace data (BundleDescription id's) have changed.
+			PDECore.getDefault().getExtensionsRegistry().targetReloaded();
+		}
+
+		// TODO Remove
+		long newWay = System.currentTimeMillis() - startTime;
+
+		// Old way
+		startTime = System.currentTimeMillis();
+
+		// Cannot assign to fEntries here - will create a race condition with isInitialized()
+		Map<String, LocalModelEntry> entries2 = Collections.synchronizedMap(new TreeMap<String, LocalModelEntry>());
 
 		// Create a state that contains all bundles from the target and workspace
 		// If a workspace bundle has the same symbolic name as a target bundle,
@@ -520,7 +585,7 @@ public class PluginModelManager implements IModelProviderListener {
 		fExternalManager.initializeModels(fState.getTargetModels());
 
 		// add target models to the master table
-		boolean statechanged = addToTable(entries, fExternalManager.getAllModels());
+		statechanged = addToTable(entries2, fExternalManager.getAllModels());
 
 		// a state is combined only if the workspace plug-ins have not changed
 		// since the last shutdown of the workbench
@@ -529,7 +594,7 @@ public class PluginModelManager implements IModelProviderListener {
 			// initialize the workspace models from the cached state
 			fWorkspaceManager.initializeModels(models);
 			// add workspace models to the master table
-			addToTable(entries, models);
+			addToTable(entries2, models);
 			// resolve the state incrementally if some target models
 			// were removed
 			if (statechanged)
@@ -540,12 +605,12 @@ public class PluginModelManager implements IModelProviderListener {
 			IPluginModelBase[] models = fWorkspaceManager.getPluginModels();
 
 			// add workspace plug-ins to the master table
-			addToTable(entries, models);
+			addToTable(entries2, models);
 
 			// add workspace plug-ins to the state
 			// and remove their target counterparts from the state.
 			for (int i = 0; i < models.length; i++) {
-				addWorkspaceBundleToState(entries, models[i]);
+				addWorkspaceBundleToState(entries2, models[i]);
 			}
 
 			// resolve the state incrementally if any workspace plug-ins were found
@@ -556,10 +621,10 @@ public class PluginModelManager implements IModelProviderListener {
 			PDECore.getDefault().getExtensionsRegistry().targetReloaded();
 		}
 
-		fEntries = entries;
+		//		fEntries = entries2;
 
 		// Create default target platform definition if required
-		initDefaultTargetPlatformDefinition();
+//		initDefaultTargetPlatformDefinition();
 
 		// re-load the target if the corrupt POOLED_BUNDLES preference was being used
 		PDEPreferencesManager pref = PDECore.getDefault().getPreferencesManager();
@@ -578,75 +643,104 @@ public class PluginModelManager implements IModelProviderListener {
 			}
 		}
 
-		if (PDECore.DEBUG_MODEL) {
-			long time = System.currentTimeMillis() - startTime;
-			System.out.println("PDE plug-in model initialization complete: " + time + " ms"); //$NON-NLS-1$//$NON-NLS-2$
-		}
+		// TODO Remove
+		long oldWay = System.currentTimeMillis() - startTime;
+		System.out.println("Time to complete using preferences: " + oldWay);
+		System.out.println("Time to complete using target definition file: " + newWay);
+		System.err.println("New way took " + (newWay - oldWay) + " ms longer");
+		System.err.println("Old Bundles: " + entries2.size() + " New Bundles: " + entries1.size());
+
+		fEntries = entries1;
+//		if (PDECore.DEBUG_MODEL) {
+//			long time = System.currentTimeMillis() - startTime;
+//			System.out.println("PDE plug-in model initialization complete: " + time + " ms"); //$NON-NLS-1$//$NON-NLS-2$
+//		}
 	}
 
 	/**
-	 * Sets active target definition handle if not yet set. If an existing target
-	 * definition corresponds to workspace target settings, it is selected as the
-	 * active target. If there are no targets that correspond to workspace settings
-	 * a new definition is created. 
+	 * Returns an array of URL plug-in locations for external bundles loaded from the
+	 * current target platform.  The URLs will not be encoded.
+	 * 
+	 * @return array of URLs for external bundles
 	 */
-	private synchronized void initDefaultTargetPlatformDefinition() {
-		ITargetPlatformService service = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
-		if (service != null) {
-			String memento = PDECore.getDefault().getPreferencesManager().getString(ICoreConstants.WORKSPACE_TARGET_HANDLE);
-			if (memento.equals("")) { //$NON-NLS-1$
-				// no workspace target handle set, check if any targets are equivalent to current settings
-				ITargetHandle[] targets = service.getTargets(null);
-				TargetPlatformService ts = (TargetPlatformService) service;
-				// create target platform from current workspace settings
-				TargetDefinition curr = (TargetDefinition) ts.newTarget();
-				ITargetHandle wsHandle = null;
-				try {
-					ts.loadTargetDefinitionFromPreferences(curr);
-					for (int i = 0; i < targets.length; i++) {
-						if (curr.isContentEquivalent(targets[i].getTargetDefinition())) {
-							wsHandle = targets[i];
-							break;
-						}
-					}
-					if (wsHandle == null) {
-						// restore settings from preferences
-						ITargetDefinition def = ts.newDefaultTarget();
-						String defVMargs = def.getVMArguments();
-						if (curr.getVMArguments() == null) {
-							// previous to 3.5, default VM arguments were null instead of matching the host's
-							// so compare to null VM arguments
-							def.setVMArguments(null);
-						}
-						if (curr.isContentEquivalent(def)) {
-							// Target is equivalent to the default settings, just add it as active
-							curr.setName(Messages.TargetPlatformService_7);
-							curr.setVMArguments(defVMargs); // restore default VM arguments
-						} else {
-							// Custom target settings, add as new target platform and add default as well
-							curr.setName(PDECoreMessages.PluginModelManager_0);
+	private URL[] getExternalBundles() {
+		final ITargetDefinition target;
+		try {
+			ITargetPlatformService service = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
+			if (service == null) {
+				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, "Could not acquire target platform service"));
+			}
+			target = service.getWorkspaceTargetDefinition();
+		} catch (CoreException e) {
+			PDECore.log(e);
+			return new URL[0];
+		}
 
-							boolean defaultExists = false;
-							for (int i = 0; i < targets.length; i++) {
-								if (((TargetDefinition) def).isContentEquivalent(targets[i].getTargetDefinition())) {
-									defaultExists = true;
-									break;
-								}
-							}
-							if (!defaultExists) {
-								ts.saveTargetDefinition(def);
-							}
-						}
-						ts.saveTargetDefinition(curr);
-						wsHandle = curr.getHandle();
-					}
-					PDEPreferencesManager preferences = PDECore.getDefault().getPreferencesManager();
-					preferences.setValue(ICoreConstants.WORKSPACE_TARGET_HANDLE, wsHandle.getMemento());
-				} catch (CoreException e) {
-					PDECore.log(e);
+		// Don't resolve again if we don't have to
+		if (!target.isResolved()) {
+
+			// TODO Performance hack, avoid p2 pinging remote sites or downloading at this time
+			ITargetLocation[] locations = target.getTargetLocations();
+			for (int i = 0; i < locations.length; i++) {
+				if (locations[i] instanceof IUBundleContainer) {
+					((IUBundleContainer) locations[i]).setRemoteFetch(false);
 				}
 			}
+
+			// Resolve the target definition in a separate job to allow cancellation
+			Job job = new Job("Loading external bundles from target platform") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					return target.resolve(monitor);
+				}
+			};
+			job.schedule();
+			try {
+				job.join();
+			} catch (InterruptedException e1) {
+			}
+
+			// TODO Performance hack, avoid p2 pinging remote sites or downloading at this time
+			for (int i = 0; i < locations.length; i++) {
+				if (locations[i] instanceof IUBundleContainer) {
+					((IUBundleContainer) locations[i]).setRemoteFetch(true);
+				}
+			}
+
+			if (job.getResult().getSeverity() == IStatus.CANCEL) {
+				// TODO Do we want to schedule a job for later to complete?
+				return new URL[0];
+			}
 		}
+
+		// Log any known issues with the target platform to warn user
+		if (target.getStatus().getSeverity() == IStatus.ERROR) {
+			PDECore.log(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, "The current target platform contains errors, open Window > Preferences > Plug-in Development > Target Platform for details.", new CoreException(target.getStatus())));
+		}
+
+		URL[] externalURLs = new URL[0];
+		TargetBundle[] bundles = target.getBundles();
+		if (bundles != null) {
+			List<URL> urls = new ArrayList<URL>(bundles.length);
+			for (int i = 0; i < bundles.length; i++) {
+				if (bundles[i].getStatus().isOK()) {
+					try {
+						File file = URIUtil.toFile(bundles[i].getBundleInfo().getLocation());
+						urls.add(file.toURL());
+					} catch (MalformedURLException e) {
+						// Ignore bad urls as they should be caught by the target resolution
+					}
+				}
+			}
+			externalURLs = urls.toArray(new URL[urls.size()]);
+		}
+
+		if (PDECore.DEBUG_MODEL) {
+			System.out.println("External models loaded from target definition: " + externalURLs.length); //$NON-NLS-1$
+		}
+
+		return externalURLs;
+
 	}
 
 	/**

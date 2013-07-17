@@ -152,11 +152,6 @@ public class P2TargetUtils {
 	private boolean fIncludeConfigurePhase = false;
 
 	/**
-	 * Whether or not this synchronizer is dirty by means other than target tweaks etc.
-	 */
-	private boolean fDirty = false;
-
-	/**
 	 * Deletes any profiles associated with target definitions that no longer exist
 	 * and returns a list of profile identifiers that were deleted.
 	 */
@@ -445,8 +440,6 @@ public class P2TargetUtils {
 			return false;
 		}
 
-		if (fDirty)
-			return false;
 		// check that the target and profiles are in sync. If they are then life is good.
 		// If they are not equal, there is still a chance that everything is ok.
 		String profileNumber = fProfile.getProperty(PROP_SEQUENCE_NUMBER);
@@ -674,7 +667,7 @@ public class P2TargetUtils {
 		P2TargetUtils synchronizer = getSynchronizer(target);
 		if (synchronizer == null)
 			return null;
-		synchronizer.synchronize(target, monitor);
+		synchronizer.synchronize(target, monitor, true);
 		return synchronizer.getProfile().query(QueryUtil.createIUAnyQuery(), null);
 	}
 
@@ -692,7 +685,7 @@ public class P2TargetUtils {
 	 * 
 	 * @throws CoreException if there was a problem synchronizing
 	 */
-	public synchronized void synchronize(ITargetDefinition target, IProgressMonitor monitor) throws CoreException {
+	public synchronized void synchronize(ITargetDefinition target, IProgressMonitor monitor, boolean remoteFetch) throws CoreException {
 		SubMonitor progress = SubMonitor.convert(monitor, 100);
 
 		// Happiness if we have a profile and it checks out or if we can load one and it checks out.
@@ -722,7 +715,6 @@ public class P2TargetUtils {
 
 		// If we are updating a profile then delete the old snapshot on success.
 		notify(target, progress.newChild(15));
-		fDirty = false;
 	}
 
 	private void createProfile(ITargetDefinition target) throws CoreException, ProvisionException {
@@ -1447,14 +1439,4 @@ public class P2TargetUtils {
 		return fProfile;
 	}
 
-//	/**
-//	 * @return the target definition associated with this synchronizer
-//	 */
-//	ITargetDefinition getTargetDefinition() {
-//		return fTarget;
-//	}
-
-	void markDirty() {
-		fDirty = true;
-	}
 }

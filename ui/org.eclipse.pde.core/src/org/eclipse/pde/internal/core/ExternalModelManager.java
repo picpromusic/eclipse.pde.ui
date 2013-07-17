@@ -10,10 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core;
 
-import java.io.File;
-
-import org.eclipse.pde.core.target.NameVersionDescriptor;
-
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,6 +21,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.osgi.service.resolver.BundleDescription;
 import org.eclipse.pde.core.plugin.IPluginLibrary;
 import org.eclipse.pde.core.plugin.IPluginModelBase;
+import org.eclipse.pde.core.target.NameVersionDescriptor;
 import org.eclipse.pde.internal.core.target.P2TargetUtils;
 import org.eclipse.pde.internal.core.util.CoreUtility;
 
@@ -37,6 +34,10 @@ public class ExternalModelManager extends AbstractModelManager {
 		return fModels;
 	}
 
+	/**
+	 * TODO Remove for bug 283731
+	 * @param models
+	 */
 	protected void initializeModels(IPluginModelBase[] models) {
 		fModels = models;
 		PDEPreferencesManager pref = PDECore.getDefault().getPreferencesManager();
@@ -82,6 +83,7 @@ public class ExternalModelManager extends AbstractModelManager {
 	}
 
 	/**
+	 * TODO Remove for bug 283731
 	 * Returns the URLs of all external plug-ins referenced by PDE target platform preferences.
 	 * <p>
 	 * Note this method is public for testing purposes only.
@@ -164,6 +166,7 @@ public class ExternalModelManager extends AbstractModelManager {
 	}
 
 	/**
+	 * TODO Remove for bug 283731
 	 * Appends one {@link URL} to another
 	 * 
 	 * @param base first URL

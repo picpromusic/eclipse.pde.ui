@@ -15,6 +15,7 @@ import java.util.Locale;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.pde.core.project.IBundleProjectDescription;
+import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.osgi.framework.Constants;
 
 public interface ICoreConstants {
@@ -32,6 +33,11 @@ public interface ICoreConstants {
 	String P_SOURCE_LOCATIONS = "source_locations"; //$NON-NLS-1$
 	String P_EXT_LOCATIONS = "ext_locations"; //$NON-NLS-1$
 	String PROGRAM_ARGS = "program_args"; //$NON-NLS-1$
+	/**
+	 * Preferences key that stores a String containing additional arguments to
+	 * add to the VM arguments list.
+	 * @deprecated Since the 4.4 Luna release, target platform information is no longer stored in preferences. Instead use {@link ITargetPlatformService}.
+	 */
 	String VM_ARGS = "vm_args"; //$NON-NLS-1$
 	String VM_LAUNCHER_INI = "vm_launcher_ini"; //$NON-NLS-1$
 	String IMPLICIT_DEPENDENCIES = "implicit_dependencies"; //$NON-NLS-1$
@@ -364,12 +370,15 @@ public interface ICoreConstants {
 	public static final String TARGET_FILE_EXTENSION = "target"; //$NON-NLS-1$
 
 	/**
-	 * Preference key for the active workspace target platform handle memento 
+	 * Preference key for the active workspace target platform handle memento.  If not set,
+	 * old target preferences will be used to create a default.  If no external bundles are
+	 * wanted, this value should be set to {@link #NO_TARGET}.
 	 */
 	public static final String WORKSPACE_TARGET_HANDLE = "workspace_target_handle"; //$NON-NLS-1$
 
 	/**
-	 * Explicit setting when the user chooses no target for the workspace.
+	 * Explicit preference value for {@link #WORKSPACE_TARGET_HANDLE} when the user chooses no
+	 * target for the workspace (no external bundles).
 	 */
 	public static final String NO_TARGET = "NO_TARGET"; //$NON-NLS-1$
 

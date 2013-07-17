@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import org.eclipse.pde.core.target.*;
-
 import java.io.File;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.pde.core.target.*;
 import org.eclipse.pde.internal.core.PDECore;
 
 /**
@@ -47,8 +46,8 @@ public class TargetMetadataCollector {
 			if (service == null) {
 				return null;
 			}
-			ITargetHandle handle = service.getWorkspaceTargetHandle();
-			definition = handle.getTargetDefinition();
+			// Use the non-api method to get active target definition
+			definition = service.getWorkspaceTargetDefinition();
 		}
 
 		Set<URI> repos = new HashSet<URI>();

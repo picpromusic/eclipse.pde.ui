@@ -183,6 +183,19 @@ public interface ITargetPlatformService {
 	public ITargetHandle getWorkspaceTargetHandle() throws CoreException;
 
 	/**
+	 * Returns a {@link ITargetDefinition} that corresponds to the active target platform. Will
+	 * create a new target definition if one does not exist. The returned target definition may
+	 * have been resolved previously, but this is not guaranteed. This method replaces
+	 * {@link #getWorkspaceTargetHandle()}.
+	 * 
+	 * @return a target definition corresponding to the active target platform
+	 * @throws CoreException if an error occurs loading the workspace target definition
+	 * 
+	 * @since 3.10 Added in the Luna 4.4 release
+	 */
+	public ITargetDefinition getWorkspaceTargetDefinition() throws CoreException;
+
+	/**
 	 * Returns a status describing whether the given target definition is synchronized with
 	 * workspace's target platform state. It is possible that bundles could have been added/removed
 	 * from the underlying target location storage making the current target platform state out of

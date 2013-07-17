@@ -115,6 +115,8 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 */
 	private ITargetDefinition fTarget;
 
+	private boolean fRemoteFetch = true;
+
 	/**
 	 * Constructs a installable unit bundle container for the specified units.
 	 * 
@@ -179,7 +181,7 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 */
 	protected TargetFeature[] resolveFeatures(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
 		fTarget = definition;
-		fSynchronizer.synchronize(definition, monitor);
+		fSynchronizer.synchronize(definition, monitor, fRemoteFetch);
 		return fFeatures;
 	}
 
@@ -246,8 +248,14 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	 */
 	protected TargetBundle[] resolveBundles(ITargetDefinition definition, IProgressMonitor monitor) throws CoreException {
 		fTarget = definition;
-		fSynchronizer.synchronize(definition, monitor);
+		fSynchronizer.synchronize(definition, monitor, fRemoteFetch);
 		return fBundles;
+	}
+
+	/**
+	 */
+	public void setRemoteFetch(boolean remote) {
+		fRemoteFetch = remote;
 	}
 
 	/**
@@ -366,11 +374,6 @@ public class IUBundleContainer extends AbstractBundleContainer {
 			clearResolutionStatus();
 		}
 		return updated;
-	}
-
-	protected void clearResolutionStatus() {
-		super.clearResolutionStatus();
-		fSynchronizer.markDirty();
 	}
 
 	/**
@@ -628,8 +631,6 @@ public class IUBundleContainer extends AbstractBundleContainer {
 	protected void associateWithTarget(ITargetDefinition target) {
 		super.associateWithTarget(target);
 		fSynchronizer = getSynchronizer(target);
-		// The synchronizer is being made dirty because this IU container is being associated with it
-		fSynchronizer.markDirty();
 		fSynchronizer.setIncludeAllRequired((fFlags & INCLUDE_REQUIRED) == INCLUDE_REQUIRED);
 		fSynchronizer.setIncludeAllEnvironments((fFlags & INCLUDE_ALL_ENVIRONMENTS) == INCLUDE_ALL_ENVIRONMENTS);
 		fSynchronizer.setIncludeSource((fFlags & INCLUDE_SOURCE) == INCLUDE_SOURCE);

@@ -10,11 +10,6 @@
  *******************************************************************************/
 package org.eclipse.pde.internal.core.target;
 
-import java.net.URI;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.pde.core.target.ITargetHandle;
-import org.eclipse.pde.core.target.NameVersionDescriptor;
-
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -45,6 +40,12 @@ public class TargetPlatformService implements ITargetPlatformService {
 	 * External File Targets
 	 */
 	private static Map<URI, ExternalFileTargetHandle> fExtTargetHandles;
+
+	/**
+	 * The target definition currently being used as the target platform for
+	 * the workspace.
+	 */
+	private ITargetDefinition fWorkspaceTarget;
 
 	/**
 	 * Collects target files in the workspace
@@ -257,9 +258,12 @@ public class TargetPlatformService implements ITargetPlatformService {
 	}
 
 	/* (non-Javadoc)
-	 * @see org.eclipse.pde.core.target.ITargetPlatformService#getWorkspaceTargetDefinition()
+	 * @see org.eclipse.pde.core.target.ITargetPlatformService#getWorkspaceTargetHandle()
 	 */
 	public ITargetHandle getWorkspaceTargetHandle() throws CoreException {
+
+		// TODO Go through all uses of this and update to getWorkspaceTargetDefinition
+
 		// If the plug-in registry has not been initialized we may not have a target set, getting the start forces the init
 		PluginModelManager manager = PDECore.getDefault().getModelManager();
 		if (!manager.isInitialized()) {
@@ -272,6 +276,98 @@ public class TargetPlatformService implements ITargetPlatformService {
 			return getTarget(memento);
 		}
 		return null;
+	}
+
+	/* (non-Javadoc)
+	 * @see org.eclipse.pde.core.target.ITargetPlatformService#getWorkspaceTargetDefinition()
+	 */
+	public synchronized ITargetDefinition getWorkspaceTargetDefinition() throws CoreException {
+		if (fWorkspaceTarget != null) {
+			return fWorkspaceTarget;
+		}
+
+		// If no target definition has been chosen before, try using preferences
+		initDefaultTargetPlatformDefinition();
+
+		// Load and resolve
+		String memento = PDECore.getDefault().getPreferencesManager().getString(ICoreConstants.WORKSPACE_TARGET_HANDLE);
+		ITargetDefinition target = null;
+		if (memento == null || memento.equals("") || memento.equals(ICoreConstants.NO_TARGET)) { //$NON-NLS-1$
+			if (PDECore.DEBUG_MODEL) {
+				System.out.println("No target memento, using empty target."); //$NON-NLS-1$
+			}
+			target = newTarget();
+		} else {
+			ITargetHandle handle = getTarget(memento);
+			target = handle.getTargetDefinition();
+		}
+
+		fWorkspaceTarget = target;
+		return target;
+	}
+
+	/**
+	 * Sets active target definition handle if not yet set. If an existing target
+	 * definition corresponds to workspace target settings, it is selected as the
+	 * active target. If there are no targets that correspond to workspace settings
+	 * a new definition is created. 
+	 */
+	private synchronized void initDefaultTargetPlatformDefinition() {
+		String memento = PDECore.getDefault().getPreferencesManager().getString(ICoreConstants.WORKSPACE_TARGET_HANDLE);
+		if (memento == null || memento.equals("")) { //$NON-NLS-1$
+			if (PDECore.DEBUG_MODEL) {
+				System.out.println("No target memento, loading target info from old preferences.");
+			}
+			// no workspace target handle set, check if any targets are equivalent to current settings
+			ITargetHandle[] targets = getTargets(null);
+			// create target platform from current workspace settings
+			TargetDefinition curr = (TargetDefinition) newTarget();
+			ITargetHandle wsHandle = null;
+			try {
+				loadTargetDefinitionFromPreferences(curr);
+				for (int i = 0; i < targets.length; i++) {
+					if (curr.isContentEquivalent(targets[i].getTargetDefinition())) {
+						wsHandle = targets[i];
+						break;
+					}
+				}
+				if (wsHandle == null) {
+					// restore settings from preferences
+					ITargetDefinition def = newDefaultTarget();
+					String defVMargs = def.getVMArguments();
+					if (curr.getVMArguments() == null) {
+						// previous to 3.5, default VM arguments were null instead of matching the host's
+						// so compare to null VM arguments
+						def.setVMArguments(null);
+					}
+					if (curr.isContentEquivalent(def)) {
+						// Target is equivalent to the default settings, just add it as active
+						curr.setName(Messages.TargetPlatformService_7);
+						curr.setVMArguments(defVMargs); // restore default VM arguments
+					} else {
+						// Custom target settings, add as new target platform and add default as well
+						curr.setName(PDECoreMessages.PluginModelManager_0);
+
+						boolean defaultExists = false;
+						for (int i = 0; i < targets.length; i++) {
+							if (((TargetDefinition) def).isContentEquivalent(targets[i].getTargetDefinition())) {
+								defaultExists = true;
+								break;
+							}
+						}
+						if (!defaultExists) {
+							saveTargetDefinition(def);
+						}
+					}
+					saveTargetDefinition(curr);
+					wsHandle = curr.getHandle();
+				}
+				PDEPreferencesManager preferences = PDECore.getDefault().getPreferencesManager();
+				preferences.setValue(ICoreConstants.WORKSPACE_TARGET_HANDLE, wsHandle.getMemento());
+			} catch (CoreException e) {
+				PDECore.log(e);
+			}
+		}
 	}
 
 	/* (non-Javadoc)
