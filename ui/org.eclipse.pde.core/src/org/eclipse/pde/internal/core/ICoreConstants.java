@@ -14,6 +14,7 @@ package org.eclipse.pde.internal.core;
 import java.util.Locale;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.pde.core.plugin.TargetPlatform;
 import org.eclipse.pde.core.project.IBundleProjectDescription;
 import org.eclipse.pde.core.target.ITargetPlatformService;
 import org.osgi.framework.Constants;
@@ -21,8 +22,13 @@ import org.osgi.framework.Constants;
 public interface ICoreConstants {
 
 	// Target Platform
+	/**
+	 * Preference key that stores the string path to the root location of the 
+	 * target platform.  Should be accessed through {@link TargetPlatform#getLocation()}.
+	 */
 	String PLATFORM_PATH = "platform_path"; //$NON-NLS-1$
-	String SAVED_PLATFORM = "saved_platform"; //$NON-NLS-1$
+
+	// TODO The following will all be deprecated and only used when loading a target from preferences
 	String TARGET_MODE = "target_mode"; //$NON-NLS-1$
 	String VALUE_USE_THIS = "useThis"; //$NON-NLS-1$
 	String VALUE_USE_OTHER = "useOther"; //$NON-NLS-1$
@@ -30,8 +36,6 @@ public interface ICoreConstants {
 	String VALUE_SAVED_NONE = "[savedNone]"; //$NON-NLS-1$
 	String VALUE_SAVED_ALL = "[savedAll]"; //$NON-NLS-1$
 	String VALUE_SAVED_SOME = "savedSome"; //$NON-NLS-1$
-	String P_SOURCE_LOCATIONS = "source_locations"; //$NON-NLS-1$
-	String P_EXT_LOCATIONS = "ext_locations"; //$NON-NLS-1$
 	String PROGRAM_ARGS = "program_args"; //$NON-NLS-1$
 	/**
 	 * Preferences key that stores a String containing additional arguments to
@@ -39,12 +43,11 @@ public interface ICoreConstants {
 	 * @deprecated Since the 4.4 Luna release, target platform information is no longer stored in preferences. Instead use {@link ITargetPlatformService}.
 	 */
 	String VM_ARGS = "vm_args"; //$NON-NLS-1$
+	// Not sure about this one:
 	String VM_LAUNCHER_INI = "vm_launcher_ini"; //$NON-NLS-1$
 	String IMPLICIT_DEPENDENCIES = "implicit_dependencies"; //$NON-NLS-1$
-	String GROUP_PLUGINS_VIEW = "group_plugins"; //$NON-NLS-1$
 	String ADDITIONAL_LOCATIONS = "additional_locations"; //$NON-NLS-1$
 	String TARGET_PLATFORM_REALIZATION = "target_platform_realization"; //$NON-NLS-1$
-
 	/**
 	 * This preference was only used during 3.5, it has been replaced in 3.6
 	 * with POOLED_URLS.
@@ -258,6 +261,13 @@ public interface ICoreConstants {
 	 * </p>
 	 */
 	public final static String TARGET_VERSION_LATEST = TARGET38;
+
+	/**
+	 * Preference key that stores a list of user specified source locations.
+	 * No longer supported in the UI.
+	 * @deprecated Not supported in the UI.
+	 */
+	String P_SOURCE_LOCATIONS = "source_locations"; //$NON-NLS-1$
 
 	public final static String EQUINOX = "Equinox"; //$NON-NLS-1$
 

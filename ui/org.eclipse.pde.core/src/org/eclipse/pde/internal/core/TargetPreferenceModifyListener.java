@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corporation and others.
+ * Copyright (c) 2009, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,12 +40,6 @@ public class TargetPreferenceModifyListener extends PreferenceModifyListener {
 				node.remove(ICoreConstants.POOLED_URLS);
 				node.remove(ICoreConstants.PROGRAM_ARGS);
 				node.remove(ICoreConstants.OS);
-				for (int i = 0; i < 4; i++) {
-					StringBuffer key = new StringBuffer();
-					key.append(ICoreConstants.SAVED_PLATFORM);
-					key.append(i);
-					node.remove(key.toString());
-				}
 				node.remove(ICoreConstants.TARGET_MODE);
 				node.remove(ICoreConstants.TARGET_PLATFORM_REALIZATION);
 				node.remove(ICoreConstants.TARGET_PROFILE);

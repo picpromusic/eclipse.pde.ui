@@ -26,7 +26,6 @@ import org.eclipse.pde.core.build.IBuild;
 import org.eclipse.pde.core.build.IBuildEntry;
 import org.eclipse.pde.core.plugin.*;
 import org.eclipse.pde.core.target.*;
-import org.eclipse.pde.internal.core.target.IUBundleContainer;
 
 public class PluginModelManager implements IModelProviderListener {
 
@@ -664,53 +663,17 @@ public class PluginModelManager implements IModelProviderListener {
 	 * @return array of URLs for external bundles
 	 */
 	private URL[] getExternalBundles() {
-		final ITargetDefinition target;
+		ITargetDefinition target = null;
 		try {
-			ITargetPlatformService service = (ITargetPlatformService) PDECore.getDefault().acquireService(ITargetPlatformService.class.getName());
-			if (service == null) {
-				throw new CoreException(new Status(IStatus.ERROR, PDECore.PLUGIN_ID, "Could not acquire target platform service"));
-			}
-			target = service.getWorkspaceTargetDefinition();
+			target = TargetPlatformHelper.getWorkspaceTargetResolved(null);
 		} catch (CoreException e) {
 			PDECore.log(e);
 			return new URL[0];
 		}
 
-		// Don't resolve again if we don't have to
-		if (!target.isResolved()) {
-
-			// TODO Performance hack, avoid p2 pinging remote sites or downloading at this time
-			ITargetLocation[] locations = target.getTargetLocations();
-			for (int i = 0; i < locations.length; i++) {
-				if (locations[i] instanceof IUBundleContainer) {
-					((IUBundleContainer) locations[i]).setRemoteFetch(false);
-				}
-			}
-
-			// Resolve the target definition in a separate job to allow cancellation
-			Job job = new Job("Loading external bundles from target platform") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					return target.resolve(monitor);
-				}
-			};
-			job.schedule();
-			try {
-				job.join();
-			} catch (InterruptedException e1) {
-			}
-
-			// TODO Performance hack, avoid p2 pinging remote sites or downloading at this time
-			for (int i = 0; i < locations.length; i++) {
-				if (locations[i] instanceof IUBundleContainer) {
-					((IUBundleContainer) locations[i]).setRemoteFetch(true);
-				}
-			}
-
-			if (job.getResult().getSeverity() == IStatus.CANCEL) {
-				// TODO Do we want to schedule a job for later to complete?
-				return new URL[0];
-			}
+		// TODO resolution cancelled, can we reschedule?
+		if (target == null) {
+			return new URL[0];
 		}
 
 		// Log any known issues with the target platform to warn user

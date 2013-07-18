@@ -297,16 +297,6 @@ public class LoadTargetDefinitionJob extends WorkspaceJob {
 			buffer.setLength(buffer.length() - 1);
 		pref.setValue(ICoreConstants.ADDITIONAL_LOCATIONS, buffer.toString());
 
-		String newValue = currentPath;
-		for (int i = 0; i < 4; i++) {
-			String value = pref.getString(ICoreConstants.SAVED_PLATFORM + i);
-			pref.setValue(ICoreConstants.SAVED_PLATFORM + i, newValue);
-			if (!value.equals(currentPath))
-				newValue = value;
-			else
-				break;
-		}
-
 		handleReload(path, additional, pref, new SubProgressMonitor(monitor, 85));
 		monitor.done();
 	}

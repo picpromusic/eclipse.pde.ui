@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2012 IBM Corporation and others.
+ * Copyright (c) 2008, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -264,11 +264,12 @@ public class TargetPlatformService implements ITargetPlatformService {
 
 		// TODO Go through all uses of this and update to getWorkspaceTargetDefinition
 
+		// TODO Removing this represents a binary compatible API change
 		// If the plug-in registry has not been initialized we may not have a target set, getting the start forces the init
-		PluginModelManager manager = PDECore.getDefault().getModelManager();
-		if (!manager.isInitialized()) {
-			manager.getExternalModelManager();
-		}
+//		PluginModelManager manager = PDECore.getDefault().getModelManager();
+//		if (!manager.isInitialized()) {
+//			manager.getExternalModelManager();
+//		}
 
 		PDEPreferencesManager preferences = PDECore.getDefault().getPreferencesManager();
 		String memento = preferences.getString(ICoreConstants.WORKSPACE_TARGET_HANDLE);
@@ -282,7 +283,8 @@ public class TargetPlatformService implements ITargetPlatformService {
 	 * @see org.eclipse.pde.core.target.ITargetPlatformService#getWorkspaceTargetDefinition()
 	 */
 	public synchronized ITargetDefinition getWorkspaceTargetDefinition() throws CoreException {
-		if (fWorkspaceTarget != null) {
+		// TODO Check if the preference has changed, might be better to listen for preference changes
+		if (fWorkspaceTarget != null && fWorkspaceTarget.getHandle().equals(getWorkspaceTargetHandle())) {
 			return fWorkspaceTarget;
 		}
 
@@ -312,13 +314,13 @@ public class TargetPlatformService implements ITargetPlatformService {
 	 * active target. If there are no targets that correspond to workspace settings
 	 * a new definition is created. 
 	 */
-	private synchronized void initDefaultTargetPlatformDefinition() {
+	private void initDefaultTargetPlatformDefinition() {
 		String memento = PDECore.getDefault().getPreferencesManager().getString(ICoreConstants.WORKSPACE_TARGET_HANDLE);
 		if (memento == null || memento.equals("")) { //$NON-NLS-1$
 			if (PDECore.DEBUG_MODEL) {
 				System.out.println("No target memento, loading target info from old preferences.");
 			}
-			// no workspace target handle set, check if any targets are equivalent to current settings
+			// no workspace target handle set, check if any known target definitions are equivalent to current settings
 			ITargetHandle[] targets = getTargets(null);
 			// create target platform from current workspace settings
 			TargetDefinition curr = (TargetDefinition) newTarget();
