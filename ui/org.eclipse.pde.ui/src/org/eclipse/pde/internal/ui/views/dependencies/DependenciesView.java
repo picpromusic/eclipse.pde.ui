@@ -31,6 +31,22 @@ import org.eclipse.ui.part.*;
 
 public class DependenciesView extends PageBookView implements IPreferenceConstants, IHelpContextIds {
 
+	static enum ShowMode {
+		SHOW_CALLERS, SHOW_CALLEES, SHOW_PATH;
+
+		public int getPreferenceValue() {
+			return this.ordinal();
+		}
+
+		public static ShowMode find(int preferenceValue) {
+			ShowMode[] values = ShowMode.values();
+			if (preferenceValue < 0 || preferenceValue >= values.length) {
+				return null;
+			}
+			return values[preferenceValue];
+		}
+	}
+
 	static class DummyPart implements IWorkbenchPart {
 		private IWorkbenchPartSite fSite;
 
@@ -124,7 +140,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 		@Override
 		public void run() {
 			if (isChecked()) {
-				fPreferences.setValue(DEPS_VIEW_SHOW_CALLERS, false);
+				fPreferences.setValue(DEPS_VIEW_SHOW_MODE, ShowMode.SHOW_CALLEES.getPreferenceValue());
 				setViewType(false);
 			}
 		}
@@ -146,11 +162,34 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 		@Override
 		public void run() {
 			if (isChecked()) {
-				fPreferences.setValue(DEPS_VIEW_SHOW_CALLERS, true);
+				fPreferences.setValue(DEPS_VIEW_SHOW_MODE, ShowMode.SHOW_CALLERS.getPreferenceValue());
 				setViewType(true);
 			}
 		}
 	}
+
+	class ShowPathAction extends Action {
+		public ShowPathAction() {
+			super("", AS_RADIO_BUTTON); //$NON-NLS-1$
+			setText(PDEUIMessages.DependenciesView_ShowCallersAction_label);
+			setDescription(PDEUIMessages.DependenciesView_ShowCallersAction_description);
+			setToolTipText(PDEUIMessages.DependenciesView_ShowCallersAction_tooltip);
+			setImageDescriptor(PDEPluginImages.DESC_PATH);
+			setDisabledImageDescriptor(PDEPluginImages.DESC_PATH_DISABLED);
+		}
+
+		/*
+		 * @see Action#actionPerformed
+		 */
+		@Override
+		public void run() {
+			if (isChecked()) {
+				fPreferences.setValue(DEPS_VIEW_SHOW_MODE, ShowMode.SHOW_PATH.getPreferenceValue());
+				setViewType(true);
+			}
+		}
+	}
+
 
 	class ShowListAction extends Action {
 		public ShowListAction() {
@@ -212,6 +251,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 
 	private ShowCalleesAction fShowCallees;
 	private ShowCallersAction fShowCallers;
+	private ShowPathAction fShowPaths;
 	private ShowListAction fShowList;
 	private ShowTreeAction fShowTree;
 	private ShowLoopsAction fShowLoops;
@@ -229,6 +269,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 	private IWorkbenchPart fPartCalleesTree;
 	private IWorkbenchPart fPartCallersList;
 	private IWorkbenchPart fPartCallersTree;
+	private IWorkbenchPart fPartPathTree;
 
 	/**
 	 *
@@ -251,6 +292,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 		manager.add(new Separator("type")); //$NON-NLS-1$
 		manager.appendToGroup("type", fShowCallees); //$NON-NLS-1$
 		manager.appendToGroup("type", fShowCallers); //$NON-NLS-1$
+		manager.appendToGroup("type", fShowPaths); //$NON-NLS-1$
 		manager.add(new Separator("presentation")); //$NON-NLS-1$
 		manager.appendToGroup("presentation", fShowTree); //$NON-NLS-1$
 		manager.appendToGroup("presentation", fShowList); //$NON-NLS-1$
@@ -265,16 +307,22 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 	}
 
 	private IWorkbenchPart getDefaultPart() {
-		if (fPreferences.getBoolean(DEPS_VIEW_SHOW_CALLERS)) {
-			if (fPreferences.getBoolean(DEPS_VIEW_SHOW_LIST)) {
-				return fPartCallersList;
-			}
-			return fPartCallersTree;
+		switch (getShowMode()) {
+		case SHOW_CALLEES:
+			return fPreferences.getBoolean(DEPS_VIEW_SHOW_LIST) ? fPartCalleesList : fPartCalleesTree;
+		case SHOW_PATH:
+			return fPreferences.getBoolean(DEPS_VIEW_SHOW_LIST) ? fPartPathTree : fPartPathTree;
+		case SHOW_CALLERS:
+			default:
+			return fPreferences.getBoolean(DEPS_VIEW_SHOW_LIST) ? fPartCallersList : fPartCallersTree;
 		}
-		if (fPreferences.getBoolean(DEPS_VIEW_SHOW_LIST)) {
-			return fPartCalleesList;
-		}
-		return fPartCalleesTree;
+
+	}
+
+	private ShowMode getShowMode() {
+		ShowMode showMode = ShowMode.find(fPreferences.getInt(DEPS_VIEW_SHOW_MODE));
+		showMode = showMode != null ? showMode : ShowMode.SHOW_CALLEES;
+		return showMode;
 	}
 
 	/**
@@ -303,10 +351,21 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 
 	@Override
 	public void createPartControl(Composite parent) {
+
 		fShowCallees = new ShowCalleesAction();
-		fShowCallees.setChecked(!fPreferences.getBoolean(DEPS_VIEW_SHOW_CALLERS));
 		fShowCallers = new ShowCallersAction();
-		fShowCallers.setChecked(fPreferences.getBoolean(DEPS_VIEW_SHOW_CALLERS));
+		fShowPaths = new ShowPathAction();
+
+		switch (getShowMode()) {
+		case SHOW_CALLERS:
+			fShowCallers.setChecked(true);
+			break;
+		case SHOW_PATH:
+			break;
+		case SHOW_CALLEES:
+		default:
+			fShowCallees.setChecked(true);
+		}
 
 		fShowTree = new ShowTreeAction();
 		fShowTree.setChecked(!fPreferences.getBoolean(DEPS_VIEW_SHOW_LIST));
@@ -322,7 +381,8 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 		IActionBars actionBars = getViewSite().getActionBars();
 		contributeToActionBars(actionBars);
 
-		// Create the actions before calling super so that actions added by the pages get added at the end
+		// Create the actions before calling super so that actions added by the
+		// pages get added at the end
 		super.createPartControl(parent);
 
 		PlatformUI.getWorkbench().getHelpSystem().setHelp(parent, IHelpContextIds.DEPENDENCIES_VIEW);
@@ -362,6 +422,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 		fPartCalleesTree = new DummyPart(site);
 		fPartCallersList = new DummyPart(site);
 		fPartCallersTree = new DummyPart(site);
+		fPartPathTree = new DummyPart(site);
 
 		if (memento == null)
 			return;
@@ -391,19 +452,31 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 		updateInput(object);
 	}
 
-	public void openCallersFor(Object object) {
-		if (!fShowCallers.isChecked() && fShowCallees.isChecked()) {
-			fShowCallers.setChecked(true);
+	public void openPathsFor(Object object) {
+		if (!fShowPaths.isChecked()) {
+			fShowPaths.setChecked(true);
+			fShowCallers.setChecked(false);
 			fShowCallees.setChecked(false);
 			fShowCallers.run();
 		}
 		openTo(object);
 	}
 
+	public void openCallersFor(Object object) {
+		if (!fShowCallers.isChecked()) {
+			fShowCallers.setChecked(true);
+			fShowCallees.setChecked(false);
+			fShowPaths.setChecked(false);
+			fShowCallers.run();
+		}
+		openTo(object);
+	}
+
 	public void openCalleesFor(Object object) {
-		if (!fShowCallees.isChecked() && fShowCallers.isChecked()) {
+		if (!fShowCallees.isChecked()) {
 			fShowCallees.setChecked(true);
 			fShowCallers.setChecked(false);
+			fShowPaths.setChecked(false);
 			fShowCallees.run();
 		}
 		openTo(object);
@@ -486,7 +559,8 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 	@Override
 	protected void showPageRec(PageRec pageRec) {
 		IPage currPage = getCurrentPage();
-		// if we try to show the same page, just call super and return, no use calling any custom functions
+		// if we try to show the same page, just call super and return, no use
+		// calling any custom functions
 		if (pageRec.page.equals(currPage)) {
 			super.showPageRec(pageRec);
 			return;
@@ -537,8 +611,11 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 	}
 
 	/**
-	 * Adds the entry if new. Inserted at the beginning of the history entries list.
-	 * @param entry The new entry
+	 * Adds the entry if new. Inserted at the beginning of the history entries
+	 * list.
+	 *
+	 * @param entry
+	 *            The new entry
 	 */
 	private void addHistoryEntry(String entry) {
 		if (fInputHistory.contains(entry)) {
@@ -561,8 +638,11 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 	}
 
 	/**
-	 * Goes to the selected entry, without updating the order of history entries.
-	 * @param entry The entry to open
+	 * Goes to the selected entry, without updating the order of history
+	 * entries.
+	 *
+	 * @param entry
+	 *            The entry to open
 	 */
 	public void gotoHistoryEntry(String entry) {
 		if (fInputHistory.contains(entry)) {
@@ -572,6 +652,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 
 	/**
 	 * Gets all history entries.
+	 *
 	 * @return All history entries
 	 */
 	public String[] getHistoryEntries() {
@@ -583,7 +664,9 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 
 	/**
 	 * Sets the history entries
-	 * @param elems The history elements to set
+	 *
+	 * @param elems
+	 *            The history elements to set
 	 */
 	public void setHistoryEntries(String[] elems) {
 		fInputHistory.clear();
@@ -604,7 +687,7 @@ public class DependenciesView extends PageBookView implements IPreferenceConstan
 	}
 
 	public boolean isShowingCallers() {
-		return fPreferences.getBoolean(DEPS_VIEW_SHOW_CALLERS);
+		return getShowMode() == ShowMode.SHOW_CALLERS;
 	}
 
 	protected void enableStateView(boolean enabled) {

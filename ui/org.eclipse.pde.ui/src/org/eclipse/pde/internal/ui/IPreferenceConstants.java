@@ -40,7 +40,7 @@ public interface IPreferenceConstants extends ILaunchingPreferenceConstants {
 	public static final String EDITOR_FOLDING_ENABLED = "editor.folding"; //$NON-NLS-1$
 
 	// Dependencies view
-	public static final String DEPS_VIEW_SHOW_CALLERS = "DependenciesView.show.callers"; //$NON-NLS-1$
+	public static final String DEPS_VIEW_SHOW_MODE = "DependenciesView.show.mode"; //$NON-NLS-1$
 	public static final String DEPS_VIEW_SHOW_LIST = "DependenciesView.show.list"; //$NON-NLS-1$
 	public static final String DEPS_VIEW_SHOW_STATE = "DependenciesView.show.state"; //$NON-NLS-1$
 

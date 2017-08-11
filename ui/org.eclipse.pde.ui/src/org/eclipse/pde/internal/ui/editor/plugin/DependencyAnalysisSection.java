@@ -20,8 +20,7 @@ import org.eclipse.pde.internal.ui.*;
 import org.eclipse.pde.internal.ui.editor.PDEFormPage;
 import org.eclipse.pde.internal.ui.editor.PDESection;
 import org.eclipse.pde.internal.ui.search.dependencies.UnusedDependenciesAction;
-import org.eclipse.pde.internal.ui.views.dependencies.OpenPluginDependenciesAction;
-import org.eclipse.pde.internal.ui.views.dependencies.OpenPluginReferencesAction;
+import org.eclipse.pde.internal.ui.views.dependencies.*;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.forms.events.HyperlinkAdapter;
 import org.eclipse.ui.forms.events.HyperlinkEvent;
@@ -57,6 +56,7 @@ public class DependencyAnalysisSection extends PDESection {
 		formText.setImage("loops", lp.get(PDEPluginImages.DESC_LOOP_OBJ)); //$NON-NLS-1$
 		formText.setImage("search", lp.get(PDEPluginImages.DESC_PSEARCH_OBJ)); //$NON-NLS-1$
 		formText.setImage("hierarchy", lp.get(PDEPluginImages.DESC_CALLEES)); //$NON-NLS-1$
+		formText.setImage("paths", lp.get(PDEPluginImages.DESC_PATH)); //$NON-NLS-1$
 		formText.setImage("dependencies", lp.get(PDEPluginImages.DESC_CALLERS)); //$NON-NLS-1$
 		formText.addHyperlinkListener(new HyperlinkAdapter() {
 			@Override
@@ -69,6 +69,8 @@ public class DependencyAnalysisSection extends PDESection {
 					new OpenPluginReferencesAction(PluginRegistry.findModel(getPlugin().getId())).run();
 				else if (e.getHref().equals("hierarchy")) //$NON-NLS-1$
 					new OpenPluginDependenciesAction(PluginRegistry.findModel(getPlugin().getId())).run();
+				else if (e.getHref().equals("paths")) //$NON-NLS-1$
+					new OpenPluginClasspathAction(PluginRegistry.findModel(getPlugin().getId())).run();
 			}
 		});
 
